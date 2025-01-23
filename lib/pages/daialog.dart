@@ -28,7 +28,10 @@ class MainMemoriesDialog extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => VoteRankingPage(),
+                builder: (context) => VoteRankingPage(
+                  classId: 'dummyClassId', // ダミーのclassIdを渡す
+                  rankingList: ['サンプルランキング1', 'サンプルランキング2'], // ダミーデータ
+                ),
               ),
             );
           },

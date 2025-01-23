@@ -1,13 +1,131 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'myprofile_model.dart'; // モデルクラスをインポート
+import 'setting_profile.dart'; // プロフィール設定画面をインポート
+
 class MyProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // プロフィール編集ボタン → 未実装だが例として設定画面などに飛ばせる
-    return Scaffold(
-      body: Center(
-        child: Text('MyProfilePage'),
+    return ChangeNotifierProvider<MyProfileModel>(
+      create: (context) => MyProfileModel()..init(context),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Consumer<MyProfileModel>(
+          builder: (context, model, child) {
+            if (model.name.isEmpty) {
+              // プロフィール未設定時の画面
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('まだプロフィールが設定されていません！'),
+                    Text('早速設定しよう'),
+                    SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        // 設定画面に遷移
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SettingProfilePage(),
+                          ),
+                        );
+                      },
+                      child: Text("設定する"),
+                    ),
+                  ],
+                ),
+              );
+            }
+  // clearAllCache();
+            // プロフィール設定済み時の画面
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ヘッダー画像部分
+                  Container(
+                    height: 300,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage("https://picsum.photos/200/300"),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    alignment: Alignment.bottomLeft,
+                    padding: EdgeInsets.all(20),
+                    child: Text(
+                      model.name,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 40,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(2, 2),
+                            blurRadius: 4,
+                            color: Colors.black38,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // プロフィール詳細情報
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        buildProfileItem('誕生日', model.birthday),
+                        buildProfileItem('好きな教科', model.subject),
+                        // buildProfileItem('好きな食べ物', model.food),
+                        // buildProfileItem('趣味', model.hobby),
+                        // buildProfileItem('将来の夢', model.dream),
+                        // buildProfileItem('長所', model.advantage),
+                        // buildProfileItem('好きなYoutuber', model.youtuber),
+                        // buildProfileItem('好きな芸能人', model.celebrity),
+                        // buildProfileItem('好きな名言', model.hero),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// プロフィール項目を表示する共通ウィジェット
+  Widget buildProfileItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.black,
+            ),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value.isEmpty ? '未設定' : value,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+
