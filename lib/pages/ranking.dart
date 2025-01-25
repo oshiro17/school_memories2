@@ -1,15 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-/// ダミーのクラス情報
-class Class {
-  final String id;
-  final String name;
-
-  Class({required this.id, required this.name});
-}
-
-/// ダミーのユーザー情報
+import '../class_model.dart';
 class UserProfile {
   final String uid;
   final String name;
@@ -98,7 +89,7 @@ class VoteRankingPage extends StatelessWidget {
 
 /// メインのランキングページ
 class RankingPage extends StatelessWidget {
-  final Class _class;
+  final ClassModel _class;
 
   RankingPage(this._class);
 

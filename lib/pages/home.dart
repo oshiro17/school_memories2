@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../signup/classselection_model.dart';
 import 'daialog.dart';
 import 'myprofile.dart';
 import 'profile.dart';
 import 'message.dart';
 import 'ranking.dart';
+import '../class_model.dart';
 
 
 class Home extends StatefulWidget {
-  final Clas classInfo;
+  final ClassModel classInfo; // Class型を受け取る
 
   const Home({required this.classInfo, Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => HomeState();
+  State<Home> createState() => HomeState();
 }
 
 class HomeState extends State<Home> {
-  late final Clas _class;
+  late final ClassModel _class;
   int currentIndex = 0;
   late final List<Widget> tabs;
 
@@ -30,7 +29,7 @@ class HomeState extends State<Home> {
       MyProfilePage(),
       ProfilePage(),
       MessagePage(),
-      RankingPage( Class(id: 'dummyClassId', name: 'Dummy Class'),), // 必要なクラス情報を渡す
+      RankingPage(_class), // 必要なクラス情報を渡す
     ];
   }
 
@@ -45,7 +44,7 @@ class HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${_class.name}',
+          _class.name,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,

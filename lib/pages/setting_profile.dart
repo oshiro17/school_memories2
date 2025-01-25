@@ -1,177 +1,122 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'setting_profile_model.dart';
+
+class SettingProfileModel extends ChangeNotifier {
+  bool isLoading = false;
+
+  /// Firestoreへプロフィールを保存する
+  Future<void> saveProfile({
+    required String name,
+    required String birthday,
+    required String subject,
+  }) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
+        throw Exception('ログイン情報がありません。');
+      }
+
+      // Firestoreに保存するデータ
+      final data = {
+        'name': name,
+        'birthday': birthday,
+        'subject': subject,
+        // 必要に応じて他のフィールドを追加
+      };
+
+      // Firestoreを更新（users/{uid}ドキュメント）
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set(data, SetOptions(merge: true));
+
+    } catch (e) {
+      // エラーハンドリング
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+}
 
 class SettingProfilePage extends StatelessWidget {
-  final _formKey = GlobalKey<FormState>();
-
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<SettingProfileModel>(
-      create: (context) => SettingProfileModel()..init(),
-      child: Scaffold(
-        appBar: AppBar(
-          centerTitle: false,
-          title: Text(
-            'プロフィールを設定する',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
+    // プロバイダーからモデルを取得
+    final model = Provider.of<SettingProfileModel>(context, listen: false);
+
+    // 入力用コントローラー
+    final nameController = TextEditingController();
+    final birthdayController = TextEditingController();
+    final subjectController = TextEditingController();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('プロフィール設定'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: '名前'),
             ),
-          ),
-          backgroundColor: Colors.white,
-          elevation: 4.0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_outlined,
-              color: Colors.black,
+            TextField(
+              controller: birthdayController,
+              decoration: InputDecoration(labelText: '誕生日'),
             ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        body: Consumer<SettingProfileModel>(
-          builder: (context, model, child) {
-            return GestureDetector(
-              onTap: () {
-                FocusScope.of(context).unfocus();
+            TextField(
+              controller: subjectController,
+              decoration: InputDecoration(labelText: '好きな教科'),
+            ),
+            const SizedBox(height: 20),
+            Consumer<SettingProfileModel>(
+              builder: (context, model, child) {
+                return model.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            await model.saveProfile(
+                              name: nameController.text,
+                              birthday: birthdayController.text,
+                              subject: subjectController.text,
+                            );
+                            Navigator.pop(context); // 設定画面を閉じる
+                          } catch (e) {
+                            _showErrorDialog(context, e.toString());
+                          }
+                        },
+                        child: const Text('保存'),
+                      );
               },
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-                child: Form(
-                  key: _formKey,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 48.0,
-                      horizontal: 24.0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// プロフィール画像
-                        Center(
-                          child: GestureDetector(
-                            onTap: () async {
-                              await showDialog(
-                                context: context,
-                                builder: (context) => SimpleDialog(
-                                  title: Text('プロフィール画像を設定'),
-                                  children: [
-                                    SimpleDialogOption(
-                                      onPressed: () async {
-                                        Navigator.pop(context);
-                                        try {
-                                          await model.pickImage(ImageSource.camera);
-                                        } catch (e) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('カメラの使用中にエラーが発生しました: $e')),
-                                          );
-                                        }
-                                      },
-                                      child: Text('カメラで撮影'),
-                                    ),
-                                    SimpleDialogOption(
-                                      onPressed: () async {
-                                        Navigator.pop(context);
-                                        await model.pickImage(ImageSource.gallery);
-                                      },
-                                      child: Text('写真を選択'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            child: ClipOval(
-                              child: model.imageURL.isNotEmpty
-                                  ? Image.file(
-                                      File(model.imageURL),
-                                      width: 100,
-                                      height: 100,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Icon(
-                                      Icons.account_circle,
-                                      size: 100,
-                                      color: Colors.grey,
-                                    ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 24),
-
-                        /// フォーム項目
-                        buildProfileField(
-                          label: '名前',
-                          controller: model.nameController,
-                          hintText: '例)大城太郎',
-                          icon: Icons.face,
-                          validator: model.validateText,
-                        ),
-                        buildProfileField(
-                          label: '誕生日',
-                          controller: model.birthdayController,
-                          hintText: '例)2003.08.01',
-                          icon: Icons.cake,
-                          validator: model.validateText,
-                        ),
-                        buildProfileField(
-                          label: '好きな教科',
-                          controller: model.subjectController,
-                          hintText: '例)数学',
-                          icon: Icons.book,
-                          validator: model.validateText,
-                        ),
-
-                        /// 更新ボタン
-                        SizedBox(height: 40),
-                        Center(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
-                                await model.saveProfile();
-                                await model.init();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('プロフィールを更新しました')),
-                                );
-                              }
-                            },
-                            child: Text('更新する'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// プロフィール入力フィールド
-  Widget buildProfileField({
-    required String label,
-    required TextEditingController controller,
-    required String hintText,
-    required IconData icon,
-    required String? Function(String?) validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextFormField(
-        controller: controller,
-        validator: validator,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hintText,
-          prefixIcon: Icon(icon),
-          border: OutlineInputBorder(),
-        ),
+  Future<void> _showErrorDialog(BuildContext context, String message) async {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('エラー'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('閉じる'),
+          ),
+        ],
       ),
     );
   }

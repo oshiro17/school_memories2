@@ -1,15 +1,17 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '12.0'
+platform :ios, '13.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# プロジェクトの設定
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
   'Release' => :release,
 }
 
+# Flutter のルートパスを取得
 def flutter_root
   generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
   unless File.exist?(generated_xcode_build_settings_path)
@@ -23,20 +25,34 @@ def flutter_root
   raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
 end
 
+# Flutter の Podfile ヘルパーを読み込む
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
+# Flutter iOS の設定
 flutter_ios_podfile_setup
 
+# Runner ターゲットの設定
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
+  # Flutter に必要なすべての Pod をインストール
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # CocoaPods の設定を Runner ターゲットに統合
+  xcconfig_path = File.join(File.dirname(File.realpath(__FILE__)), 'Pods', 'Target Support Files', 'Pods-Runner', 'Pods-Runner.profile.xcconfig')
+  if File.exist?(xcconfig_path)
+    puts "Integrating CocoaPods xcconfig: #{xcconfig_path}"
+    ENV['FLUTTER_XCFRAMEWORK_CONFIGURATION'] = xcconfig_path
+  end
+
+  # テストターゲットの設定
   target 'RunnerTests' do
     inherit! :search_paths
   end
 end
 
+# Post-install フックで追加のビルド設定を適用
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)

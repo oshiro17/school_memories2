@@ -7,22 +7,19 @@ class LoginModel extends ChangeNotifier {
 
   Future<void> login() async {
     if (mail == null || mail!.isEmpty || password == null || password!.isEmpty) {
-      throw 'メールアドレスとパスワードを入力してください';
+      throw 'メールアドレスとパスワードを入力してください。';
     }
-
     try {
-      // Firebase Authenticationでログイン
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: mail!,
-        password: password!,
+        email: mail!.trim(),
+        password: password!.trim(),
       );
     } on FirebaseAuthException catch (e) {
-      // Firebaseエラーのハンドリング
       switch (e.code) {
         case 'user-not-found':
-          throw 'ユーザーが見つかりません';
+          throw 'ユーザーが見つかりません。';
         case 'wrong-password':
-          throw 'パスワードが間違っています';
+          throw 'パスワードが間違っています。';
         default:
           throw 'ログインに失敗しました: ${e.message}';
       }
