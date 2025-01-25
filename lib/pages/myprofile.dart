@@ -12,31 +12,39 @@ class MyProfilePage extends StatelessWidget {
         backgroundColor: Colors.white,
         body: Consumer<MyProfileModel>(
           builder: (context, model, child) {
-            if (model.name.isEmpty) {
-              // プロフィール未設定時の画面
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('まだプロフィールが設定されていません！'),
-                    Text('早速設定しよう'),
-                    SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        // 設定画面に遷移
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SettingProfilePage(),
-                          ),
-                        );
-                      },
-                      child: Text("設定する"),
-                    ),
-                  ],
-                ),
-              );
+           if (model.isLoading) {
+  return Center(
+    child: CircularProgressIndicator(),
+  );
+}
+
+if (model.name.isEmpty) {
+  // プロフィール未設定時の画面
+  return Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('まだプロフィールが設定されていません！'),
+        Text('早速設定しよう'),
+        SizedBox(height: 10),
+        ElevatedButton(
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SettingProfilePage(),
+              ),
+            );
+            if (result == true) {
+              Provider.of<MyProfileModel>(context, listen: false).fetchProfile();
             }
+          },
+          child: Text("設定する"),
+        ),
+      ],
+    ),
+  );
+}
   // clearAllCache();
             // プロフィール設定済み時の画面
             return SingleChildScrollView(

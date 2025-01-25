@@ -3,77 +3,62 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class MyProfileModel extends ChangeNotifier {
-  // プロフィール情報
   String name = '';
   String birthday = '';
   String subject = '';
-  String comment = '';
-  String imageURL = '';
-
-  final currentUser = FirebaseAuth.instance.currentUser; // ログイン中のユーザー
-
-  /// 初期化処理
+bool isLoading = false;
   Future<void> init(BuildContext context) async {
-    if (currentUser == null) {
-      return; // ログインしていない場合は何もしない
-    }
+    await fetchProfile();
+  }
 
-    final userRef =
-        FirebaseFirestore.instance.collection('users').doc(currentUser!.uid);
-
+ Future<void> fetchProfile() async {
     try {
-      final userDoc = await userRef.get();
-      if (userDoc.exists) {
-        // Firestore からデータを取得してフィールドにセット
-        final data = userDoc.data() as Map<String, dynamic>;
-        name = data['name'] ?? '';
-        birthday = data['birthday'] ?? '';
-        subject = data['subject'] ?? '';
-        comment = data['comment'] ?? '';
-        imageURL = data['imageURL'] ?? '';
-        notifyListeners(); // UI を更新
+      isLoading = true;
+      notifyListeners();
+
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data();
+        name = data?['name'] ?? '';
+        birthday = data?['birthday'] ?? '';
+        subject = data?['subject'] ?? '';
       }
-    } catch (e) {
-      print('プロフィール情報の取得に失敗しました: $e');
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 
-  /// プロフィール情報を更新
   Future<void> updateProfile({
     required String name,
     required String birthday,
     required String subject,
-    String? comment,
-    String? imageURL,
   }) async {
-    if (currentUser == null) {
-      return; // ログインしていない場合は何もしない
-    }
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('ログイン情報がありません');
 
-    final userRef =
-        FirebaseFirestore.instance.collection('users').doc(currentUser!.uid);
+    final data = {
+      'name': name,
+      'birthday': birthday,
+      'subject': subject,
+    };
 
-    try {
-      // Firestore にデータを更新
-      await userRef.update({
-        'name': name,
-        'birthday': birthday,
-        'subject': subject,
-        if (comment != null) 'comment': comment,
-        if (imageURL != null) 'imageURL': imageURL,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .set(data, SetOptions(merge: true));
 
-      // ローカルモデルを更新
-      this.name = name;
-      this.birthday = birthday;
-      this.subject = subject;
-      if (comment != null) this.comment = comment;
-      if (imageURL != null) this.imageURL = imageURL;
-
-      notifyListeners(); // UI を更新
-    } catch (e) {
-      print('プロフィール情報の更新に失敗しました: $e');
-    }
+    // モデルに即時反映
+    this.name = name;
+    this.birthday = birthday;
+    this.subject = subject;
+    notifyListeners();
   }
 }
