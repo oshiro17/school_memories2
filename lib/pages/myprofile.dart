@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
-import 'myprofile_model.dart'; // モデルクラスをインポート
-import 'setting_profile.dart'; // プロフィール設定画面をインポート
+import 'package:school_memories2/pages/myprofile_model.dart';
+import 'package:school_memories2/pages/setting_profile.dart';
 
 class MyProfilePage extends StatelessWidget {
-    final ClassModel classInfo;
+  final ClassModel classInfo;
 
   MyProfilePage({required this.classInfo});
-  
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<MyProfileModel>(
@@ -17,40 +17,41 @@ class MyProfilePage extends StatelessWidget {
         backgroundColor: Colors.white,
         body: Consumer<MyProfileModel>(
           builder: (context, model, child) {
-           if (model.isLoading) {
-  return Center(
-    child: CircularProgressIndicator(),
-  );
-}
-
-if (model.name.isEmpty) {
-  // プロフィール未設定時の画面
-  return Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('まだプロフィールが設定されていません！'),
-        Text('早速設定しよう'),
-        SizedBox(height: 10),
-        ElevatedButton(
-          onPressed: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SettingProfilePage(classInfo : classInfo),
-              ),
-            );
-            if (result == true) {
-              Provider.of<MyProfileModel>(context, listen: false).fetchProfile();
+            if (model.isLoading) {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
             }
-          },
-          child: Text("設定する"),
-        ),
-      ],
-    ),
-  );
-}
-  // clearAllCache();
+
+            if (model.name.isEmpty) {
+              // プロフィール未設定時の画面
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('まだプロフィールが設定されていません！'),
+                    Text('早速設定しよう'),
+                    SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SettingProfilePage(classInfo: classInfo),
+                          ),
+                        );
+                        if (result == true) {
+                          // プロフィール保存後にfetchProfileを再実行
+                          await Provider.of<MyProfileModel>(context, listen: false).fetchProfile();
+                        }
+                      },
+                      child: Text("設定する"),
+                    ),
+                  ],
+                ),
+              );
+            }
+
             // プロフィール設定済み時の画面
             return SingleChildScrollView(
               child: Column(
@@ -92,13 +93,6 @@ if (model.name.isEmpty) {
                       children: [
                         buildProfileItem('誕生日', model.birthday),
                         buildProfileItem('好きな教科', model.subject),
-                        // buildProfileItem('好きな食べ物', model.food),
-                        // buildProfileItem('趣味', model.hobby),
-                        // buildProfileItem('将来の夢', model.dream),
-                        // buildProfileItem('長所', model.advantage),
-                        // buildProfileItem('好きなYoutuber', model.youtuber),
-                        // buildProfileItem('好きな芸能人', model.celebrity),
-                        // buildProfileItem('好きな名言', model.hero),
                       ],
                     ),
                   ),
@@ -141,4 +135,3 @@ if (model.name.isEmpty) {
     );
   }
 }
-

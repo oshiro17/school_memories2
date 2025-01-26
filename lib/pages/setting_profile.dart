@@ -101,19 +101,21 @@ class SettingProfilePage extends StatelessWidget {
                 return model.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
-                        onPressed: () async {
-                          try {
-                            await model.saveProfile(
-                              name: nameController.text,
-                              birthday: birthdayController.text,
-                              subject: subjectController.text,
-                              classId: classInfo.id, // クラスIDを渡す
-                            );
-                            Navigator.pop(context); // 設定画面を閉じる
-                          } catch (e) {
-                            _showErrorDialog(context, e.toString());
-                          }
-                        },
+                       // SettingProfilePageの保存ボタンの処理を修正
+onPressed: () async {
+  try {
+    await model.saveProfile(
+      name: nameController.text,
+      birthday: birthdayController.text,
+      subject: subjectController.text,
+      classId: classInfo.id, // クラスIDを渡す
+    );
+    Navigator.pop(context, true); // trueを返す
+  } catch (e) {
+    _showErrorDialog(context, e.toString());
+  }
+},
+
                         child: const Text('保存'),
                       );
               },
