@@ -67,8 +67,8 @@ class ClassSelectionPageModel extends ChangeNotifier {
       'id': uid,
       'classId': docId,
       'name': userData['name'] ?? '',
-      'comment': userData['comment'] ?? '',
-      'imageURL': userData['imageURL'] ?? '',
+      'subject': userData['subject'] ?? '',
+      'birthday': userData['birthday'] ?? '',
       'joinedAt': now,
     };
     await newClassDoc.collection('members').doc(uid).set(memberData);
@@ -151,8 +151,8 @@ class ClassSelectionPageModel extends ChangeNotifier {
       'id': uid,
       'classId': classId,
       'name': userData['name'] ?? '',
-      'comment': userData['comment'] ?? '',
-      'imageURL': userData['imageURL'] ?? '',
+      'birthday': userData['birthday'] ?? '',
+      'subject': userData['subject'] ?? '',
       'joinedAt': now,
     });
     batch.set(attendingRef, {

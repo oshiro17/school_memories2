@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'daialog.dart';
 import 'myprofile.dart';
-import 'profile.dart';
+import 'members_profile.dart';
 import 'message.dart';
 import 'ranking.dart';
 import '../class_model.dart';
@@ -26,8 +26,8 @@ class HomeState extends State<Home> {
     super.initState();
     _class = widget.classInfo;
     tabs = [
-      MyProfilePage(),
-      ProfilePage(),
+      MyProfilePage(classInfo : _class),
+      ProfilePage(classInfo : _class),
       MessagePage(),
       RankingPage(_class), // 必要なクラス情報を渡す
     ];

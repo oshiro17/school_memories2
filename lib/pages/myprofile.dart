@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/class_model.dart';
 import 'myprofile_model.dart'; // モデルクラスをインポート
 import 'setting_profile.dart'; // プロフィール設定画面をインポート
 
 class MyProfilePage extends StatelessWidget {
+    final ClassModel classInfo;
+
+  MyProfilePage({required this.classInfo});
+  
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<MyProfileModel>(
@@ -32,7 +37,7 @@ if (model.name.isEmpty) {
             final result = await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SettingProfilePage(),
+                builder: (context) => SettingProfilePage(classInfo : classInfo),
               ),
             );
             if (result == true) {

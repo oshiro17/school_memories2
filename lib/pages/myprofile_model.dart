@@ -3,22 +3,31 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class MyProfileModel extends ChangeNotifier {
+  // プロフィールデータのプロパティ
   String name = '';
   String birthday = '';
   String subject = '';
-bool isLoading = false;
+  bool isLoading = true;
+
+  /// 初期化処理（データ取得を行う）
   Future<void> init(BuildContext context) async {
     await fetchProfile();
   }
 
- Future<void> fetchProfile() async {
+  /// Firestoreから自分のプロフィールを取得してモデルに反映
+  Future<void> fetchProfile() async {
     try {
       isLoading = true;
-      notifyListeners();
+      notifyListeners(); // ローディング状態を通知
 
+      // ログイン中のユーザーのUIDを取得
       final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) return;
+      if (uid == null) {
+        print('ログインしていません');
+        return;
+      }
 
+      // Firestoreからユーザードキュメントを取得
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -26,39 +35,18 @@ bool isLoading = false;
 
       if (doc.exists) {
         final data = doc.data();
-        name = data?['name'] ?? '';
-        birthday = data?['birthday'] ?? '';
-        subject = data?['subject'] ?? '';
+        name = data?['name'] ?? ''; // Firestoreのnameフィールドを取得
+        birthday = data?['birthday'] ?? ''; // Firestoreのbirthdayフィールドを取得
+        subject = data?['subject'] ?? ''; // Firestoreのsubjectフィールドを取得
+        print('プロフィールデータ取得成功: name=$name, birthday=$birthday, subject=$subject');
+      } else {
+        print('ユーザードキュメントが存在しません: uid=$uid');
       }
+    } catch (e) {
+      print('fetchProfileエラー: $e');
     } finally {
       isLoading = false;
-      notifyListeners();
+      notifyListeners(); // ローディング解除を通知
     }
-  }
-
-  Future<void> updateProfile({
-    required String name,
-    required String birthday,
-    required String subject,
-  }) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) throw Exception('ログイン情報がありません');
-
-    final data = {
-      'name': name,
-      'birthday': birthday,
-      'subject': subject,
-    };
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .set(data, SetOptions(merge: true));
-
-    // モデルに即時反映
-    this.name = name;
-    this.birthday = birthday;
-    this.subject = subject;
-    notifyListeners();
   }
 }

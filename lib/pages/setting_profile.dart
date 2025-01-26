@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/class_model.dart';
 
 class SettingProfileModel extends ChangeNotifier {
   bool isLoading = false;
@@ -11,6 +12,7 @@ class SettingProfileModel extends ChangeNotifier {
     required String name,
     required String birthday,
     required String subject,
+    required String classId, // クラスIDを追加
   }) async {
     try {
       isLoading = true;
@@ -22,19 +24,31 @@ class SettingProfileModel extends ChangeNotifier {
       }
 
       // Firestoreに保存するデータ
-      final data = {
+      final userData = {
         'name': name,
         'birthday': birthday,
         'subject': subject,
-        // 必要に応じて他のフィールドを追加
       };
 
-      // Firestoreを更新（users/{uid}ドキュメント）
+      // users/{uid}を更新
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .set(data, SetOptions(merge: true));
+          .set(userData, SetOptions(merge: true));
 
+      // classes/{classId}/members/{uid}を更新
+      final memberData = {
+        'name': name,
+        'subject': subject,
+        // 必要なら他のフィールドを追加
+      };
+
+      await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId)
+          .collection('members')
+          .doc(uid)
+          .set(memberData, SetOptions(merge: true));
     } catch (e) {
       // エラーハンドリング
       rethrow;
@@ -46,6 +60,10 @@ class SettingProfileModel extends ChangeNotifier {
 }
 
 class SettingProfilePage extends StatelessWidget {
+  final ClassModel classInfo;
+
+  SettingProfilePage({required this.classInfo});
+
   @override
   Widget build(BuildContext context) {
     // プロバイダーからモデルを取得
@@ -89,6 +107,7 @@ class SettingProfilePage extends StatelessWidget {
                               name: nameController.text,
                               birthday: birthdayController.text,
                               subject: subjectController.text,
+                              classId: classInfo.id, // クラスIDを渡す
                             );
                             Navigator.pop(context); // 設定画面を閉じる
                           } catch (e) {
