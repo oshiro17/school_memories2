@@ -28,7 +28,7 @@ class HomeState extends State<Home> {
     tabs = [
       MyProfilePage(classInfo : _class),
       ProfilePage(classInfo : _class),
-      MessagePage(),
+      MessagePage(classId : _class.id),
       RankingPage(_class), // 必要なクラス情報を渡す
     ];
   }
