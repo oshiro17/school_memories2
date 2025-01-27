@@ -29,7 +29,7 @@ class HomeState extends State<Home> {
       MyProfilePage(classInfo : _class),
       ProfilePage(classInfo : _class),
       MessagePage(classId : _class.id),
-      RankingPage(_class), // 必要なクラス情報を渡す
+      RankingPage(classId: _class.id), // 必要なクラス情報を渡す
     ];
   }
 

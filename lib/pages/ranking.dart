@@ -1,217 +1,84 @@
+// ranking_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../class_model.dart';
-class UserProfile {
-  final String uid;
-  final String name;
-  final String imageURL;
+import 'ranking_page_model.dart';
 
-  UserProfile({required this.uid, required this.name, required this.imageURL});
-}
-
-/// ダミーのランキング情報
-class Ranking {
-  final String name;
-  final int allVotedCount;
-  final Rank rank1;
-  final Rank rank2;
-  final Rank rank3;
-
-  Ranking({
-    required this.name,
-    required this.allVotedCount,
-    required this.rank1,
-    required this.rank2,
-    required this.rank3,
-  });
-}
-
-/// ランキング内の順位情報
-class Rank {
-  final String uid;
-  final int votedCount;
-
-  Rank({required this.uid, required this.votedCount});
-}
-
-/// ダミーのデータプロバイダー
-class RankingPageModel extends ChangeNotifier {
-  final String classId;
-  List<Ranking> rankingList = [];
-
-  RankingPageModel(this.classId);
-
-  Future<void> init(BuildContext context) async {
-    // ダミーデータを設定
-    rankingList = [
-      Ranking(
-        name: 'サンプルランキング1',
-        allVotedCount: 10,
-        rank1: Rank(uid: '1', votedCount: 5),
-        rank2: Rank(uid: '2', votedCount: 3),
-        rank3: Rank(uid: '3', votedCount: 2),
-      ),
-      Ranking(
-        name: 'サンプルランキング2',
-        allVotedCount: 7,
-        rank1: Rank(uid: '4', votedCount: 4),
-        rank2: Rank(uid: '5', votedCount: 2),
-        rank3: Rank(uid: '6', votedCount: 1),
-      ),
-    ];
-    notifyListeners();
-  }
-}
-
-class VoteRankingPage extends StatelessWidget {
-  final String classId;
-  final List<Ranking>? rankingList;
-
-  VoteRankingPage({required this.classId, required this.rankingList});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-  
-      body: ListView.builder(
-        itemCount: rankingList?.length ?? 0,
-        itemBuilder: (context, index) {
-          final ranking = rankingList![index];
-          return ListTile(
-            title: Text(ranking.name),
-            subtitle: Text('総投票数: ${ranking.allVotedCount}'),
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// メインのランキングページ
 class RankingPage extends StatelessWidget {
-  final ClassModel _class;
+  final String classId;
 
-  RankingPage(this._class);
+  const RankingPage({
+    Key? key,
+    required this.classId,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<RankingPageModel>(
-      create: (context) => RankingPageModel(_class.id)..init(context),
-      child: Consumer<RankingPageModel>(
-        builder: (context, model, _) {
-          final rankingCardList = model.rankingList.map((ranking) {
-            return _rankingCard(ranking);
-          }).toList();
+      create: (_) => RankingPageModel()..init(classId),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('ランキング結果'),
+        ),
+        body: Consumer<RankingPageModel>(
+          builder: (context, model, child) {
+            if (model.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          return Scaffold(
-    
-            body: rankingCardList.isNotEmpty
-                ? ListView.builder(
-                    itemCount: rankingCardList.length,
-                    itemBuilder: (context, index) {
-                      return rankingCardList[index];
-                    },
-                  )
-                : Center(
-                    child: Text('まだランキングがないよ😇'),
-                  ),
-            floatingActionButton: FloatingActionButton(
-              backgroundColor: Colors.blue,
-              child: Icon(Icons.add),
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VoteRankingPage(
-                      classId: model.classId,
-                      rankingList: model.rankingList,
-                    ),
-                  ),
-                );
-              },
-            ),
-          );
-        },
+            return ListView(
+              children: [
+                for (final rankingName in model.sampleRankings) ...[
+                  _buildRankingCard(model, rankingName),
+                  const SizedBox(height: 16),
+                ],
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  /// ランキングカード
-  Widget _rankingCard(Ranking ranking) {
-    return Card(
-      color: Colors.blue.shade100,
-      child: Column(
-        children: [
-          SizedBox(height: 10),
-          Text(
-            '${ranking.name}',
-            style: TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.w900,
-              color: Colors.black,
-            ),
-          ),
-          _rankingTile(
-            rank: 1,
-            votedCount: ranking.rank1.votedCount,
-            votedUser: UserProfile(
-              uid: ranking.rank1.uid,
-              name: 'ユーザー${ranking.rank1.uid}',
-              imageURL: 'https://via.placeholder.com/48',
-            ),
-          ),
-          _rankingTile(
-            rank: 2,
-            votedCount: ranking.rank2.votedCount,
-            votedUser: UserProfile(
-              uid: ranking.rank2.uid,
-              name: 'ユーザー${ranking.rank2.uid}',
-              imageURL: 'https://via.placeholder.com/48',
-            ),
-          ),
-          _rankingTile(
-            rank: 3,
-            votedCount: ranking.rank3.votedCount,
-            votedUser: UserProfile(
-              uid: ranking.rank3.uid,
-              name: 'ユーザー${ranking.rank3.uid}',
-              imageURL: 'https://via.placeholder.com/48',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildRankingCard(RankingPageModel model, String rankingName) {
+    final votesData = model.rankingVotes[rankingName] ?? [];
 
-  /// ランキングタイル
-  Widget _rankingTile({
-    required int rank,
-    required int votedCount,
-    required UserProfile votedUser,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Text('$rank位'),
-          SizedBox(width: 8),
-          ClipOval(
-            child: Image.network(
-              votedUser.imageURL,
-              width: 48,
-              height: 48,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(Icons.account_circle, size: 48, color: Colors.grey);
-              },
-            ),
+    if (votesData.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            '$rankingName\nまだ投票がありません',
+            style: const TextStyle(fontSize: 16),
           ),
-          SizedBox(width: 8),
-          Text('${votedUser.name}'),
-          Spacer(),
-          Text('$votedCount票'),
-        ],
-      ),
-    );
+        ),
+      );
+    } else {
+      // 票数の多い順に並んでいると仮定
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                rankingName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // 上位順に表示 (1位, 2位, 3位...)
+              for (int i = 0; i < votesData.length; i++) ...[
+                Text(
+                  '${i + 1}位: ${votesData[i].memberName}  ${votesData[i].count}票',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
   }
 }
