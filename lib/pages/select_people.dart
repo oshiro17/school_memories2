@@ -35,15 +35,15 @@ class ClassMemberPage extends StatelessWidget {
                 return ListTile(
                   title: Text(member.name),
                   onTap: () {
-                    if (action == ClassMemberAction.writeMessage) {
-                      // メンバー情報を次画面へ渡す
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => WritingMessagePage(selectMember: member),
-                        ),
-                      );
-                    } else {
+                    // if (action == ClassMemberAction.writeMessage) {
+                    //   // メンバー情報を次画面へ渡す
+                    //   Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //       builder: (context) => WritingMessagePage(selectMember: member),
+                    //     ),
+                    //   );
+                    // } else {
                       // 投票用ダイアログ
                       showDialog(
                         context: context,
@@ -67,7 +67,7 @@ class ClassMemberPage extends StatelessWidget {
                           );
                         },
                       );
-                    }
+                    // }
                   },
                 );
               },
