@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/class_model.dart';
 import 'select_people.dart';
 import 'vote.dart';
 
 class MainMemoriesDialog extends StatelessWidget {
+    final ClassModel classInfo;
+      const MainMemoriesDialog({required this.classInfo, Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return SimpleDialog(
@@ -16,7 +19,7 @@ class MainMemoriesDialog extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ClassMemberPage(action: ClassMemberAction.writeMessage),
+                builder: (context) => ClassMemberPage(action: ClassMemberAction.writeMessage, classInfo: classInfo),
               ),
             );
           },

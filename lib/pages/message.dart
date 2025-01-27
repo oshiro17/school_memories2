@@ -1,84 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MessagePage extends StatelessWidget {
-  // サンプルデータ
-  final List<Map<String, String>> messages = [
-    {
-      'message': 'こんにちは一緒に勉強しましょう！',
-      'username': 'Taro',
-      'iconUrl': 'https://via.placeholder.com/150',
-    },
-    {
-      'message': '明日の授業はどうでしたか？',
-      'username': 'Hanako',
-      'iconUrl': 'https://via.placeholder.com/150',
-    },
-    {
-      'message': 'いい天気ですね！',
-      'username': 'Yuki',
-      'iconUrl': 'https://via.placeholder.com/150',
-    },
-  ];
+  const MessagePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // ログイン中ユーザー（= このメッセージ一覧を見ている人 = 受信者）
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      // 未ログインの場合（基本的にあり得ない想定なら適当でOK）
+      return const Center(child: Text('ログインしてください'));
+    }
+
+    // Firestoreのコレクションをリアルタイムで監視する
+    final messagesStream = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('messages')
+        .orderBy('timestamp', descending: true) // 新しい順に並べる例
+        .snapshots();
+
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: PageView.builder(
-          itemCount: messages.length,
-          itemBuilder: (context, index) {
-            final messageData = messages[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.0),
-              ),
-              elevation: 5,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // メッセージ本文
-                    Text(
-                      messageData['message']!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20.0),
-                    // ユーザー情報
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // 丸いアイコン
-                        CircleAvatar(
-                          radius: 24.0,
-                          backgroundImage: NetworkImage(messageData['iconUrl']!),
-                        ),
-                        const SizedBox(width: 12.0),
-                        // ユーザーネーム
-                        Text(
-                          messageData['username']!,
-                          style: TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: messagesStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('エラーが発生しました: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('まだ寄せ書きがありません'));
+          }
+
+          final docs = snapshot.data!.docs;
+          return ListView.builder(
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final data = docs[index].data() as Map<String, dynamic>;
+              final messageText = data['message'] ?? '';
+              final senderName = data['senderName'] ?? 'Unknown';
+              final timestamp = data['timestamp'] as Timestamp?;
+              final dateTime = timestamp?.toDate().toLocal();
+
+              return Card(
+                margin: const EdgeInsets.all(8.0),
+                child: ListTile(
+                  title: Text(
+                    messageText,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    'From: $senderName\nTime: ${dateTime ?? '-'}',
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          );
+        },
       ),
     );
   }

@@ -58,7 +58,7 @@ class HomeState extends State<Home> {
               // メニューダイアログを表示
               showDialog(
                 context: context,
-                builder: (context) => MainMemoriesDialog(),
+                builder: (context) => MainMemoriesDialog(classInfo: _class),
               );
             },
           ),
