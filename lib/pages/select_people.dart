@@ -60,7 +60,6 @@ class ClassMemberPage extends StatelessWidget {
                               ),
                               TextButton(
                                 onPressed: () {
-                                  Navigator.pop(context); // ダイアログを閉じる
                                   Navigator.pop(context, member); // 投票先を返す
                                 },
                                 child: const Text('投票する'),

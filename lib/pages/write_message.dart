@@ -1,34 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:school_memories2/pages/message.dart';
-import 'package:school_memories2/pages/select_people_model.dart';
-import '../class_model.dart';
 
 class WriteMessagePage extends StatelessWidget {
-  final ClassModel classInfo;
+  final String classId;
   final String currentMemberId;
 
-  const WriteMessagePage({
-    Key? key,
-    required this.classInfo,
-    required this.currentMemberId,
-  }) : super(key: key);
+  const WriteMessagePage({required this.classId, required this.currentMemberId});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<WriteMessagePageProvider>(
-      create: (_) => WriteMessagePageProvider()..initData(classInfo.id),
+    return ChangeNotifierProvider(
+      create: (_) => WriteMessagePageModel()..initialize(classId, currentMemberId),
       child: Scaffold(
-        appBar: AppBar(title: Text('メンバーにメッセージを送る')),
-        body: Consumer<WriteMessagePageProvider>(
+        appBar: AppBar(title: Text('メッセージ送信')),
+        body: Consumer<WriteMessagePageModel>(
           builder: (context, model, child) {
             if (model.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(child: CircularProgressIndicator());
             }
-            if (model.allMembers.isEmpty) {
-              return const Center(
-                child: Text('メンバーがいません。'),
+
+            if (model.isSent) {
+              return Center(
+                child: Text(
+                  'このメンバーには既にメッセージを送信しました。',
+                  style: TextStyle(fontSize: 18, color: Colors.red),
+                ),
               );
             }
 
@@ -36,33 +33,27 @@ class WriteMessagePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: ListView.builder(
-                    itemCount: model.allMembers.length,
+                    itemCount: model.memberList.length,
                     itemBuilder: (context, index) {
-                      final member = model.allMembers[index];
+                      final member = model.memberList[index];
                       final controller = model.messageControllers[index];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                        padding: const EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '相手: ${member.name}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              '宛先: ${member['name']}',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             TextField(
                               controller: controller,
-                              maxLines: 3,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 border: OutlineInputBorder(),
-                                hintText: 'ここにメッセージを入力してください',
+                                hintText: 'メッセージを入力してください',
                               ),
+                              maxLines: 3,
                             ),
                           ],
                         ),
@@ -70,35 +61,22 @@ class WriteMessagePage extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: () async {
                     try {
-                      await model.sendAllMessages(classInfo.id, currentMemberId);
+                      await model.sendMessages();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('送信が完了しました'),
-                        ),
+                        SnackBar(content: Text('メッセージを送信しました！')),
                       );
+                      Navigator.pop(context);
                     } catch (e) {
-                      showDialog(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: const Text('送信エラー'),
-                          content: Text(e.toString()),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('閉じる'),
-                            ),
-                          ],
-                        ),
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
                       );
                     }
                   },
-                  child: const Text('送信'),
+                  child: Text('送信'),
                 ),
-                const SizedBox(height: 16),
               ],
             );
           },
@@ -108,79 +86,87 @@ class WriteMessagePage extends StatelessWidget {
   }
 }
 
-class WriteMessagePageProvider extends ChangeNotifier {
+class WriteMessagePageModel extends ChangeNotifier {
   bool isLoading = false;
-
-  // クラスの全メンバー
-  List<SelectPeopleModel> allMembers = [];
-  // メンバーごとの入力欄
+  bool isSent = false;
+  List<Map<String, dynamic>> memberList = [];
   List<TextEditingController> messageControllers = [];
+  late String classId;
+  late String currentMemberId;
 
-  Future<void> initData(String classId) async {
+  void initialize(String classId, String currentMemberId) async {
+    this.classId = classId;
+    this.currentMemberId = currentMemberId;
+
     isLoading = true;
     notifyListeners();
 
     try {
-      // クラスの全メンバーを取得
-      final memberSnap = await FirebaseFirestore.instance
+      final memberDoc = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
           .collection('members')
+          .doc(currentMemberId)
           .get();
-      allMembers = memberSnap.docs.map((doc) {
-        return SelectPeopleModel.fromMap(doc.data());
-      }).toList();
 
-      // テキストコントローラをメンバー数分用意
-      messageControllers = List.generate(
-        allMembers.length,
-        (_) => TextEditingController(),
-      );
+      isSent = memberDoc.data()?['isSent'] ?? false;
+
+      if (!isSent) {
+        final memberSnapshot = await FirebaseFirestore.instance
+            .collection('classes')
+            .doc(classId)
+            .collection('members')
+            .get();
+
+        memberList = memberSnapshot.docs.map((doc) {
+          return {'id': doc.id, 'name': doc.data()['name'] ?? 'Unknown'};
+        }).toList();
+
+        messageControllers =
+            List.generate(memberList.length, (_) => TextEditingController());
+      }
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  /// メッセージ送信
-  Future<void> sendAllMessages(String classId, String senderId) async {
-    if (allMembers.isEmpty) {
-      return; // 送信対象なし
+  Future<void> sendMessages() async {
+    if (messageControllers.any((controller) => controller.text.trim().isEmpty)) {
+      throw '全員にメッセージを入力してください。';
     }
 
     isLoading = true;
     notifyListeners();
 
     try {
-      final senderDoc = await FirebaseFirestore.instance
-          .collection('classes')
-          .doc(classId)
-          .collection('members')
-          .doc(senderId)
-          .get();
-      final senderName = senderDoc.data()?['name'] ?? 'Unknown';
-
-      for (int i = 0; i < allMembers.length; i++) {
-        final member = allMembers[i];
+      for (int i = 0; i < memberList.length; i++) {
+        final member = memberList[i];
         final message = messageControllers[i].text.trim();
-        if (message.isEmpty) {
-          continue; // 空文字なら送信しない
-        }
 
-        // 相手のmessagesコレクションに書き込み
         await FirebaseFirestore.instance
             .collection('classes')
             .doc(classId)
             .collection('members')
-            .doc(member.id)
+            .doc(member['id'])
             .collection('messages')
             .add({
           'message': message,
-          'senderId': senderId,
-          'senderName': senderName,
+          'senderId': currentMemberId,
+          'senderName': 'Your Name', // 必要に応じて変更
           'timestamp': FieldValue.serverTimestamp(),
         });
       }
+
+      // メンバーの `isSent` を更新
+      await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId)
+          .collection('members')
+          .doc(currentMemberId)
+          .update({'isSent': true});
+
+      isSent = true;
     } finally {
       isLoading = false;
       notifyListeners();
@@ -189,8 +175,8 @@ class WriteMessagePageProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    for (final c in messageControllers) {
-      c.dispose();
+    for (final controller in messageControllers) {
+      controller.dispose();
     }
     super.dispose();
   }

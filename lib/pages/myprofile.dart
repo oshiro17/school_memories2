@@ -40,14 +40,17 @@ class MyProfilePage extends StatelessWidget {
                     const Text('早速設定しよう'),
                     const SizedBox(height: 10),
                     ElevatedButton(
-                      onPressed: () {
-           Navigator.pop(context);
-            Navigator.push(
+                      onPressed: () async{
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => SettingProfilePage(classInfo: classInfo, currentMemberId: currentMemberId),
               ),
             ); 
+            if (result == true) {
+      // プロフィール再取得
+      await model.fetchProfile(classInfo.id, currentMemberId);
+    }
           },
                       child: const Text("設定する"),
                     ),

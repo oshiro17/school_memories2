@@ -8,16 +8,17 @@ import 'vote_model.dart';
 
 class VoteRankingPage extends StatelessWidget {
   final String classId;
+  final String currentMemberId;
 
   const VoteRankingPage({
     Key? key,
-    required this.classId,
+    required this.classId, required this.currentMemberId,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<VoteRankingPageModel>(
-      create: (_) => VoteRankingPageModel()..init(classId),
+      create: (_) => VoteRankingPageModel()..init(classId,currentMemberId),
       child: Consumer<VoteRankingPageModel>(
         builder: (context, model, child) {
           if (model.isLoading) {
@@ -67,7 +68,7 @@ class VoteRankingPage extends StatelessWidget {
   onPressed: model.isReadyToVote
       ? () async {
           try {
-            await model.submitVotes(classId); // 投票処理を実行
+            await model.submitVotes(classId,currentMemberId); // 投票処理を実行
 
             // 投票完了のメッセージを表示
             ScaffoldMessenger.of(context).showSnackBar(

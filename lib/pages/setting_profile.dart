@@ -3,13 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
+import 'package:school_memories2/pages/myprofile.dart';
 
 class SettingProfileModel extends ChangeNotifier {
   bool isLoading = false;
 
   /// Firestoreへプロフィールを保存する
   Future<void> saveProfile({
-    required String name,
+    required String name2,
     required String birthday,
     required String subject,
     required String classId, 
@@ -23,6 +24,7 @@ class SettingProfileModel extends ChangeNotifier {
    
       // classes/{classId}/members/{uid}を更新
       final memberData = {
+        'name': name2,
         'subject': subject,
         'birthday': birthday,
         // 必要なら他のフィールドを追加
@@ -90,7 +92,7 @@ class SettingProfilePage extends StatelessWidget {
 onPressed: () async {
   try {
     await model.saveProfile(
-      name: nameController.text,
+      name2: nameController.text,
       birthday: birthdayController.text,
       subject: subjectController.text,
       classId: classInfo.id,

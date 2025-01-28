@@ -17,11 +17,10 @@ class MainMemoriesDialog extends StatelessWidget {
         SimpleDialogOption(
           child: Text('寄せ書きを書く'),
           onPressed: () {
-           Navigator.pop(context);
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => WriteMessagePage(classInfo: classInfo, currentMemberId: currentMemberId),
+                builder: (context) => WriteMessagePage(classId: classInfo.id, currentMemberId: currentMemberId),
               ),
             ); 
        
@@ -30,13 +29,12 @@ class MainMemoriesDialog extends StatelessWidget {
         SimpleDialogOption(
           child: Text('ランキングを投票する'),
           onPressed: () {
-            Navigator.pop(context);
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => VoteRankingPage(
                   classId: classInfo.id,
-     // ダミーデータ
+                  currentMemberId: currentMemberId,
                 ),
               ),
             );

@@ -2,15 +2,39 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:school_memories2/pages/message.dart';
 import 'package:school_memories2/pages/select_people_model.dart';
-import '../class_model.dart'; // SelectPeopleModel など
 
 class VoteRankingPageModel extends ChangeNotifier {
-  final List<String> sampleRankings = [
-    'サンプルランキング1',
-    'サンプルランキング2',
-  ];
+final List<String> sampleRankings = [
+  'クラスで一番モテるのは？',
+  'クラスで一番おしゃべりなのは？',
+  'クラスで一番頭がいいのは？',
+  'クラスで一番妄想が激しいのは？',
+  'クラスで一番結婚が早そうなのは？',
+  'クラスで一番お金持ちになりそうなのは？',
+  'クラスで一番海外に住みそうなのは？',
+  'クラスで一番有名になりそうなのは？',
+  'クラスで一番会社の社長になりそうなのは？',
+  'クラスで一番世界一周しそうなのは？',
+  'クラスで一番すぐ結婚しそうなのは？',
+  'クラスで一番忘れ物が多いのは？',
+  'クラスで一番優しいのは？',
+  'クラスで一番イケメンなのは？',
+  'クラスで一番可愛いのは？',
+  // 'クラスで一番友達が多いのは？',
+  // 'クラスで一番うるさいのは？',
+  // 'クラスで一番世界を救いそうなのは？',
+  // 'クラスで一番オリンピックに出てそうなのは？',
+  // 'クラスで一番お母さんにしたいのは？',
+  // 'クラスで一番お父さんにしたいのは？',
+  // 'クラスで一番妹にしたいのは？',
+  // 'クラスで一番姉にしたいのは？',
+  // 'クラスで一番弟にしたいのは？',
+  // 'クラスで一番兄にしたいのは？',
+  // 'クラスで一番奥さんにしたいのは？',
+  // 'クラスで一番旦那さんにしたいのは？',
+  // 'クラスで一番アイドルになりそうなのは？',
+];
 
   bool isLoading = false;
   bool isReadyToVote = false; // 投票ボタンの有効/無効を管理
@@ -21,34 +45,28 @@ class VoteRankingPageModel extends ChangeNotifier {
   // 各ランキングで選ばれたメンバー
   Map<String, SelectPeopleModel?> selectedMembers = {};
 
-  Future<void> init(String classId) async {
+  Future<void> init(String classId, String currentMemberId )async {
     try {
       isLoading = true;
       notifyListeners();
 
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) throw 'ログイン情報がありません';
-
-      // Firestore から既に投票済みのランキングを確認
+      
+      // // Firestore から既に投票済みのランキングを確認
       final userVotesSnap = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
-          .collection('rankings')
-          .where('votesDone.$userId', isEqualTo: true)
+          .collection('members')
+          .doc(currentMemberId)
           .get();
-      final alreadyVotedRankings = userVotesSnap.docs.map((doc) => doc.id).toSet();
-
-      // 投票済みならフラグを立てる
-      if (alreadyVotedRankings.length == sampleRankings.length) {
+        
+      final isVoted = userVotesSnap.data()?['isVoted'] ?? false;
+      if (isVoted) {
         hasAlreadyVoted = true;
         return;
       }
 
-      // 投票可能なランキングをフィルタリング
       for (final ranking in sampleRankings) {
-        if (!alreadyVotedRankings.contains(ranking)) {
           selectedMembers[ranking] = null;
-        }
       }
 
       // クラスメンバーを取得
@@ -83,7 +101,7 @@ class VoteRankingPageModel extends ChangeNotifier {
   }
 
   // 投票処理
-  Future<void> submitVotes(String classId) async {
+  Future<void> submitVotes(String classId,String currentMemberId) async {
     if (!isReadyToVote) throw 'すべてのランキングに投票してください';
 
     try {
@@ -110,13 +128,16 @@ class VoteRankingPageModel extends ChangeNotifier {
           {'count': FieldValue.increment(1)},
           SetOptions(merge: true),
         );
+          
+          final Votes = await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId)
+          .collection('members')
+          .doc(currentMemberId)
+          .update({'isVoted': true});
+  
 
-        // 投票履歴を記録
-        batch.set(
-          votesRef,
-          {'votesDone.$userId': true},
-          SetOptions(merge: true),
-        );
+
       }
 
       await batch.commit();

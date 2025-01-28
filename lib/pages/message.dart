@@ -30,7 +30,14 @@ class MessagePage extends StatelessWidget {
                 child: Text('まだメッセージがありません。'),
               );
             }
-
+if (model.isSent) {
+              return Center(
+                child: Text(
+                  'このメンバーには既にメッセージを送信しました。',
+                  style: TextStyle(fontSize: 18, color: Colors.red),
+                ),
+              );
+            }
             // 取得したメッセージをListViewで表示
             return ListView.builder(
               itemCount: model.messages.length,
@@ -75,6 +82,7 @@ class MessagePage extends StatelessWidget {
 
 /// メッセージ表示のためのデータモデルと取得処理を担当
 class MessageModel extends ChangeNotifier {
+  bool isSent = false;
   bool isLoading = false;
   List<MessageData> messages = [];
 
@@ -84,7 +92,17 @@ class MessageModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+
+       final memberDoc = await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId)
+          .collection('members')
+          .doc(memberId)
+          .get();
+
+      isSent = memberDoc.data()?['isSent'] ?? false;
       // /classes/{classId}/members/{memberId}/messages をタイムスタンプ降順で取得
+      if (!isSent) {
       final snapshot = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
@@ -101,7 +119,7 @@ class MessageModel extends ChangeNotifier {
           senderName: data['senderName'] ?? 'Unknown',
           timestamp: data['timestamp'] as Timestamp?, // nullの可能性があるため型チェック
         );
-      }).toList();
+      }).toList();}
     } catch (e) {
       print('メッセージ取得中にエラーが発生: $e');
     } finally {

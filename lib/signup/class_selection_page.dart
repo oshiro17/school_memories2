@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'select_account_page.dart';
 
+/// クラス作成ページ
 class ClassSelectionPage extends StatefulWidget {
   const ClassSelectionPage({Key? key}) : super(key: key);
 
@@ -112,7 +113,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
         ),
         const SizedBox(height: 16),
         ElevatedButton(
-          onPressed: _createClass,
+          onPressed: _showConfirmationPage,
           child: const Text('クラスを作成'),
         ),
       ],
@@ -141,50 +142,116 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
     );
   }
 
-  /// クラス作成
-  Future<void> _createClass() async {
+  /// 確認画面を表示
+  void _showConfirmationPage() {
+    final className = classNameController.text.trim();
+    final classId = classIdForCreateController.text.trim();
+    final password = classPasswordForCreateController.text.trim();
+    final members = memberControllers
+        .map((controller) => controller.text.trim())
+        .where((name) => name.isNotEmpty)
+        .toList();
+
+    // バリデーション
+    if (className.isEmpty || classId.isEmpty || password.isEmpty || members.isEmpty) {
+      _showMessage('入力されていないところがあります');
+      return;
+    }
+    if (members.length < 2) {
+      _showMessage('メンバーは２人以上にしてください');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConfirmationPage(
+          className: className,
+          classId: classId,
+          password: password,
+          members: members,
+          onConfirm: _joinClassAfterConfirm,
+        ),
+      ),
+    );
+  }
+
+  /// 確認画面から "進む" ボタンを押した時に呼ばれるメソッド
+  /// ※ クラスを作成 → 参加フローを実現
+  Future<void> _joinClassAfterConfirm() async {
     final className = classNameController.text.trim();
     final classId = classIdForCreateController.text.trim();
     final password = classPasswordForCreateController.text.trim();
 
-    if (className.isEmpty || classId.isEmpty || password.isEmpty) {
-      _showMessage('未入力の項目があります');
-      return;
-    }
-
+    // Firestoreの参照
     final classRef = FirebaseFirestore.instance.collection('classes').doc(classId);
 
-    // クラスドキュメントを作成
-    await classRef.set({
-      'id': classId,
-      'name': className,
-      'password': password,
-      'createdAt': DateTime.now(),
-    });
+    try {
+      // 1. クラスIDの重複確認
+      final docSnap = await classRef.get();
+      if (docSnap.exists) {
+        _showMessage('クラスidがもう使われています');
+        return;
+      }
 
-    // members サブコレクションへメンバーを一括登録
-    for (final controller in memberControllers) {
-      final memberName = controller.text.trim();
-      if (memberName.isNotEmpty) {
-        final memberDoc = classRef.collection('members').doc(); // メンバーID自動生成
+      // 2. メンバーの入力状態をチェック
+      final trimmedNames = memberControllers.map((c) => c.text.trim()).toList();
+      if (trimmedNames.any((name) => name.isEmpty)) {
+        _showMessage('入力されていないところがあります');
+        return;
+      }
+
+      // 3. メンバーが2人以上かどうか
+      if (trimmedNames.length < 2) {
+        _showMessage('メンバーは２人以上にしてください');
+        return;
+      }
+
+      // 4. 名前重複チェック
+      final uniqueNames = trimmedNames.toSet();
+      if (uniqueNames.length != trimmedNames.length) {
+        _showMessage('名前が被っています');
+        return;
+      }
+
+      // 5. その他必須項目チェック
+      if (className.isEmpty || classId.isEmpty || password.isEmpty) {
+        _showMessage('未入力の項目があります');
+        return;
+      }
+
+      // --- 上記のチェックを全てパスしたらクラス作成 ---
+      await classRef.set({
+        'id': classId,
+        'name': className,
+        'password': password,
+        'createdAt': DateTime.now(),
+      });
+
+      // メンバー作成
+      for (final name in trimmedNames) {
+        final memberDoc = classRef.collection('members').doc();
         await memberDoc.set({
           'id': memberDoc.id,
-          'name': memberName,
-          // 初期パスワードを使う場合はここで保存可能 (例: 'pass': '0000')
+          'name': name,
         });
       }
-    }
 
-    _showMessage('クラス「$className」作成完了！');
+      _showMessage('クラス「$className」作成完了！');
 
-    // アカウントを選択
-    Navigator.push(
+      Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => SelectAccountPage(classId: classId)),
+      MaterialPageRoute(
+        builder: (context) =>SelectAccountPage(classId: classId)
+      ),
+      (route) => false, // すべての画面を削除
     );
+    } catch (e) {
+      _showMessage('エラー: $e');
+    }
   }
 
-  /// クラスに参加
+  /// 既存クラスに参加
   Future<void> _joinClass() async {
     final classId = classIdForJoinController.text.trim();
     final password = classPasswordForJoinController.text.trim();
@@ -207,15 +274,81 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
       _showMessage('パスワードが違います');
       return;
     }
-
-    // OK → 名前選択画面へ
-    Navigator.push(
+        Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => SelectAccountPage(classId: classId)),
+      MaterialPageRoute(
+        builder: (context) =>SelectAccountPage(classId: classId)
+      ),
+      (route) => false, // すべての画面を削除
     );
+    // OK → 名前選択画面へ
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (_) => SelectAccountPage(classId: classId)),
+    // );
   }
 
   void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+}
+
+/// 確認画面
+class ConfirmationPage extends StatelessWidget {
+  final String className;
+  final String classId;
+  final String password;
+  final List<String> members;
+  final VoidCallback onConfirm;
+
+  const ConfirmationPage({
+    Key? key,
+    required this.className,
+    required this.classId,
+    required this.password,
+    required this.members,
+    required this.onConfirm,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('確認'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('クラス名: $className', style: const TextStyle(fontSize: 18)),
+            Text('クラスID: $classId', style: const TextStyle(fontSize: 18)),
+            Text('パスワード: $password', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 16),
+            const Text('メンバー:', style: TextStyle(fontSize: 18)),
+            ...members.map((member) => Text(member, style: const TextStyle(fontSize: 16))),
+            const SizedBox(height: 32),
+            const Text(
+              'クラス作成後は編集できません。よろしいですか？',
+              style: TextStyle(fontSize: 16, color: Colors.red),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('もう一度編集'),
+                ),
+                ElevatedButton(
+                  onPressed: onConfirm,
+                  child: const Text('進む'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
