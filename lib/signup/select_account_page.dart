@@ -15,7 +15,7 @@ class SelectAccountPage extends StatefulWidget {
 class _SelectAccountPageState extends State<SelectAccountPage> {
   List<Map<String, dynamic>> members = [];
   String? selectedMemberId;
-  final passController = TextEditingController(); // 初期パスワード用 (0000想定)
+  final passController = TextEditingController();
 
   @override
   void initState() {
@@ -55,16 +55,14 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                         value: member['id'],
                         groupValue: selectedMemberId,
                         onChanged: (value) {
-                          setState(() {
-                            selectedMemberId = value;
-                          });
+                          setState(() => selectedMemberId = value);
                         },
                       );
                     },
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text('初期パスワード「0000」を入力してください。'),
+                const Text('パスワードを入力してください。'), // ← もはや"初期"に限定しない
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
@@ -85,27 +83,53 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
     );
   }
 
-  void _onLoginPressed() {
+  Future<void> _onLoginPressed() async {
     if (selectedMemberId == null) {
       _showMessage('メンバーを選択してください');
       return;
     }
-    if (passController.text.trim() != '0000') {
-      _showMessage('初期パスワードが違います');
+    final inputPass = passController.text.trim();
+    if (inputPass.isEmpty) {
+      _showMessage('パスワードを入力してください');
       return;
     }
-    // Homeへ移動
+
+    // 選択した memberId の Firestore doc を取得して、loginPassword を照合
+    final doc = await FirebaseFirestore.instance
+        .collection('classes')
+        .doc(widget.classId)
+        .collection('members')
+        .doc(selectedMemberId!)
+        .get();
+
+    if (!doc.exists) {
+      _showMessage('メンバー情報が存在しません');
+      return;
+    }
+
+    final storedPass = doc.data()?['loginPassword'] ?? '0000'; 
+    // loginPassword が無い場合は '0000' を初期値とする
+
+    if (inputPass != storedPass) {
+      _showMessage('パスワードが違います');
+      return;
+    }
+
+    // パスワードOK -> Homeへ移動
     final classInfo = ClassModel(
       id: widget.classId,
       classNumber: '',
-      name: '', // 必要であれば取り直す
-      password: '0000',
-      userCount: 0, // 適宜設定
+      name: '',
+      password: '', 
+      userCount: 0,
     );
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => Home(classInfo: classInfo, currentMemberId: selectedMemberId!),
+        builder: (_) => Home(
+          classInfo: classInfo,
+          currentMemberId: selectedMemberId!,
+        ),
       ),
     );
   }

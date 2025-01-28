@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:school_memories2/class_model.dart';
 import 'members_profile_model.dart';
 
-
+// メンバー一覧表示ページ
 class ProfilePage extends StatelessWidget {
   final String classId;
 
-  ProfilePage({required this.classId});
+  const ProfilePage({Key? key, required this.classId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,21 +16,16 @@ class ProfilePage extends StatelessWidget {
         body: Consumer<MembersProfileModel>(
           builder: (context, model, child) {
             if (model.isLoading) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
 
             final classMemberList = model.classMemberList;
 
+            // 全体をグラデーション背景にする
             return Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue, Colors.blueAccent],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
+              decoration: _buildBackgroundGradient(),
               child: classMemberList.isEmpty
-                  ? Center(
+                  ? const Center(
                       child: Text(
                         'まだプロフィールがありません🥺',
                         style: TextStyle(fontSize: 18, color: Colors.white),
@@ -39,65 +33,64 @@ class ProfilePage extends StatelessWidget {
                     )
                   : PageView.builder(
                       itemCount: classMemberList.length,
-                      controller: PageController(viewportFraction: 0.8),
+                      controller: PageController(viewportFraction: 0.85),
                       itemBuilder: (context, index) {
                         final member = classMemberList[index];
-                        return GestureDetector(
-                          onTap: () {
-                            // 詳細ページへ遷移
-                          },
-                          child: Container(
-                            margin: EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(15.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black26,
-                                  blurRadius: 5.0,
-                                  offset: Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Text(
-                                      "名前: ${member.name}",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Text(
-                                      "誕生日: ${member.birthday}",
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Text(
-                                      "好きな教科: ${member.subject}",
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
+                        return _buildMemberCard(member);
                       },
                     ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  // グラデーションの定義
+  BoxDecoration _buildBackgroundGradient() {
+    return const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Color(0xFFE0F7FA), // very light cyan
+          Color(0xFFFFEBEE), // very light pink
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    );
+  }
+
+  // メンバー情報をカード表示
+  Widget _buildMemberCard(Member member) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 40),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85), // 背景を少し透明にしグラデをうっすら透過
+        borderRadius: BorderRadius.circular(15.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 5.0,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "名前: ${member.name}",
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text("誕生日: ${member.birthday}"),
+              const SizedBox(height: 8),
+              Text("好きな教科: ${member.subject}"),
+            ],
+          ),
         ),
       ),
     );
