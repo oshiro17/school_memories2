@@ -5,14 +5,14 @@ import 'members_profile_model.dart';
 
 
 class ProfilePage extends StatelessWidget {
-  final ClassModel classInfo;
+  final String classId;
 
-  ProfilePage({required this.classInfo});
+  ProfilePage({required this.classId});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => MembersProfileModel()..fetchClassMembers(classInfo.id),
+      create: (context) => MembersProfileModel()..fetchClassMembers(classId),
       child: Scaffold(
         body: Consumer<MembersProfileModel>(
           builder: (context, model, child) {

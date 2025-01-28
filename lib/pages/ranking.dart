@@ -8,7 +8,7 @@ class RankingPage extends StatelessWidget {
 
   const RankingPage({
     Key? key,
-    required this.classId,
+    required this.classId, required String currentMemberId,
   }) : super(key: key);
 
   @override

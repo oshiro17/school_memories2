@@ -1,51 +1,55 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
-import 'package:school_memories2/pages/myprofile_model.dart';
 import 'package:school_memories2/pages/setting_profile.dart';
+
+import 'myprofile_model.dart';
 
 class MyProfilePage extends StatelessWidget {
   final ClassModel classInfo;
+  final String currentMemberId;
 
-  MyProfilePage({required this.classInfo});
+  const MyProfilePage({
+    required this.classInfo,
+    required this.currentMemberId,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<MyProfileModel>(
-      create: (context) => MyProfileModel()..init(context),
+      create: (context) => MyProfileModel()..init(classInfo.id, currentMemberId),
       child: Scaffold(
         backgroundColor: Colors.white,
         body: Consumer<MyProfileModel>(
           builder: (context, model, child) {
             if (model.isLoading) {
-              return Center(
+              return const Center(
                 child: CircularProgressIndicator(),
               );
             }
 
-            if (model.name.isEmpty) {
+            if (model.subject.isEmpty) {
               // プロフィール未設定時の画面
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('まだプロフィールが設定されていません！'),
-                    Text('早速設定しよう'),
-                    SizedBox(height: 10),
+                    const Text('まだプロフィールが設定されていません！'),
+                    const Text('早速設定しよう'),
+                    const SizedBox(height: 10),
                     ElevatedButton(
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SettingProfilePage(classInfo: classInfo),
-                          ),
-                        );
-                        if (result == true) {
-                          // プロフィール保存後にfetchProfileを再実行
-                          await Provider.of<MyProfileModel>(context, listen: false).fetchProfile();
-                        }
-                      },
-                      child: Text("設定する"),
+                      onPressed: () {
+           Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SettingProfilePage(classInfo: classInfo, currentMemberId: currentMemberId),
+              ),
+            ); 
+          },
+                      child: const Text("設定する"),
                     ),
                   ],
                 ),
@@ -61,17 +65,17 @@ class MyProfilePage extends StatelessWidget {
                   Container(
                     height: 300,
                     width: double.infinity,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: NetworkImage("https://picsum.photos/200/300"),
                         fit: BoxFit.cover,
                       ),
                     ),
                     alignment: Alignment.bottomLeft,
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     child: Text(
                       model.name,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 40,
@@ -114,17 +118,17 @@ class MyProfilePage extends StatelessWidget {
         children: [
           Text(
             '$label:',
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
               color: Colors.black,
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value.isEmpty ? '未設定' : value,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black87,
               ),

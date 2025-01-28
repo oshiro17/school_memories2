@@ -12,34 +12,19 @@ class SettingProfileModel extends ChangeNotifier {
     required String name,
     required String birthday,
     required String subject,
-    required String classId, // クラスIDを追加
+    required String classId, 
+    required String memberId,
+    // クラスIDを追加
   }) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) {
-        throw Exception('ログイン情報がありません。');
-      }
-
-      // Firestoreに保存するデータ
-      final userData = {
-        'name': name,
-        'birthday': birthday,
-        'subject': subject,
-      };
-
-      // users/{uid}を更新
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .set(userData, SetOptions(merge: true));
-
+   
       // classes/{classId}/members/{uid}を更新
       final memberData = {
-        'name': name,
         'subject': subject,
+        'birthday': birthday,
         // 必要なら他のフィールドを追加
       };
 
@@ -47,7 +32,7 @@ class SettingProfileModel extends ChangeNotifier {
           .collection('classes')
           .doc(classId)
           .collection('members')
-          .doc(uid)
+          .doc(memberId)
           .set(memberData, SetOptions(merge: true));
     } catch (e) {
       // エラーハンドリング
@@ -61,8 +46,8 @@ class SettingProfileModel extends ChangeNotifier {
 
 class SettingProfilePage extends StatelessWidget {
   final ClassModel classInfo;
-
-  SettingProfilePage({required this.classInfo});
+  final String currentMemberId;
+  SettingProfilePage({required this.classInfo,required this.currentMemberId});
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +93,9 @@ onPressed: () async {
       name: nameController.text,
       birthday: birthdayController.text,
       subject: subjectController.text,
-      classId: classInfo.id, // クラスIDを渡す
+      classId: classInfo.id,
+      memberId: currentMemberId,
+       // クラスIDを渡す
     );
     Navigator.pop(context, true); // trueを返す
   } catch (e) {

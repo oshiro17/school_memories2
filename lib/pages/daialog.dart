@@ -7,7 +7,8 @@ import 'vote.dart';
 
 class MainMemoriesDialog extends StatelessWidget {
     final ClassModel classInfo;
-      const MainMemoriesDialog({required this.classInfo, Key? key}) : super(key: key);
+  final String currentMemberId;
+      const MainMemoriesDialog({required this.classInfo, Key? key, required this.currentMemberId,}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return SimpleDialog(
@@ -20,16 +21,10 @@ class MainMemoriesDialog extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => WriteMessagePage(classInfo: classInfo),
+                builder: (context) => WriteMessagePage(classInfo: classInfo, currentMemberId: currentMemberId),
               ),
             ); 
-            // Navigator.pop(context); // ダイアログを閉じる
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (context) => ClassMemberPage(action: ClassMemberAction.writeMessage, classInfo: classInfo),
-            //   ),
-            // );
+       
           },
         ),
         SimpleDialogOption(

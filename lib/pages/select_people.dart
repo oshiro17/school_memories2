@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
+import 'package:school_memories2/pages/message.dart';
+import 'package:school_memories2/pages/select_people_model.dart';
 import 'write_message.dart';
 
 enum ClassMemberAction { writeMessage, voteRanking }

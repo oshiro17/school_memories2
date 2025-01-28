@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:school_memories2/pages/home.dart';
 import 'package:school_memories2/class_model.dart';
+import 'package:school_memories2/pages/home.dart';
 
 class SelectAccountPage extends StatefulWidget {
   final String classId;
@@ -15,7 +15,7 @@ class SelectAccountPage extends StatefulWidget {
 class _SelectAccountPageState extends State<SelectAccountPage> {
   List<Map<String, dynamic>> members = [];
   String? selectedMemberId;
-  final passController = TextEditingController(); // 初期パスワード用
+  final passController = TextEditingController(); // 初期パスワード用 (0000想定)
 
   @override
   void initState() {
@@ -30,9 +30,8 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
         .collection('members')
         .get();
 
-    final list = snap.docs.map((doc) => doc.data()).toList();
     setState(() {
-      members = list;
+      members = snap.docs.map((doc) => doc.data()).toList();
     });
   }
 
@@ -40,7 +39,7 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('あなたのアカウントを選択'),
+        title: const Text('あなたのアカウントを選択'),
       ),
       body: members.isEmpty
           ? const Center(child: CircularProgressIndicator())
@@ -64,6 +63,7 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                     },
                   ),
                 ),
+                const SizedBox(height: 8),
                 const Text('初期パスワード「0000」を入力してください。'),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -76,35 +76,7 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    if (selectedMemberId == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('メンバーを選択してください。')),
-                      );
-                      return;
-                    }
-                    if (passController.text.trim() != '0000') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('パスワードが間違っています。')),
-                      );
-                      return;
-                    }
-
-                    // ここで Home へ遷移する
-                    final classInfo = ClassModel(
-                      id: widget.classId,
-                      classNumber: '', // 必要に応じて入れてください
-                      name: '',
-                      password: '0000',
-                      userCount: 0,
-                    );
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Home(classInfo: classInfo),
-                      ),
-                    );
-                  },
+                  onPressed: _onLoginPressed,
                   child: const Text('ログイン'),
                 ),
                 const SizedBox(height: 20),
@@ -113,9 +85,32 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
     );
   }
 
-  @override
-  void dispose() {
-    passController.dispose();
-    super.dispose();
+  void _onLoginPressed() {
+    if (selectedMemberId == null) {
+      _showMessage('メンバーを選択してください');
+      return;
+    }
+    if (passController.text.trim() != '0000') {
+      _showMessage('初期パスワードが違います');
+      return;
+    }
+    // Homeへ移動
+    final classInfo = ClassModel(
+      id: widget.classId,
+      classNumber: '',
+      name: '', // 必要であれば取り直す
+      password: '0000',
+      userCount: 0, // 適宜設定
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Home(classInfo: classInfo, currentMemberId: selectedMemberId!),
+      ),
+    );
+  }
+
+  void _showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 }

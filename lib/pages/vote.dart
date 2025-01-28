@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
+import 'package:school_memories2/pages/message.dart';
+import 'package:school_memories2/pages/select_people_model.dart';
 import 'vote_model.dart';
 
 class VoteRankingPage extends StatelessWidget {

@@ -2,6 +2,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:school_memories2/pages/message.dart';
+import 'package:school_memories2/pages/select_people_model.dart';
 import '../class_model.dart'; // SelectPeopleModel など
 
 class VoteRankingPageModel extends ChangeNotifier {

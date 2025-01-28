@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class MyProfileModel extends ChangeNotifier {
@@ -10,27 +9,22 @@ class MyProfileModel extends ChangeNotifier {
   bool isLoading = true;
 
   /// 初期化処理（データ取得を行う）
-  Future<void> init(BuildContext context) async {
-    await fetchProfile();
+  Future<void> init(String classId, String memberId) async {
+    await fetchProfile(classId, memberId);
   }
 
-  /// Firestoreから自分のプロフィールを取得してモデルに反映
-  Future<void> fetchProfile() async {
+  /// Firestoreからメンバーのプロフィールを取得してモデルに反映
+  Future<void> fetchProfile(String classId, String memberId) async {
     try {
       isLoading = true;
       notifyListeners(); // ローディング状態を通知
 
-      // ログイン中のユーザーのUIDを取得
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) {
-        print('ログインしていません');
-        return;
-      }
-
-      // Firestoreからユーザードキュメントを取得
+      // Firestoreからメンバードキュメントを取得
       final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
+          .collection('classes')
+          .doc(classId)
+          .collection('members')
+          .doc(memberId)
           .get();
 
       if (doc.exists) {
@@ -40,7 +34,7 @@ class MyProfileModel extends ChangeNotifier {
         subject = data?['subject'] ?? ''; // Firestoreのsubjectフィールドを取得
         print('プロフィールデータ取得成功: name=$name, birthday=$birthday, subject=$subject');
       } else {
-        print('ユーザードキュメントが存在しません: uid=$uid');
+        print('メンバードキュメントが存在しません: classId=$classId, memberId=$memberId');
       }
     } catch (e) {
       print('fetchProfileエラー: $e');

@@ -1,26 +1,8 @@
-// class_model.dart
-class SelectPeopleModel {
-  final String id;
-  final String name;
- 
-  SelectPeopleModel({
-    required this.id,
-    required this.name,
-  });
-
-  factory SelectPeopleModel.fromMap(Map<String, dynamic> map) {
-    return SelectPeopleModel(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-    );
-  }
-}
-
 class ClassModel {
   final String id;
   final String classNumber;
   final String name;
-  final String password; // 平文で扱う（セキュリティはルール省略）
+  final String password;
   final int userCount;
 
   ClassModel({

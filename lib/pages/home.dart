@@ -1,50 +1,50 @@
 import 'package:flutter/material.dart';
-import 'daialog.dart';
-import 'myprofile.dart';
-import 'members_profile.dart';
-import 'message.dart';
-import 'ranking.dart';
-import '../class_model.dart';
-
+import 'package:school_memories2/class_model.dart';
+import 'package:school_memories2/pages/daialog.dart';
+import 'package:school_memories2/pages/members_profile.dart';
+import 'package:school_memories2/pages/message.dart';
+import 'package:school_memories2/pages/myprofile.dart';
+import 'package:school_memories2/pages/ranking.dart';
 
 class Home extends StatefulWidget {
-  final ClassModel classInfo; // Class型を受け取る
+  final ClassModel classInfo;
+  final String currentMemberId;
 
-  const Home({required this.classInfo, Key? key}) : super(key: key);
+  const Home({
+    Key? key,
+    required this.classInfo,
+    required this.currentMemberId,
+  }) : super(key: key);
 
   @override
-  State<Home> createState() => HomeState();
+  State<Home> createState() => _HomeState();
 }
 
-class HomeState extends State<Home> {
-  late final ClassModel _class;
+class _HomeState extends State<Home> {
   int currentIndex = 0;
   late final List<Widget> tabs;
 
   @override
   void initState() {
     super.initState();
-    _class = widget.classInfo;
+    // 各タブで自分のmemberIdを使いたい場合に渡す
     tabs = [
-      MyProfilePage(classInfo : _class),
-      ProfilePage(classInfo : _class),
-      MessagePage(classId : _class.id),
-      RankingPage(classId: _class.id), // 必要なクラス情報を渡す
+      MyProfilePage(
+        classInfo: widget.classInfo,
+        currentMemberId: widget.currentMemberId,
+      ),
+      ProfilePage(classId: widget.classInfo.id),
+      MessagePage(classId: widget.classInfo.id, currentMemberId: widget.currentMemberId),
+      RankingPage(classId: widget.classInfo.id, currentMemberId: widget.currentMemberId),
     ];
-  }
-
-  void onTabTapped(int index) {
-    setState(() {
-      currentIndex = index;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+     appBar: AppBar(
         title: Text(
-          _class.name,
+          widget.classInfo.id,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
@@ -53,49 +53,30 @@ class HomeState extends State<Home> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.menu),
+            icon: Icon(Icons.menu), // メニューアイコンを表示
             onPressed: () {
               // メニューダイアログを表示
               showDialog(
                 context: context,
-                builder: (context) => MainMemoriesDialog(classInfo: _class),
+                builder: (context) => MainMemoriesDialog(classInfo: widget.classInfo,currentMemberId : widget.currentMemberId),
               );
             },
           ),
         ],
-          backgroundColor: Colors.white,
+        backgroundColor: Colors.white,
       ),
       body: tabs[currentIndex],
-     bottomNavigationBar: BottomNavigationBar(
-  backgroundColor: Colors.white, // 背景色を設定
-  selectedItemColor: Colors.blue, // 選択されたアイテムの色
-  unselectedItemColor: Colors.grey, // 非選択時のアイテムの色
-  selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold), // 選択ラベルのスタイル
-  unselectedLabelStyle: TextStyle(fontSize: 11), // 非選択ラベルのスタイル
-  currentIndex: currentIndex,
-  onTap: (index) => setState(() {
-    currentIndex = index;
-  }),
-  items: [
-    BottomNavigationBarItem(
-      icon: Icon(Icons.home),
-      label: 'MyProfile',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.face),
-      label: 'Profile',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.mail),
-      label: 'Message',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.star),
-      label: 'Ranking',
-    ),
-  ],
-),
-
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (idx) => setState(() => currentIndex = idx),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'MyProfile'),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Members'),
+          BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Messages'),
+          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Ranking'),
+        ],
+      ),
     );
   }
 }
+
