@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/signup/class_selection_page.dart';
+import 'package:school_memories2/signup/class_selection_page_model.dart';
 
 import 'login_model.dart';
 import 'signup_page.dart';
@@ -100,6 +102,17 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
+                      ElevatedButton(
+              onPressed: () {
+                // 「アカウントを作らずに使う」を押下 → さらにポップアップ等で「アカウント登録せずに使う」ボタンを表示
+                // 今回はシンプルに直接 ClassSelectionPage に遷移
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ClassSelectionPage()),
+                );
+              },
+              child: const Text('アカウントを作らずに使う'),
+            ),
                     const SizedBox(height: 30),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,

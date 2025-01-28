@@ -1,190 +1,277 @@
-// class_selection_page_model.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../class_model.dart';
+import 'select_account_page.dart';
 
-class ClassSelectionPageModel extends ChangeNotifier {
+class ClassSelectionPage extends StatefulWidget {
+  const ClassSelectionPage({Key? key}) : super(key: key);
+
+  @override
+  State<ClassSelectionPage> createState() => _ClassSelectionPageState();
+}
+
+class _ClassSelectionPageState extends State<ClassSelectionPage> {
+  bool isCreating = true; // true: クラス作成, false: 既存クラス参加
+
   // クラス作成用
-  final classNumberController = TextEditingController();
-  final passwordController = TextEditingController();
-  final nameController = TextEditingController();
+  final classNameController = TextEditingController();
+  final classIdForCreateController = TextEditingController();
+  final classPasswordForCreateController = TextEditingController();
+  List<TextEditingController> memberControllers = [];
 
   // クラス参加用
-  final classNumberForJoinController = TextEditingController();
-  final passwordForJoinController = TextEditingController();
+  final classIdForJoinController = TextEditingController();
+  final classPasswordForJoinController = TextEditingController();
 
-  /// 新規クラスを作成して、FireStore に保存 + 自分をメンバー登録
-  /// 成功時には作成したクラスの ClassModel を返す
-  Future<ClassModel> createClass() async {
-    final classNumber = classNumberController.text.trim();
-    final password = passwordController.text.trim();
-    final className = nameController.text.trim();
-
-    if (classNumber.isEmpty || password.isEmpty || className.isEmpty) {
-      throw '入力されていない項目があります。';
-    }
-
-    // 既に同じ classNumber が使われていないかチェック
-    final exists = await FirebaseFirestore.instance
-        .collection('classes')
-        .where('classNumber', isEqualTo: classNumber)
-        .limit(1)
-        .get();
-    if (exists.docs.isNotEmpty) {
-      // 同じクラスIDが存在する
-      throw 'クラスID "$classNumber" は既に使われています。';
-    }
-
-    // 新しいクラスを作成
-    final classesRef = FirebaseFirestore.instance.collection('classes');
-    final newClassDoc = classesRef.doc(); // docId 自動生成
-    final docId = newClassDoc.id;
-
-    final now = Timestamp.now();
-    final classData = {
-      'id': docId,
-      'classNumber': classNumber,
-      'password': password, // 平文で保存（セキュリティルールは省略）
-      'name': className,
-      'userCount': 1,
-      'createdAt': now,
-      'updatedAt': now,
-    };
-
-    // 書き込み
-    await newClassDoc.set(classData);
-
-    // members サブコレクションに自分を登録
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-    final userData = userDoc.data() ?? {};
-
-    final memberData = {
-      'id': uid,
-      'classId': docId,
-      'name': userData['name'] ?? '',
-      'subject': userData['subject'] ?? '',
-      'birthday': userData['birthday'] ?? '',
-      'joinedAt': now,
-    };
-    await newClassDoc.collection('members').doc(uid).set(memberData);
-
-    // ユーザーの attendingClasses にも追加
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('attendingClasses')
-        .doc(docId)
-        .set({
-      'id': docId,
-      'createdAt': now,
-      'updatedAt': now,
-    });
-
-    // 最後に ClassModel を返す
-    return ClassModel.fromMap(classData);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('クラスを作成 or 参加'),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            // タブ切り替え
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                InkWell(
+                  onTap: () => setState(() => isCreating = true),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'クラスを作成',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      if (isCreating)
+                        Container(
+                          color: Colors.blue,
+                          width: 60,
+                          height: 2,
+                          margin: const EdgeInsets.only(top: 4),
+                        ),
+                    ],
+                  ),
+                ),
+                InkWell(
+                  onTap: () => setState(() => isCreating = false),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'クラスに参加',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      if (!isCreating)
+                        Container(
+                          color: Colors.blue,
+                          width: 60,
+                          height: 2,
+                          margin: const EdgeInsets.only(top: 4),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            isCreating ? _buildCreateClassArea() : _buildJoinClassArea(),
+          ],
+        ),
+      ),
+    );
   }
 
-  /// 既存クラスに参加する
-  /// 成功時には参加したクラスの ClassModel を返す
-  Future<ClassModel> joinClass() async {
-    final classNumber = classNumberForJoinController.text.trim();
-    final password = passwordForJoinController.text.trim();
-    if (classNumber.isEmpty || password.isEmpty) {
-      throw 'クラスID と パスワードを入力してください。';
+  /// 「クラスを作成」UI
+  Widget _buildCreateClassArea() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          // クラス名
+          TextField(
+            controller: classNameController,
+            decoration: const InputDecoration(labelText: 'クラス名'),
+          ),
+          const SizedBox(height: 8),
+          // ユニークなID
+          TextField(
+            controller: classIdForCreateController,
+            decoration: const InputDecoration(labelText: 'クラスID（任意文字列）'),
+          ),
+          const SizedBox(height: 8),
+          // パスワード
+          TextField(
+            controller: classPasswordForCreateController,
+            decoration: const InputDecoration(labelText: 'クラスのパスワード'),
+          ),
+          const SizedBox(height: 16),
+          // メンバー追加ボタン
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                memberControllers.add(TextEditingController());
+              });
+            },
+            child: const Text('クラスメイトを追加'),
+          ),
+          const SizedBox(height: 8),
+          // メンバー入力欄一覧
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: memberControllers.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: TextField(
+                  controller: memberControllers[index],
+                  decoration: InputDecoration(labelText: 'メンバー${index + 1}の名前'),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          // クラス作成ボタン
+          ElevatedButton(
+            onPressed: () => _createClass(),
+            child: const Text('クラスを作成'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 「クラスに参加」UI
+  Widget _buildJoinClassArea() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          TextField(
+            controller: classIdForJoinController,
+            decoration: const InputDecoration(labelText: 'クラスID'),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: classPasswordForJoinController,
+            decoration: const InputDecoration(labelText: 'クラスのパスワード'),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => _joinClass(),
+            child: const Text('クラスに参加'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// クラスを新規作成し、members サブコレクションに登録
+  Future<void> _createClass() async {
+    final className = classNameController.text.trim();
+    final classId = classIdForCreateController.text.trim();
+    final password = classPasswordForCreateController.text.trim();
+
+    if (className.isEmpty || classId.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('必要項目を入力してください。')),
+      );
+      return;
     }
 
-    // classNumber が一致するクラスを取得
-    final snap = await FirebaseFirestore.instance
-        .collection('classes')
-        .where('classNumber', isEqualTo: classNumber)
-        .limit(1)
-        .get();
-    if (snap.docs.isEmpty) {
-      throw 'クラスが存在しません。';
+    // Firestore書き込み
+    final docRef = FirebaseFirestore.instance.collection('classes').doc(classId);
+    final now = DateTime.now();
+
+    // クラス自体を作成
+    await docRef.set({
+      'id': classId,
+      'name': className,
+      'password': password,
+      'createdAt': now,
+    });
+
+    // メンバーを一括登録
+    for (var controller in memberControllers) {
+      final name = controller.text.trim();
+      if (name.isNotEmpty) {
+        final memberDoc = docRef.collection('members').doc(); // docIdは自動生成
+        await memberDoc.set({
+          'id': memberDoc.id, // メンバーID
+          'name': name,
+          // ここに初期パスワードを保存したい場合は
+          // 'pass': '0000',
+        });
+      }
     }
-    final classDoc = snap.docs.first;
-    final classData = classDoc.data();
-    final classId = classData['id'] as String;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$className を作成しました。')),
+    );
+
+    // クラス作成後の動き
+    // 例: 「あなたのアカウントを選択」画面へ → そこで自分の名前を選択させる
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectAccountPage(classId: classId),
+      ),
+    );
+  }
+
+  /// 既存クラスへ参加
+  Future<void> _joinClass() async {
+    final classId = classIdForJoinController.text.trim();
+    final password = classPasswordForJoinController.text.trim();
+
+    if (classId.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('クラスID/パスワードを入力してください。')),
+      );
+      return;
+    }
 
     // パスワードチェック
-    if (classData['password'] != password) {
-      throw 'パスワードが違います。';
-    }
-
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-
-    // 既に参加しているかどうかチェック
-    final memberDoc = await FirebaseFirestore.instance
+    final classDoc = await FirebaseFirestore.instance
         .collection('classes')
         .doc(classId)
-        .collection('members')
-        .doc(uid)
         .get();
-    if (memberDoc.exists) {
-      throw '既に参加しています。';
+
+    if (!classDoc.exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('クラスが存在しません。')),
+      );
+      return;
     }
 
-    // メンバー登録 + attendingClasses 登録 + userCount のインクリメント
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-    final userData = userDoc.data() ?? {};
-    final now = Timestamp.now();
+    final data = classDoc.data()!;
+    if (data['password'] != password) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('パスワードが違います。')),
+      );
+      return;
+    }
 
-    // バッチ or トランザクションでまとめてもOK
-    final batch = FirebaseFirestore.instance.batch();
-    final classRef = FirebaseFirestore.instance.collection('classes').doc(classId);
-    final membersRef = classRef.collection('members').doc(uid);
-    final attendingRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('attendingClasses')
-        .doc(classId);
-
-    batch.set(membersRef, {
-      'id': uid,
-      'classId': classId,
-      'name': userData['name'] ?? '',
-      'birthday': userData['birthday'] ?? '',
-      'subject': userData['subject'] ?? '',
-      'joinedAt': now,
-    });
-    batch.set(attendingRef, {
-      'id': classId,
-      'createdAt': now,
-      'updatedAt': now,
-    });
-    // userCount インクリメント
-    final newCount = (classData['userCount'] ?? 0) + 1;
-    batch.update(classRef, {
-      'userCount': newCount,
-      'updatedAt': now,
-    });
-
-    // コミット
-    await batch.commit();
-
-    // 参加したクラス情報を返す
-    final updatedData = {
-      ...classData,
-      'userCount': newCount,
-    };
-    return ClassModel.fromMap(updatedData);
+    // OK → 名前選択画面へ
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectAccountPage(classId: classId),
+      ),
+    );
   }
 
   @override
   void dispose() {
-    classNumberController.dispose();
-    passwordController.dispose();
-    nameController.dispose();
-    classNumberForJoinController.dispose();
-    passwordForJoinController.dispose();
+    classNameController.dispose();
+    classIdForCreateController.dispose();
+    classPasswordForCreateController.dispose();
+    classIdForJoinController.dispose();
+    classPasswordForJoinController.dispose();
+    for (var c in memberControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 }

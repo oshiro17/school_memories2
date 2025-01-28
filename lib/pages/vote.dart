@@ -76,7 +76,7 @@ class VoteRankingPage extends StatelessWidget {
 
             // メッセージが表示された後に前の画面に戻る
             Future.delayed(const Duration(seconds: 1), () {
-              Navigator.pop(context); // 前の画面に戻る
+              // Navigator.pop(context); // 前の画面に戻る
             });
           } catch (e) {
             // エラーハンドリング

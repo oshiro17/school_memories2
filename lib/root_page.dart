@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:school_memories2/signup/class_list_page.dart';
-import 'package:school_memories2/signup/class_selection_page_model.dart';
+import 'package:school_memories2/signup/class_selection_page.dart';
 import 'signup/login_page.dart';
 
 

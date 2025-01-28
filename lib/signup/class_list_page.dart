@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/signup/class_selection_page.dart';
 import 'package:school_memories2/signup/class_selection_page_model.dart';
 import 'class_list_page_model.dart';
 import '../class_model.dart';
