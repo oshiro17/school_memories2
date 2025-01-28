@@ -30,14 +30,14 @@ class MessagePage extends StatelessWidget {
                 child: Text('まだメッセージがありません。'),
               );
             }
-if (model.isSent) {
-              return Center(
-                child: Text(
-                  'このメンバーには既にメッセージを送信しました。',
-                  style: TextStyle(fontSize: 18, color: Colors.red),
-                ),
-              );
-            }
+// if (model.isSent) {
+//               return Center(
+//                 child: Text(
+//                   'このメンバーには既にメッセージを送信しました。',
+//                   style: TextStyle(fontSize: 18, color: Colors.red),
+//                 ),
+//               );
+//             }
             // 取得したメッセージをListViewで表示
             return ListView.builder(
               itemCount: model.messages.length,
@@ -102,7 +102,7 @@ class MessageModel extends ChangeNotifier {
 
       isSent = memberDoc.data()?['isSent'] ?? false;
       // /classes/{classId}/members/{memberId}/messages をタイムスタンプ降順で取得
-      if (!isSent) {
+      if (isSent) {
       final snapshot = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
