@@ -30,19 +30,14 @@ class MyApp extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-          // bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          //   backgroundColor: Color(0xFF9ADBF0),
-          //   selectedItemColor: Colors.white, // 選択中アイテムの色
-          //   unselectedItemColor: Colors.white70, // 非選択アイテムの色
-          // ),
-          // // ボタンのスタイル
-          // elevatedButtonTheme: ElevatedButtonThemeData(
-          //   style: ElevatedButton.styleFrom(
-          //     backgroundColor: Color(0xFF9ADBF0), // AppBarと合わせる
-          //     foregroundColor: Colors.white,
-          //     textStyle: const TextStyle(fontWeight: FontWeight.bold),
-          //   ),
-          // ),
+          // ボタンのスタイル
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF9ADBF0), // AppBarと合わせる
+              foregroundColor: Colors.white,
+              textStyle: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
         home: const ClassSelectionPage(),
       ),
