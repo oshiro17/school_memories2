@@ -2,24 +2,26 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class MyProfileModel extends ChangeNotifier {
-  // プロフィールデータのプロパティ
-  String name = '';
+  // プロフィールデータ
+  String callme = '';
   String birthday = '';
   String subject = '';
   bool isLoading = true;
 
-  /// 初期化処理（データ取得を行う）
+  // 追加: アバター番号 (Firestore から取得)
+  int avatarIndex = 0; // デフォルト0
+
+  /// 初期化: プロフィール取得など
   Future<void> init(String classId, String memberId) async {
     await fetchProfile(classId, memberId);
   }
 
-  /// Firestoreからメンバーのプロフィールを取得してモデルに反映
+  /// Firestoreからメンバーのプロフィールを取得
   Future<void> fetchProfile(String classId, String memberId) async {
     try {
       isLoading = true;
-      notifyListeners(); // ローディング状態を通知
+      notifyListeners();
 
-      // Firestoreからメンバードキュメントを取得
       final doc = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
@@ -29,10 +31,12 @@ class MyProfileModel extends ChangeNotifier {
 
       if (doc.exists) {
         final data = doc.data();
-        name = data?['name'] ?? ''; // Firestoreのnameフィールドを取得
-        birthday = data?['birthday'] ?? ''; // Firestoreのbirthdayフィールドを取得
-        subject = data?['subject'] ?? ''; // Firestoreのsubjectフィールドを取得
-        print('プロフィールデータ取得成功: name=$name, birthday=$birthday, subject=$subject');
+        callme = data?['callmeme'] ?? '';
+        birthday = data?['birthday'] ?? '';
+        subject = data?['subject'] ?? '';
+
+        // 追加: avatarIndex (Firestore上未設定の場合は 0)
+        avatarIndex = data?['avatarIndex'] ?? 0;
       } else {
         print('メンバードキュメントが存在しません: classId=$classId, memberId=$memberId');
       }
@@ -40,7 +44,7 @@ class MyProfileModel extends ChangeNotifier {
       print('fetchProfileエラー: $e');
     } finally {
       isLoading = false;
-      notifyListeners(); // ローディング解除を通知
+      notifyListeners();
     }
   }
 }

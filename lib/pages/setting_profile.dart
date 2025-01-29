@@ -1,9 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
-import 'package:school_memories2/pages/myprofile.dart';
 
 class SettingProfileModel extends ChangeNotifier {
   bool isLoading = false;
@@ -13,21 +11,20 @@ class SettingProfileModel extends ChangeNotifier {
     required String name2,
     required String birthday,
     required String subject,
-    required String classId, 
+    required String classId,
     required String memberId,
-    // クラスIDを追加
+    required int avatarIndex, // 追加: アバター番号
   }) async {
     try {
       isLoading = true;
       notifyListeners();
 
-   
-      // classes/{classId}/members/{uid}を更新
+      // classes/{classId}/members/{memberId} を更新
       final memberData = {
         'name': name2,
-        'subject': subject,
         'birthday': birthday,
-        // 必要なら他のフィールドを追加
+        'subject': subject,
+        'avatarIndex': avatarIndex,  // Firestoreに保存
       };
 
       await FirebaseFirestore.instance
@@ -37,7 +34,6 @@ class SettingProfileModel extends ChangeNotifier {
           .doc(memberId)
           .set(memberData, SetOptions(merge: true));
     } catch (e) {
-      // エラーハンドリング
       rethrow;
     } finally {
       isLoading = false;
@@ -45,66 +41,158 @@ class SettingProfileModel extends ChangeNotifier {
     }
   }
 }
-
-class SettingProfilePage extends StatelessWidget {
+/// プロフィールの新規設定・編集ページ
+class SettingProfilePage extends StatefulWidget {
   final ClassModel classInfo;
   final String currentMemberId;
-  SettingProfilePage({required this.classInfo,required this.currentMemberId});
+
+  const SettingProfilePage({
+    Key? key,
+    required this.classInfo,
+    required this.currentMemberId,
+  }) : super(key: key);
+
+  @override
+  State<SettingProfilePage> createState() => _SettingProfilePageState();
+}
+
+class _SettingProfilePageState extends State<SettingProfilePage> {
+  // 入力用コントローラー
+  final nameController = TextEditingController();
+  final birthdayController = TextEditingController();
+  final subjectController = TextEditingController();
+
+  /// 全アバター画像を列挙
+  final List<String> avatarPaths = [
+    'assets/j0.png',
+    'assets/j1.jpg',
+    'assets/j2.png',
+    'assets/j3.png',
+    'assets/j4.png',
+    'assets/j5.png',
+    'assets/j6.png',
+    'assets/j7.png',
+    'assets/j8.png',
+    'assets/j9.png',
+    'assets/j10.png',
+    'assets/j11.png',
+    'assets/j12.png',
+    'assets/j13.png',
+    'assets/j14.png',
+    'assets/j15.png',
+    'assets/j16.png',
+    'assets/j17.png',
+    'assets/j18.png',
+    'assets/j19.png',
+  ];
+
+  // 選択中のアバターindex
+  int selectedAvatarIndex = 0; // デフォルト 0
 
   @override
   Widget build(BuildContext context) {
-    // プロバイダーからモデルを取得
+    // SettingProfileModel
     final model = Provider.of<SettingProfileModel>(context, listen: false);
-
-    // 入力用コントローラー
-    final nameController = TextEditingController();
-    final birthdayController = TextEditingController();
-    final subjectController = TextEditingController();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('プロフィール設定'),
+        title: const Text('プロフィール設定'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- 名前入力 ---
             TextField(
               controller: nameController,
-              decoration: InputDecoration(labelText: '名前'),
+              decoration: const InputDecoration(labelText: '名前'),
             ),
+            const SizedBox(height: 8),
+
+            // --- 誕生日 ---
             TextField(
               controller: birthdayController,
-              decoration: InputDecoration(labelText: '誕生日'),
+              decoration: const InputDecoration(labelText: '誕生日'),
             ),
+            const SizedBox(height: 8),
+
+            // --- 好きな教科 ---
             TextField(
               controller: subjectController,
-              decoration: InputDecoration(labelText: '好きな教科'),
+              decoration: const InputDecoration(labelText: '好きな教科'),
             ),
             const SizedBox(height: 20),
+
+            // --- アバター選択UI ---
+            const Text(
+              'アバター画像を選択:',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+
+            // GridView でアバター画像を並べる
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: avatarPaths.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,         // 4列
+                mainAxisExtent: 80,        // 縦方向の1マスの高さ
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemBuilder: (context, index) {
+                final path = avatarPaths[index];
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedAvatarIndex = index;
+                    });
+                  },
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: CircleAvatar(
+                          radius: 30,
+                          backgroundImage: AssetImage(path),
+                        ),
+                      ),
+                      // 選択中の場合は "チェック" アイコン表示
+                      if (selectedAvatarIndex == index)
+                        const Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Icon(Icons.check_circle, color: Colors.blue),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+
+            // --- 保存ボタン ---
             Consumer<SettingProfileModel>(
               builder: (context, model, child) {
                 return model.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
-                       // SettingProfilePageの保存ボタンの処理を修正
-onPressed: () async {
-  try {
-    await model.saveProfile(
-      name2: nameController.text,
-      birthday: birthdayController.text,
-      subject: subjectController.text,
-      classId: classInfo.id,
-      memberId: currentMemberId,
-       // クラスIDを渡す
-    );
-    Navigator.pop(context, true); // trueを返す
-  } catch (e) {
-    _showErrorDialog(context, e.toString());
-  }
-},
-
+                        onPressed: () async {
+                          try {
+                            await model.saveProfile(
+                              name2: nameController.text,
+                              birthday: birthdayController.text,
+                              subject: subjectController.text,
+                              classId: widget.classInfo.id,
+                              memberId: widget.currentMemberId,
+                              avatarIndex: selectedAvatarIndex, // 追加
+                            );
+                            Navigator.pop(context, true); // trueを返す
+                          } catch (e) {
+                            _showErrorDialog(context, e.toString());
+                          }
+                        },
                         child: const Text('保存'),
                       );
               },

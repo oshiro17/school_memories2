@@ -13,11 +13,19 @@ class ClassSelectionPage extends StatefulWidget {
 class _ClassSelectionPageState extends State<ClassSelectionPage> {
   bool isCreating = true; // true: クラス作成タブ, false: 既存クラス参加タブ
 
+  // ローディング管理用 (画面全体)
+  bool _isLoading = false;
+
   // クラス作成用
   final classNameController = TextEditingController();
   final classIdForCreateController = TextEditingController();
   final classPasswordForCreateController = TextEditingController();
-  List<TextEditingController> memberControllers = [];
+
+  // ★ 初期からメンバー2名分のテキストフィールドを用意
+  List<TextEditingController> memberControllers = [
+    TextEditingController(), // メンバー1
+    TextEditingController(), // メンバー2
+  ];
 
   // クラス参加用
   final classIdForJoinController = TextEditingController();
@@ -29,40 +37,58 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
       appBar: AppBar(
         title: const Text('クラスを作成 or 参加'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // タブ切り替え
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      // Stackを使ってローディングを重ねて表示
+      body: Stack(
+        children: [
+          // メインコンテンツ (スクロール領域)
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               children: [
-                TextButton(
-                  onPressed: () => setState(() => isCreating = true),
-                  child: Text(
-                    'クラスを作成',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isCreating ? Colors.blue : Colors.grey,
+                // タブ切り替え
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => setState(() => isCreating = true),
+                      child: Text(
+                        'クラスを作成',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isCreating ? Colors.blue : Colors.grey,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => setState(() => isCreating = false),
-                  child: Text(
-                    'クラスに参加',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: !isCreating ? Colors.blue : Colors.grey,
+                    TextButton(
+                      onPressed: () => setState(() => isCreating = false),
+                      child: Text(
+                        'クラスに参加',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: !isCreating ? Colors.blue : Colors.grey,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
+                const SizedBox(height: 16),
+                // タブ切り替えでUI表示
+                isCreating ? _buildCreateClassArea() : _buildJoinClassArea(),
               ],
             ),
-            const SizedBox(height: 16),
-            isCreating ? _buildCreateClassArea() : _buildJoinClassArea(),
-          ],
-        ),
+          ),
+
+          // ローディング表示 (_isLoading == true のときだけ表示)
+          if (_isLoading)
+            Container(
+              color: Colors.black26, // 画面タップを防ぐ半透明の背景
+              width: double.infinity,
+              height: double.infinity,
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -70,6 +96,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
   /// クラスを作成するUI
   Widget _buildCreateClassArea() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
           controller: classNameController,
@@ -85,35 +112,41 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
           obscureText: true,
         ),
         const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: () {
-            setState(() {
-              // 「クラスメイトを追加」を押すたびに1行ずつ名前入力欄を追加
-              memberControllers.add(TextEditingController());
-            });
-          },
-          child: const Text('クラスメイトを追加'),
-        ),
-        const SizedBox(height: 10),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: memberControllers.length,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
-              child: TextField(
-                controller: memberControllers[index],
-                decoration: InputDecoration(
-                  labelText: 'メンバー${index + 1}の名前',
+        // メンバー入力欄リスト
+        Column(
+          children: [
+            for (int i = 0; i < memberControllers.length; i++)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: TextField(
+                  controller: memberControllers[i],
+                  decoration: InputDecoration(
+                    labelText: 'メンバー${i + 1}の名前',
+                  ),
                 ),
               ),
-            );
-          },
+          ],
         ),
         const SizedBox(height: 16),
+
+        // 右下にボタンではなく、ここでは通常ボタンとして例示
+        Align(
+          alignment: Alignment.centerRight,
+          child: ElevatedButton(
+            onPressed: () {
+              setState(() {
+                // 「クラスメイトを追加」を押すたびに1行ずつ名前入力欄を追加
+                memberControllers.add(TextEditingController());
+              });
+            },
+            child: const Text('クラスメイトを追加'),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // "クラスを作成"ボタン
         ElevatedButton(
-          onPressed: _showConfirmationPage,
+          onPressed: _onPressCreateClass,
           child: const Text('クラスを作成'),
         ),
       ],
@@ -142,26 +175,52 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
     );
   }
 
-  /// 確認画面を表示
-  void _showConfirmationPage() {
+  /// 「クラスを作成」ボタン押下時の処理
+  void _onPressCreateClass() {
+    // バリデーションをここで行い、不備があれば終了
     final className = classNameController.text.trim();
     final classId = classIdForCreateController.text.trim();
     final password = classPasswordForCreateController.text.trim();
     final members = memberControllers
-        .map((controller) => controller.text.trim())
+        .map((ctrl) => ctrl.text.trim())
         .where((name) => name.isNotEmpty)
         .toList();
 
-    // バリデーション
-    if (className.isEmpty || classId.isEmpty || password.isEmpty || members.isEmpty) {
-      _showMessage('入力されていないところがあります');
+    // --- バリデーション ---
+    if (className.isEmpty || classId.isEmpty || password.isEmpty) {
+      _showMessage('未入力の項目があります');
       return;
     }
     if (members.length < 2) {
-      _showMessage('メンバーは２人以上にしてください');
+      _showMessage('メンバーは最低2人必要です');
+      return;
+    }
+    // 名前の重複チェック
+    final uniqueNames = members.toSet();
+    if (uniqueNames.length != members.length) {
+      _showMessage('名前が重複しています');
       return;
     }
 
+    // ここでキーボードを閉じる
+    FocusScope.of(context).unfocus();
+
+    // すべてOKなら確認画面へ
+    _showConfirmationPage(
+      className: className,
+      classId: classId,
+      password: password,
+      members: members,
+    );
+  }
+
+  /// 確認画面を表示 (キーボードはすでに閉じている)
+  void _showConfirmationPage({
+    required String className,
+    required String classId,
+    required String password,
+    required List<String> members,
+  }) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -170,7 +229,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
           classId: classId,
           password: password,
           members: members,
-          onConfirm: _joinClassAfterConfirm,
+          onConfirm: () => _joinClassAfterConfirm(className, classId, password, members),
         ),
       ),
     );
@@ -178,49 +237,31 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
 
   /// 確認画面から "進む" ボタンを押した時に呼ばれるメソッド
   /// ※ クラスを作成 → 参加フローを実現
-  Future<void> _joinClassAfterConfirm() async {
-    final className = classNameController.text.trim();
-    final classId = classIdForCreateController.text.trim();
-    final password = classPasswordForCreateController.text.trim();
+  Future<void> _joinClassAfterConfirm(
+    String className,
+    String classId,
+    String password,
+    List<String> trimmedNames,
+  ) async {
+    if (_isLoading) return; // 二重押し防止
 
-    // Firestoreの参照
-    final classRef = FirebaseFirestore.instance.collection('classes').doc(classId);
+    // ローディング開始
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
+      // Firestoreの参照
+      final classRef = FirebaseFirestore.instance.collection('classes').doc(classId);
+
       // 1. クラスIDの重複確認
       final docSnap = await classRef.get();
       if (docSnap.exists) {
-        _showMessage('クラスidがもう使われています');
+        _showMessage('クラスIDがもう使われています');
         return;
       }
 
-      // 2. メンバーの入力状態をチェック
-      final trimmedNames = memberControllers.map((c) => c.text.trim()).toList();
-      if (trimmedNames.any((name) => name.isEmpty)) {
-        _showMessage('入力されていないところがあります');
-        return;
-      }
-
-      // 3. メンバーが2人以上かどうか
-      if (trimmedNames.length < 2) {
-        _showMessage('メンバーは２人以上にしてください');
-        return;
-      }
-
-      // 4. 名前重複チェック
-      final uniqueNames = trimmedNames.toSet();
-      if (uniqueNames.length != trimmedNames.length) {
-        _showMessage('名前が被っています');
-        return;
-      }
-
-      // 5. その他必須項目チェック
-      if (className.isEmpty || classId.isEmpty || password.isEmpty) {
-        _showMessage('未入力の項目があります');
-        return;
-      }
-
-      // --- 上記のチェックを全てパスしたらクラス作成 ---
+      // --- クラス作成 ---
       await classRef.set({
         'id': classId,
         'name': className,
@@ -239,53 +280,69 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
 
       _showMessage('クラス「$className」作成完了！');
 
+      // 成功時は遷移
       Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>SelectAccountPage(classId: classId)
-      ),
-      (route) => false, // すべての画面を削除
-    );
+        context,
+        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId)),
+        (route) => false,
+      );
     } catch (e) {
       _showMessage('エラー: $e');
+    } finally {
+      // ローディング終了
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   /// 既存クラスに参加
   Future<void> _joinClass() async {
+    if (_isLoading) return; // 二重押し防止
+
     final classId = classIdForJoinController.text.trim();
     final password = classPasswordForJoinController.text.trim();
 
-    if (classId.isEmpty || password.isEmpty) {
-      _showMessage('クラスIDとパスワードを入力してください');
-      return;
-    }
+    // ローディング開始
+    setState(() {
+      _isLoading = true;
+    });
 
-    final doc = await FirebaseFirestore.instance
-        .collection('classes')
-        .doc(classId)
-        .get();
-    if (!doc.exists) {
-      _showMessage('指定のクラスIDは存在しません');
-      return;
+    try {
+      if (classId.isEmpty || password.isEmpty) {
+        _showMessage('クラスIDとパスワードを入力してください');
+        return;
+      }
+
+      final doc = await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId)
+          .get();
+      if (!doc.exists) {
+        _showMessage('指定のクラスIDは存在しません');
+        return;
+      }
+
+      final data = doc.data()!;
+      if (data['password'] != password) {
+        _showMessage('パスワードが違います');
+        return;
+      }
+
+      // OK → アカウント選択画面へ
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId)),
+        (route) => false,
+      );
+    } catch (e) {
+      _showMessage('エラー: $e');
+    } finally {
+      // ローディング終了
+      setState(() {
+        _isLoading = false;
+      });
     }
-    final data = doc.data()!;
-    if (data['password'] != password) {
-      _showMessage('パスワードが違います');
-      return;
-    }
-        Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>SelectAccountPage(classId: classId)
-      ),
-      (route) => false, // すべての画面を削除
-    );
-    // OK → 名前選択画面へ
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (_) => SelectAccountPage(classId: classId)),
-    // );
   }
 
   void _showMessage(String text) {
@@ -293,8 +350,8 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
   }
 }
 
-/// 確認画面
-class ConfirmationPage extends StatelessWidget {
+/// 確認画面（StatefulWidgetにして、overflow回避用にSingleChildScrollViewを使う）
+class ConfirmationPage extends StatefulWidget {
   final String className;
   final String classId;
   final String password;
@@ -311,22 +368,33 @@ class ConfirmationPage extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<ConfirmationPage> createState() => _ConfirmationPageState();
+}
+
+class _ConfirmationPageState extends State<ConfirmationPage> {
+  // ここでローディングを管理してもOKだが、
+  // 今回はメンバー倍増を防ぐため、親側で isLoading を管理し onConfirm 二重押しをブロックしています。
+  // ここでは Overflow 対策 & UI 調整を中心に
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('確認'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('クラス名: $className', style: const TextStyle(fontSize: 18)),
-            Text('クラスID: $classId', style: const TextStyle(fontSize: 18)),
-            Text('パスワード: $password', style: const TextStyle(fontSize: 18)),
+            Text('クラス名: ${widget.className}', style: const TextStyle(fontSize: 18)),
+            Text('クラスID: ${widget.classId}', style: const TextStyle(fontSize: 18)),
+            Text('パスワード: ${widget.password}', style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 16),
             const Text('メンバー:', style: TextStyle(fontSize: 18)),
-            ...members.map((member) => Text(member, style: const TextStyle(fontSize: 16))),
+            ...widget.members.map(
+              (member) => Text(member, style: const TextStyle(fontSize: 16)),
+            ),
             const SizedBox(height: 32),
             const Text(
               'クラス作成後は編集できません。よろしいですか？',
@@ -340,8 +408,9 @@ class ConfirmationPage extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                   child: const Text('もう一度編集'),
                 ),
+                // 「進む」ボタンを押すと 親の onConfirm() を呼ぶ
                 ElevatedButton(
-                  onPressed: onConfirm,
+                  onPressed: widget.onConfirm,
                   child: const Text('進む'),
                 ),
               ],
