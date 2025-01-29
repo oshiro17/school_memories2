@@ -62,6 +62,12 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                  Text('パスワードの初期値は0000です。', 
+      style: TextStyle(fontSize: 12, color: Colors.grey),
+    ),
+                  Text('あとでパスワードは変更してね', 
+      style: TextStyle(fontSize: 12, color: Colors.grey),
+    ),
                 const Text('パスワードを入力してください。'), // ← もはや"初期"に限定しない
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -70,6 +76,7 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                     obscureText: true,
                     decoration: const InputDecoration(
                       labelText: 'パスワード',
+                      hintText: '0000',
                     ),
                   ),
                 ),

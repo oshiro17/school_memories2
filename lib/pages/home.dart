@@ -86,15 +86,15 @@ class _HomeState extends State<Home> {
        bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (idx) => setState(() => currentIndex = idx),
-        backgroundColor: Color(0xFF9ADBF0),
-        selectedItemColor: Colors.white, // 選択中のアイコンとラベル
+        backgroundColor: Colors.white,
+        selectedItemColor: Color(0xFF9ADBF0), // 選択中のアイコンとラベル
         unselectedItemColor: Colors.black54, // 非選択時のアイコンとラベル
         type: BottomNavigationBarType.fixed, // 背景色を固定
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
-          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'マイページ'),
+          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'プロフィール'),
+          BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'よせがき'),
+          BottomNavigationBarItem(icon: Icon(Icons.equalizer), label: 'ランキング'),
         ],
       ),
     );

@@ -94,64 +94,80 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
   }
 
   /// クラスを作成するUI
-  Widget _buildCreateClassArea() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: classNameController,
-          decoration: const InputDecoration(labelText: 'クラス名'),
-        ),
-        TextField(
-          controller: classIdForCreateController,
-          decoration: const InputDecoration(labelText: 'クラスID（例: classA）'),
-        ),
-        TextField(
-          controller: classPasswordForCreateController,
-          decoration: const InputDecoration(labelText: 'クラスのパスワード'),
-          obscureText: true,
-        ),
-        const SizedBox(height: 16),
-        // メンバー入力欄リスト
-        Column(
-          children: [
-            for (int i = 0; i < memberControllers.length; i++)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: TextField(
-                  controller: memberControllers[i],
-                  decoration: InputDecoration(
-                    labelText: 'メンバー${i + 1}の名前',
-                  ),
+  /// クラスを作成するUI
+Widget _buildCreateClassArea() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      TextField(
+        controller: classNameController,
+        decoration: const InputDecoration(labelText: 'クラス名'),
+      ),
+      TextField(
+        controller: classIdForCreateController,
+        decoration: const InputDecoration(labelText: 'クラスID（例: classA）'),
+      ),
+      TextField(
+        controller: classPasswordForCreateController,
+        decoration: const InputDecoration(labelText: 'クラスのパスワード'),
+        obscureText: true,
+      ),
+      const SizedBox(height: 16),
+      // メンバー入力欄リスト
+      Column(
+        children: [
+          for (int i = 0; i < memberControllers.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: TextField(
+                controller: memberControllers[i],
+                decoration: InputDecoration(
+                  labelText: 'メンバー${i + 1}の名前',
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 16),
+            ),
+        ],
+      ),
+      const SizedBox(height: 16),
 
-        // 右下にボタンではなく、ここでは通常ボタンとして例示
-        Align(
-          alignment: Alignment.centerRight,
-          child: ElevatedButton(
+      // 「クラスメイトを追加」「クラスメイトを減らす」ボタン
+      Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          ElevatedButton(
             onPressed: () {
               setState(() {
                 // 「クラスメイトを追加」を押すたびに1行ずつ名前入力欄を追加
                 memberControllers.add(TextEditingController());
               });
             },
-            child: const Text('クラスメイトを追加'),
+            child: const Text('追加'),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(width: 10),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                // 最低2人は残すようにする
+                if (memberControllers.length > 2) {
+                  memberControllers.removeLast();
+                }
+              });
+            },
+            child: const Text('消去'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
 
-        // "クラスを作成"ボタン
-        ElevatedButton(
-          onPressed: _onPressCreateClass,
-          child: const Text('クラスを作成'),
-        ),
-      ],
-    );
-  }
+      // "クラスを作成"ボタン
+      ElevatedButton(
+        onPressed: _onPressCreateClass,
+        child: const Text('クラスを作成'),
+      ),
+    ],
+  );
+}
+
 
   /// 既存クラスに参加するUI
   Widget _buildJoinClassArea() {
