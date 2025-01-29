@@ -28,7 +28,7 @@ class MyProfilePage extends StatelessWidget {
             }
 
             // プロフィール未設定(例: subjectが空)の場合
-            final isProfileEmpty = model.callme.isEmpty && model.subject.isEmpty && model.birthday.isEmpty;
+            final isProfileEmpty = model.callme.isEmpty; 
 
             if (isProfileEmpty) {
               return Center(
@@ -98,15 +98,15 @@ Row(
   child: Column(
     mainAxisSize: MainAxisSize.min, // 必要な分だけ高さを確保
     crossAxisAlignment: CrossAxisAlignment.center, // 横方向の中央揃え
-    children: [
-       _buildProfileText('こんにちは ', model.name),
-          _buildProfileText('', model.callme, isCallMe: true),
-          _buildProfileText('生年月日は ', model.callme),
-          _buildProfileText('血液型は ', model.name),
-          _buildProfileText('出身地は ', model.name),
-          _buildProfileText('身長は今, ', model.name),
-          _buildProfileText('MBTIは ', model.name),
-    ],
+ children: [
+  _buildProfileText('こんにちは ', model.name),
+  _buildProfileText('', model.callme, isCallMe: true),
+  _buildProfileText('生年月日は ', model.birthday),
+  _buildProfileText('好きな教科は ', model.subject),
+  _buildProfileText('血液型は ', model.bloodType),
+  _buildProfileText('身長は今, ', model.height),
+  _buildProfileText('MBTIは ', model.mbti),
+],
   ),
 ),
 
@@ -115,51 +115,41 @@ Row(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         _buildSection([
-            
-           
-              _buildProfileField('趣味', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞, カメラ, 料理'),
-              _buildProfileField('部活', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞, カメラ, 料理'),
-              _buildProfileField('特技', 'プログラミング, クワガタ飼育, 絵を描く, 楽器演奏, 速読, 手芸'),
-              _buildProfileField('なりたい職業', 'エンジニア, デザイナー'),
-              _buildProfileField('好きな歌', 'エンジニア, デザイナー'),
-              _buildProfileField('出身地', '沖縄'),
-              _buildProfileField('好きな人', '音楽, 旅行, ゲーム, カフェ巡り, ファッション, 動物, 自然'),
-              _buildProfileField('たからもの', '音楽, 旅行, ゲーム, カフェ巡り, ファッション, 動物, 自然'),
-            ]),
-          _buildSection(
-            [
-              _buildProfileField('最近の事件は？', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-              _buildProfileField('学校生活どうだった？', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-              _buildProfileField('学校生活で達成した一番の偉業は何ですか？', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-            ],
-          ),
-          _buildSection(
-            [
-              _buildProfileField('長所', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-              _buildProfileField('短所は？', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-            ],
-          ),
-          _buildSection(
-            [
-              _buildProfileField('100万あったら何したい？', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-              _buildProfileField('あなたは90才まで生きることができ、最後の60年間を「30才の頃の肉体」か「30才の頃の精神」のどちらかを保つことができます。どちらを選びますか？', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-              _buildProfileField('あなたがこれまでどんな人生を歩んできたのか、教えて下さい。', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-              _buildProfileField('友情において最も価値のあることは何ですか？', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-            ],
-          ),
-          _buildSection(
-            [
-              _buildProfileField('10年ご自分は何してると思う？', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-              _buildProfileField('10年後の自分へメッセージ', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-            ],
-          ),
-          _buildSection(
-            [
-              _buildProfileField('これからの目標', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-              _buildProfileField('将来の夢は？', 'ピアノ, 海で泳ぐ, 旅行, 読書, 映画鑑賞skjdfksjhdfkjshdf泣かんん彼kねたくさん笑った赤かかかk, カメラ, 料理'),
-            ],
-          ),
+                        _buildSection([
+  _buildProfileField('趣味特技', model.hobby),
+  _buildProfileField('部活', model.club),
+  _buildProfileField('なりたい職業', model.dream),
+  _buildProfileField('好きな歌', model.favoriteSong),
+  _buildProfileField('好きな人', model.favoritePerson),
+  _buildProfileField('たからもの', model.treasure),
+]),
+
+_buildSection([
+  _buildProfileField('最近の事件は？', model.recentEvent),
+  _buildProfileField('学校生活どうだった？', model.schoolLife),
+  _buildProfileField('学校生活で達成した一番の偉業は？', model.achievement),
+]),
+
+_buildSection([
+  _buildProfileField('長所', model.strength),
+  _buildProfileField('短所', model.weakness),
+]),
+
+_buildSection([
+  _buildProfileField('100万あったら何したい？', model.futurePlan),
+  _buildProfileField('あなたがこれまでどんな人生を歩んできたのか、教えて下さい。', model.lifeStory),
+]),
+
+_buildSection([
+  _buildProfileField('10年後自分は何してると思う？', model.futureSelf),
+  _buildProfileField('10年後の自分へメッセージ', model.futureMessage),
+]),
+
+_buildSection([
+  _buildProfileField('これからの目標', model.goal),
+  _buildProfileField('将来の夢', model.futureDream),
+  _buildProfileField('座右の銘', model.motto),
+]),
 
 
         
