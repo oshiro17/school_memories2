@@ -446,7 +446,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
               _buildProfileField('これからの目標', goalController, 450,
                   isLongText: true,
                   hintText: ''),
-              _buildProfileField('みんなへメッセージ', futureDreamController, 150,
+              _buildProfileField('みんなへメッセージ', futureDreamController, 30,
                   isLongText: true,
                   hintText: ''),
               _buildProfileField('座右の銘', mottoController, 40,

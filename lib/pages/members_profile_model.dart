@@ -21,8 +21,8 @@ class MembersProfileModel extends ChangeNotifier {
         final data = doc.data();
         return Member(
           name: data['name'] ?? '',
-          birthday: data['birthday'] ?? '',
-          subject: data['subject'] ?? '',
+          birthday: data['motto'] ?? '',
+          subject: data['futureDream'] ?? '',
         );
       }).toList();
 

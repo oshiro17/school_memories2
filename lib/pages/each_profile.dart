@@ -1,38 +1,21 @@
 import 'package:flutter/material.dart';
-import 'members_profile_model.dart';
+import 'package:school_memories2/pages/members_profile_model.dart';
 
 class EachProfilePage extends StatelessWidget {
   final Member member;
 
-  EachProfilePage({required this.member});
+  const EachProfilePage({Key? key, required this.member}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // member.name, member.birthday, member.motto, ...などを表示
     return Scaffold(
       appBar: AppBar(
-        title: Text(member.name),
+        title: Text(member.name), 
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "名前: ${member.name}",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "誕生日: ${member.birthday}",
-              style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "好きな教科: ${member.subject}",
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.all(16),
+        child: Text('Futu'),
       ),
     );
   }

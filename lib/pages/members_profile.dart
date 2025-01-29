@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/pages/each_profile.dart';
 import 'members_profile_model.dart';
 
 // メンバー一覧表示ページ
@@ -36,7 +37,18 @@ class ProfilePage extends StatelessWidget {
                       controller: PageController(viewportFraction: 0.85),
                       itemBuilder: (context, index) {
                         final member = classMemberList[index];
-                        return _buildMemberCard(member);
+                        return GestureDetector(
+                          onTap: () {
+                            // カードをタップしたら、それぞれのメンバーページ(EachProfilePage)へ遷移
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EachProfilePage(member: member),
+                              ),
+                            );
+                          },
+                          child: _buildMemberCard(member),
+                        );
                       },
                     ),
             );
@@ -46,7 +58,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // グラデーションの定義
+  /// 背景のグラデーション
   BoxDecoration _buildBackgroundGradient() {
     return const BoxDecoration(
       gradient: LinearGradient(
@@ -60,12 +72,15 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // メンバー情報をカード表示
+  /// メンバー情報をカード表示
+  ///  - 上: 左上にクラスID
+  ///  - 中: 左に太字で motto, 右にアイコン
+  ///  - 下: 左に futureDream, 右下に "- name -"
   Widget _buildMemberCard(Member member) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 40),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85), // 背景を少し透明にしグラデをうっすら透過
+        color: Colors.white.withOpacity(0.90), // 背景を少し透明にしグラデを透かす
         borderRadius: BorderRadius.circular(15.0),
         boxShadow: const [
           BoxShadow(
@@ -75,23 +90,88 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "名前: ${member.name}",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      // Positioned等を使いたい場合はStackで包むと柔軟ですが、
+      // 今回は単純なColumn配置の中に上部だけPositioned風に作ります
+      child: Stack(
+        children: [
+          // 左上に classId を表示
+          Positioned(
+            top: 8,
+            left: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(5),
               ),
-              const SizedBox(height: 8),
-              Text("誕生日: ${member.birthday}"),
-              const SizedBox(height: 8),
-              Text("好きな教科: ${member.subject}"),
-            ],
+              child: Text(
+                classId,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
-        ),
+          // カード本体の内容
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 36, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // (1) motto + アイコン
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // motto
+                    Expanded(
+                      child: Text(
+                        member.birthday,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    // 右側にアイコン
+                    const Icon(
+                      Icons.star_rounded,
+                      color: Colors.orangeAccent,
+                      size: 28,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // (2) futureDream + name右下
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // futureDream（左寄せ, 幅調整のためExpandedで包むと良い）
+                    Expanded(
+                      child: Text(
+                        member.subject,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    // 右下に - name -
+                    Text(
+                      '- ${member.name} -',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -242,11 +242,11 @@ _buildSection([
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[800]),
           ),
           Text(
             value,
-            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 16, color: Colors.black),
           ),
         ],
       ),
@@ -281,9 +281,9 @@ Widget _buildProfileText(String label, String value, {bool isCallMe = false}) {
     return Text.rich(
       TextSpan(
         children: [
-          if (!isCallMe) TextSpan(text: label, style: TextStyle(color: Colors.black)),
-          TextSpan(text: value, style: TextStyle(color: Colors.blue)), // 青色
-          if (!isCallMe) TextSpan(text: ' だよ', style: TextStyle(color: Colors.black)),
+          if (!isCallMe) TextSpan(text: label, style: TextStyle(color: Colors.black,fontSize: 16)),
+          TextSpan(text: value, style: TextStyle(color: Colors.blue,fontSize: 17)), // 青色
+          if (!isCallMe) TextSpan(text: ' だよ', style: TextStyle(color: Colors.black,fontSize: 16)),
           if (isCallMe) TextSpan(text: ' って呼んで！', style: TextStyle(color: Colors.black)),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'select_account_page.dart';
 
 /// クラス作成ページ
@@ -35,7 +36,13 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('クラスを作成 or 参加'),
+        title: Text(
+     'schoolmemories',
+          style: GoogleFonts.dancingScript(
+      fontSize: 24,
+      color: Colors.white, // 文字色を青にする
+    ),
+  ),
       ),
       // Stackを使ってローディングを重ねて表示
       body: Stack(
@@ -46,31 +53,76 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
             child: Column(
               children: [
                 // タブ切り替え
+                 SizedBox(height : 35),
+                Text(
+                        '卒業文集アプリへようこそ！',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color:  Colors.blue,
+                        ),
+                      ),
+                       SizedBox(height : 15),
+                       Text(
+                        'みんなの思い出を共有しましょう！',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color:  Colors.blue,
+                        ),
+                      ),
+                      SizedBox(height : 35),
+                        Text(
+                        'クラスを作成、又は既存のクラスに参加してください',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color:  Colors.grey,
+                        ),
+                      ),
+                      SizedBox(height : 30),
+
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton(
-                      onPressed: () => setState(() => isCreating = true),
-                      child: Text(
-                        'クラスを作成',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isCreating ? Colors.blue : Colors.grey,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => setState(() => isCreating = false),
-                      child: Text(
-                        'クラスに参加',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: !isCreating ? Colors.blue : Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+    Expanded(
+      child: ElevatedButton(
+        onPressed: () => setState(() => isCreating = true),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isCreating ?  Color(0xFF9ADBF0) : Colors.white,
+          foregroundColor: isCreating ? Colors.white :  Color(0xFF9ADBF0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(color: Colors.blue),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 12),
+        ),
+        child: Text(
+          'クラスを作成',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+    ),
+    const SizedBox(width: 10),
+    Expanded(
+      child: ElevatedButton(
+        onPressed: () => setState(() => isCreating = false),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: !isCreating ?  Color(0xFF9ADBF0) : Colors.white,
+          foregroundColor: !isCreating ? Colors.white : Color(0xFF9ADBF0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(color: Colors.blue),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 12),
+        ),
+        child: Text(
+          'クラスに参加',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+    ),
+  ],
+),
+
                 const SizedBox(height: 16),
                 // タブ切り替えでUI表示
                 isCreating ? _buildCreateClassArea() : _buildJoinClassArea(),
@@ -157,13 +209,16 @@ Widget _buildCreateClassArea() {
           ),
         ],
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 19),
 
+      
       // "クラスを作成"ボタン
+      Center(
+        child:
       ElevatedButton(
         onPressed: _onPressCreateClass,
         child: const Text('クラスを作成'),
-      ),
+      ),),
     ],
   );
 }
@@ -422,7 +477,7 @@ class _ConfirmationPageState extends State<ConfirmationPage> {
               children: [
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('もう一度編集'),
+                  child: const Text('編集'),
                 ),
                 // 「進む」ボタンを押すと 親の onConfirm() を呼ぶ
                 ElevatedButton(

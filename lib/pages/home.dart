@@ -42,6 +42,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+    
     appBar: AppBar(
   title: Align(
     alignment: Alignment.centerLeft, // 左寄せ
@@ -49,7 +50,7 @@ class _HomeState extends State<Home> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-     'schoolmemories',
+     'School Memories',
           style: GoogleFonts.dancingScript(
       fontSize: 20,
       color: Colors.white, // 文字色を青にする
