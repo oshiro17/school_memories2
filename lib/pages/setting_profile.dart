@@ -33,6 +33,7 @@ class SettingProfileModel extends ChangeNotifier {
     required String goal,
     required String futureDream,
     required String motto,
+
     required String classId,
     required String memberId,
     required int avatarIndex,
@@ -43,31 +44,30 @@ class SettingProfileModel extends ChangeNotifier {
 
       // classes/{classId}/members/{memberId} を更新
       final memberData = {
-        '名前': callme,
-        '生年月日': birthday,
-        '好きな教科': subject,
-        '血液型': bloodType,
-        '身長': height,
-        'MBTI': mbti,
-        '趣味・特技': hobby,
-        '部活': club,
-        'なりたい職業': dream,
-        '好きな歌': favoriteSong,
-        '好きな人': favoritePerson,
-        'たからもの': treasure,
-        '最近の事件': recentEvent,
-        '学校生活': schoolLife,
-        '学校生活で達成した一番の偉業は？': achievement,
-        '長所': strength,
-        '短所': weakness,
-        '100万円あったら何したい？': futurePlan,
-        '今までどんな人生だった？': lifeStory,
-        '10年後の自分へメッセージ': futureMessage,
-        '10年後自分は何をしてると思う？': futureSelf,
-        '目標': goal,
-        '将来の夢は？': futureDream,
-        '座右の銘': motto,
-        'avatarIndex': avatarIndex, // Firestoreに保存
+  'callme': callme,
+  'birthday': birthday,
+  'subject': subject,
+  'bloodType': bloodType,
+  'height': height,
+  'mbti': mbti,
+  'hobby': hobby,
+  'club': club,
+  'dream': dream,
+  'favoriteSong': favoriteSong,
+  'favoritePerson': favoritePerson,
+  'treasure': treasure,
+  'recentEvent': recentEvent,
+  'schoolLife': schoolLife,
+  'achievement': achievement,
+  'strength': strength,
+  'weakness': weakness,
+  'futurePlan': futurePlan,
+  'lifeStory': lifeStory,
+  'futureMessage': futureMessage,
+  'futureSelf': futureSelf,
+  'goal': goal,
+  'futureDream': futureDream,
+  'motto': motto,
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -157,7 +157,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
 
   /// 入力バリデーション
   bool _validateInputs() {
-    final fields = {
+  final fields = {
       '呼んでほしい名前': nameController.text,
       '生年月日': birthdayController.text,
       '好きな教科': subjectController.text,
@@ -180,9 +180,10 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
       '10年後の自分へメッセージ': futureMessageController.text,
       '10年後自分は何をしてると思う？': futureSelfController.text,
       '目標': goalController.text,
-      '将来の夢': futureDreamController.text,
+      'みんなへメッセージ': futureDreamController.text,
       '座右の銘': mottoController.text,
     };
+
 
     // **デバッグログ**
     debugPrint("==== 入力チェック開始 ====");
@@ -226,6 +227,36 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
   }
 
   /// プロフィールフィールドをビルドするウィジェット
+ Widget _buildProfileFieldForname(
+    String label,
+    TextEditingController controller,
+    int maxLength, {
+    bool isLongText = false,
+    String hintText = '', // プレースホルダーを追加
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        maxLines: isLongText ? null : 1, // 長文の場合は `null` にする
+        keyboardType:
+            isLongText ? TextInputType.multiline : TextInputType.text,
+        inputFormatters: [
+          LengthLimitingTextInputFormatter(maxLength)
+        ], // 文字数制限
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(),
+          hintText: hintText, // 例文を表示
+          counterText: '${controller.text.length}/$maxLength', // 文字数カウンター表示
+     
+        ),
+        onChanged: (text) {
+          setState(() {}); // 入力時にカウンター更新
+        },
+      ),
+    );
+  } 
   Widget _buildProfileField(
     String label,
     TextEditingController controller,
@@ -345,7 +376,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
     ),
             // プロフィール入力フィールド
             _buildSection([
-              _buildProfileField('名前', nameController, 10,
+              _buildProfileFieldForname('名前', nameController, 10,
                   hintText: '例: たっちゃん'),
               _buildProfileField('生年月日', birthdayController, 10,
                   hintText: '例: 2000年01月01日'),
@@ -415,7 +446,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
               _buildProfileField('これからの目標', goalController, 450,
                   isLongText: true,
                   hintText: ''),
-              _buildProfileField('将来の夢は？', futureDreamController, 450,
+              _buildProfileField('みんなへメッセージ', futureDreamController, 150,
                   isLongText: true,
                   hintText: ''),
               _buildProfileField('座右の銘', mottoController, 40,
