@@ -31,7 +31,7 @@ class MyProfileModel extends ChangeNotifier {
 
       if (doc.exists) {
         final data = doc.data();
-        callme = data?['callmeme'] ?? '';
+        callme = data?['callme'] ?? '';
         birthday = data?['birthday'] ?? '';
         subject = data?['subject'] ?? '';
 

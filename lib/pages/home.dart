@@ -5,6 +5,7 @@ import 'package:school_memories2/pages/message.dart';
 import 'package:school_memories2/pages/myprofile.dart';
 import 'package:school_memories2/pages/ranking.dart';
 import '../class_model.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Home extends StatefulWidget {
   final ClassModel classInfo;
@@ -41,35 +42,46 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'schoolmemories',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-            ),
-            Text(
-              widget.classInfo.id,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => MainMemoriesDialog(
-                  classInfo: widget.classInfo,
-                  currentMemberId: widget.currentMemberId,
-                ),
-              );
-            },
+    appBar: AppBar(
+  title: Align(
+    alignment: Alignment.centerLeft, // 左寄せ
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+     'schoolmemories',
+          style: GoogleFonts.dancingScript(
+      fontSize: 20,
+      color: Colors.white, // 文字色を青にする
+    ),
+  ),
+        // const Text(
+        //   'schoolmemories',
+        //   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+        // ),
+        // Text(
+        //   widget.classInfo.id,
+        //   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        // ),
+      ],
+    ),
+  ),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.menu),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) => MainMemoriesDialog(
+            classInfo: widget.classInfo,
+            currentMemberId: widget.currentMemberId,
           ),
-        ],
-      ),
+        );
+      },
+    ),
+  ],
+),
+
       body: tabs[currentIndex],
        bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
