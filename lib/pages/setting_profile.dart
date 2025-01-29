@@ -283,7 +283,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
             icon: const Icon(Icons.lock), // 🔒 アイコンを設定
             onPressed: () {
               setState(() {
-                controller.text = '内緒！'; // アイコンを押すと「内緒！」を自動入力
+                controller.text = '内緒'; // アイコンを押すと「内緒！」を自動入力
               });
             },
           ),
