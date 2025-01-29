@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 
 class MyProfileModel extends ChangeNotifier {
   // プロフィールデータ
-  String callme = '';
-  String birthday = '';
-  String subject = '';
+  String callme = '内緒';
+  String name = '内緒';
+  String birthday = '内緒';
+  String subject = '内緒';
   bool isLoading = true;
 
   // 追加: アバター番号 (Firestore から取得)
@@ -32,6 +33,7 @@ class MyProfileModel extends ChangeNotifier {
       if (doc.exists) {
         final data = doc.data();
         callme = data?['callme'] ?? '';
+        name = data?['name'] ?? '';
         birthday = data?['birthday'] ?? '';
         subject = data?['subject'] ?? '';
 
