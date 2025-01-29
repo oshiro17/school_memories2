@@ -88,33 +88,65 @@ class MyProfilePage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildProfileItem('名前', model.callme),
+                        _buildProfileItem('名前は', model.callme,'です'),
                         const SizedBox(height: 8),
-                        _buildProfileItem('誕生日', model.birthday),
+                        _buildProfileItem('誕生日は', model.birthday,'です'),
                         const SizedBox(height: 8),
-                        _buildProfileItem('好きな教科', model.subject),
-                        const SizedBox(height: 32),
+                        _buildProfileItem('名前は', model.callme,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('名前は', model.callme,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('誕生日は', model.birthday,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('名前は', model.callme,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('誕生日は', model.birthday,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('名前は', model.callme,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('誕生日は', model.birthday,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('誕生日は', model.birthday,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('名前は', model.callme,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('誕生日は', model.birthday,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('名前は', model.callme,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('誕生日は', model.birthday,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('名前は', model.callme,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('誕生日は', model.birthday,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('名前は', model.callme,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('誕生日は', model.birthday,'です'),
+                        const SizedBox(height: 8),
+                        _buildProfileItem('好きな教科は', model.subject,'です'),
+                        // const SizedBox(height: 32),
                         // プロフィール編集ボタン
-                        Center(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SettingProfilePage(
-                                    classInfo: classInfo,
-                                    currentMemberId: currentMemberId,
-                                  ),
-                                ),
-                              );
-                              if (result == true) {
-                                // 保存後に再取得
-                                await model.fetchProfile(classInfo.id, currentMemberId);
-                              }
-                            },
-                            child: const Text('プロフィールを編集'),
-                          ),
-                        ),
+                        // Center(
+                        //   child: ElevatedButton(
+                        //     onPressed: () async {
+                        //       final result = await Navigator.push(
+                        //         context,
+                        //         MaterialPageRoute(
+                        //           builder: (context) => SettingProfilePage(
+                        //             classInfo: classInfo,
+                        //             currentMemberId: currentMemberId,
+                        //           ),
+                        //         ),
+                        //       );
+                        //       if (result == true) {
+                        //         // 保存後に再取得
+                        //         await model.fetchProfile(classInfo.id, currentMemberId);
+                        //       }
+                        //     },
+                        //     child: const Text('プロフィールを編集'),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
@@ -128,20 +160,28 @@ class MyProfilePage extends StatelessWidget {
   }
 
   /// ラベルと値を表示する共通Widget
-  Widget _buildProfileItem(String label, String value) {
+  Widget _buildProfileItem(String label, String value, String label2) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$label: ',
+          '$label',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        Expanded(
-          child: Text(
+          
+         Text(
             value.isNotEmpty ? value : '未設定',
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16, color: Colors.blue),
+
           ),
+  
+        Expanded(
+          child:  Text(
+          '$label2',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
+        ),
+
       ],
     );
   }

@@ -8,7 +8,7 @@ class SettingProfileModel extends ChangeNotifier {
 
   /// Firestoreへプロフィールを保存する
   Future<void> saveProfile({
-    required String name2,
+    required String callme,
     required String birthday,
     required String subject,
     required String classId,
@@ -21,7 +21,7 @@ class SettingProfileModel extends ChangeNotifier {
 
       // classes/{classId}/members/{memberId} を更新
       final memberData = {
-        'name': name2,
+        'callme': callme,
         'birthday': birthday,
         'subject': subject,
         'avatarIndex': avatarIndex,  // Firestoreに保存
@@ -65,7 +65,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
   /// 全アバター画像を列挙
   final List<String> avatarPaths = [
     'assets/j0.png',
-    'assets/j1.jpg',
+    'assets/j1.png',
     'assets/j2.png',
     'assets/j3.png',
     'assets/j4.png',
@@ -181,7 +181,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
                         onPressed: () async {
                           try {
                             await model.saveProfile(
-                              name2: nameController.text,
+                              callme: nameController.text,
                               birthday: birthdayController.text,
                               subject: subjectController.text,
                               classId: widget.classInfo.id,
