@@ -238,10 +238,17 @@ Widget _buildCreateClassArea() {
           obscureText: true,
         ),
         const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: _joinClass,
-          child: const Text('クラスに参加'),
-        ),
+ElevatedButton(
+  onPressed: () async {
+    await _joinClass(
+      classIdForJoinController.text.trim(),
+      classPasswordForJoinController.text.trim(),
+      classNameController.text.trim(),
+    );
+  },
+  child: const Text('クラスに参加'),
+),
+
       ],
     );
   }
@@ -354,7 +361,7 @@ Widget _buildCreateClassArea() {
       // 成功時は遷移
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId)),
+        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId,className:className)),
         (route) => false,
       );
     } catch (e) {
@@ -368,53 +375,53 @@ Widget _buildCreateClassArea() {
   }
 
   /// 既存クラスに参加
-  Future<void> _joinClass() async {
-    if (_isLoading) return; // 二重押し防止
+  Future<void> _joinClass(String classId, String password ,String className) async {
+  if (_isLoading) return; // 二重押し防止
 
-    final classId = classIdForJoinController.text.trim();
-    final password = classPasswordForJoinController.text.trim();
+  // ローディング開始
+  setState(() {
+    _isLoading = true;
+  });
 
-    // ローディング開始
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      if (classId.isEmpty || password.isEmpty) {
-        _showMessage('クラスIDとパスワードを入力してください');
-        return;
-      }
-
-      final doc = await FirebaseFirestore.instance
-          .collection('classes')
-          .doc(classId)
-          .get();
-      if (!doc.exists) {
-        _showMessage('指定のクラスIDは存在しません');
-        return;
-      }
-
-      final data = doc.data()!;
-      if (data['password'] != password) {
-        _showMessage('パスワードが違います');
-        return;
-      }
-
-      // OK → アカウント選択画面へ
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId)),
-        (route) => false,
-      );
-    } catch (e) {
-      _showMessage('エラー: $e');
-    } finally {
-      // ローディング終了
-      setState(() {
-        _isLoading = false;
-      });
+  try {
+    if (classId.isEmpty || password.isEmpty) {
+      _showMessage('クラスIDとパスワードを入力してください');
+      return;
     }
+
+    final doc = await FirebaseFirestore.instance
+        .collection('classes')
+        .doc(classId)
+        .get();
+    if (!doc.exists) {
+      _showMessage('指定のクラスIDは存在しません');
+      return;
+    }
+
+    final data = doc.data()!;
+    if (data['password'] != password) {
+      _showMessage('パスワードが違います');
+      return;
+    }
+    className = data['name'];
+
+    // OK → アカウント選択画面へ
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId, className: className)),
+      (route) => false,
+    );
+  } catch (e) {
+    _showMessage('エラー: $e');
+  } finally {
+    // ローディング終了
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
+
+
 
   void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));

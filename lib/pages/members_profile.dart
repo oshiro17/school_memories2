@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/class_model.dart';
 import 'members_profile_model.dart';
 
 // メンバー一覧表示ページ
 class ProfilePage extends StatelessWidget {
-  final String classId;
-  const ProfilePage({Key? key, required this.classId}) : super(key: key);
+  final ClassModel classInfo;
+  const ProfilePage({Key? key, required this.classInfo}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -13,11 +14,12 @@ class ProfilePage extends StatelessWidget {
 
     // まだfetchしてなければ最初だけ取得
     if (!membersModel.isLoading) {
-      membersModel.fetchClassMembers(classId);
+      membersModel.fetchClassMembers(classInfo.id);
     }
-
+    print('osuosu');
+    print(classInfo.name);
     return Scaffold(
-      appBar: AppBar(title: const Text('')),
+      appBar: AppBar(title:Text(classInfo.name, style: TextStyle(color: Colors.white))),
       body: membersModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : membersModel.classMemberList.isEmpty
@@ -38,7 +40,7 @@ class ProfilePage extends StatelessWidget {
           backgroundColor: Color(0xFF9ADBF0),
         onPressed: () async {
           // 強制リロード
-          await membersModel.fetchClassMembers(classId, forceUpdate: true);
+          await membersModel.fetchClassMembers(classInfo.id, forceUpdate: true);
         },
         child: const Icon(Icons.refresh),
       ),

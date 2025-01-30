@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:school_memories2/pages/daialog.dart';
 import 'package:school_memories2/pages/members_profile.dart';
@@ -33,7 +35,7 @@ class _HomeState extends State<Home> {
         classInfo: widget.classInfo,
         currentMemberId: widget.currentMemberId,
       ),
-      ProfilePage(classId: widget.classInfo.id),
+      ProfilePage(classInfo: widget.classInfo),
       MessagePage(classId: widget.classInfo.id, currentMemberId: widget.currentMemberId),
       RankingPage(classId: widget.classInfo.id),
     ];
@@ -41,6 +43,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+      print('classInfo.name: ${widget.classInfo.name}');
     return Scaffold(
     
     appBar: AppBar(

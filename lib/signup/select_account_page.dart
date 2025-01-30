@@ -5,8 +5,9 @@ import 'package:school_memories2/pages/home.dart';
 
 class SelectAccountPage extends StatefulWidget {
   final String classId;
+  final String className;
 
-  const SelectAccountPage({Key? key, required this.classId}) : super(key: key);
+  const SelectAccountPage({Key? key, required this.classId, required this.className}) : super(key: key);
 
   @override
   State<SelectAccountPage> createState() => _SelectAccountPageState();
@@ -123,12 +124,13 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
     }
 
     // パスワードOK -> Homeへ移動
+    // print('classnameだせ');
+    print(widget.className);
     final classInfo = ClassModel(
       id: widget.classId,
-      classNumber: '',
-      name: '',
-      password: '', 
-      userCount: 0,
+      name: widget.className,
+      // password: '', 
+      // userCount: 0,
     );
     Navigator.pushReplacement(
       context,

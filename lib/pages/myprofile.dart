@@ -135,6 +135,8 @@ class MyProfilePage extends StatelessWidget {
       return Scaffold(
         body: Center(
           child: Column(
+              mainAxisAlignment: MainAxisAlignment.center, // 縦方向の中央揃え
+    crossAxisAlignment: CrossAxisAlignment.center, 
             children: [
               const Text('まだプロフィールが設定されていません'),
               ElevatedButton(
