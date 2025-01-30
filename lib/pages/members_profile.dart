@@ -7,7 +7,8 @@ import 'package:school_memories2/pages/members_profile_model.dart';
 // メンバー一覧表示ページ
 class ProfilePage extends StatelessWidget {
   final ClassModel classInfo;
-  const ProfilePage({Key? key, required this.classInfo}) : super(key: key);
+  final String currentMemberId;
+  const ProfilePage({Key? key, required this.classInfo, required this.currentMemberId}) : super(key: key);
 
   /// 背景のグラデーション
   BoxDecoration _buildBackgroundGradient() {
@@ -29,16 +30,24 @@ class ProfilePage extends StatelessWidget {
 
     // 初回 (または forceUpdate 時) にfetch
     if (!membersModel.isFetched && !membersModel.isLoading) {
-      membersModel.fetchClassMembers(classInfo.id);
+      membersModel.fetchClassMembers(classInfo.id,currentMemberId);
     }
 
     return Scaffold(
-      // 背景にグラデーションを適用
-      body: Container(
-        decoration: _buildBackgroundGradient(),
-        child: SafeArea(
-          child: membersModel.isLoading
-              ? const Center(child: CircularProgressIndicator())
+  // 背景にグラデーションを適用
+  body: Container(
+    decoration: _buildBackgroundGradient(),
+    child: SafeArea(
+      child: membersModel.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : !membersModel.isEmpty
+              ? const Center(
+                  child: Text(
+                    'あなたのプロフィールが設定されていません',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                )
               : membersModel.classMemberList.isEmpty
                   ? const Center(child: Text('メンバーがいません'))
                   : Column(
@@ -46,7 +55,6 @@ class ProfilePage extends StatelessWidget {
                         const SizedBox(height: 16),
                         // 上部に角丸コンテナで classInfo.name を表示
                         _buildClassNameContainer(context),
-                        const SizedBox(height: 24),
                         // 下部: 横スワイプできるカード一覧
                         Expanded(
                           child: PageView.builder(
@@ -61,15 +69,17 @@ class ProfilePage extends StatelessWidget {
                         ),
                       ],
                     ),
-        ),
-      ),
+    ),
+  ),
+
+  // ★ FloatingActionButton (リロードボタン) は変更しない
 
       // ★ FloatingActionButton (リロードボタン) は変更しない
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF9ADBF0),
         onPressed: () async {
           // 強制リロード
-          await membersModel.fetchClassMembers(classInfo.id, forceUpdate: true);
+          await membersModel.fetchClassMembers(classInfo.id,currentMemberId, forceUpdate: true);
         },
         child: const Icon(Icons.refresh),
       ),

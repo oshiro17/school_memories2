@@ -1,10 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:school_memories2/pages/daialog.dart';
 import 'package:school_memories2/pages/members_profile.dart';
-import 'package:school_memories2/pages/members_profile_model.dart';
 import 'package:school_memories2/pages/message.dart';
 import 'package:school_memories2/pages/myprofile.dart';
 import 'package:school_memories2/pages/ranking.dart';
@@ -37,7 +33,7 @@ class _HomeState extends State<Home> {
         classInfo: widget.classInfo,
         currentMemberId: widget.currentMemberId,
       ),
-      ProfilePage(classInfo: widget.classInfo),
+      ProfilePage(classInfo: widget.classInfo,currentMemberId: widget.currentMemberId),
       MessagePage(classId: widget.classInfo.id, currentMemberId: widget.currentMemberId),
       RankingPage(classId: widget.classInfo.id),
     ];

@@ -4,18 +4,37 @@ import 'package:flutter/material.dart';
 class MembersProfileModel extends ChangeNotifier {
   List<Member> classMemberList = [];
   bool isLoading = false;
-  bool isFetched = false; // 一度だけ取得するフラグ
+  bool isFetched = false; 
+  bool isEmpty = true;// 一度だけ取得するフラグ
 
-  Future<void> fetchClassMembers(String classId, {bool forceUpdate = false}) async {
+  Future<void> fetchClassMembers(String classId, String currentMemberId ,{bool forceUpdate = false}) async {
     if (isFetched && !forceUpdate) {
-      // すでに取得済みで、強制リロードでなければスキップ
       return;
     }
-
     isLoading = true;
     notifyListeners();
 
+
+
     try {
+      final s = await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId)
+          .collection('members')
+          .doc(currentMemberId)
+          .get();
+      if (s.exists) {
+        if (s.data()!['callme'] == '') {
+          isEmpty = true;
+          isLoading = false;
+          return;
+        }
+        else
+        {
+          isEmpty = false;
+        }
+      }
+    
       final snapshot = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)

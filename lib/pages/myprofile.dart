@@ -154,7 +154,7 @@ class MyProfilePage extends StatelessWidget {
                     print('保存後に再取得');
                     model.fetchProfileOnce(classInfo.id, currentMemberId);
                     final membersModel = context.read<MembersProfileModel>();
-      await membersModel.fetchClassMembers(classInfo.id);
+      await membersModel.fetchClassMembers(classInfo.id,currentMemberId);
                   }
                 },
                 child: const Text('設定する'),
