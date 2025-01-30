@@ -3,53 +3,26 @@ import 'package:flutter/material.dart';
 
 class RankingPageModel extends ChangeNotifier {
   bool isLoading = false;
-    bool isFetched = false; 
 
-  /// コード中だけで持つランキング用の設問
   final List<String> questionList = [
     'クラスで一番モテるのは？',
-  'クラスで一番おしゃべりなのは？',
-  'クラスで一番頭がいいのは？',
-  'クラスで一番妄想が激しいのは？',
-  'クラスで一番結婚が早そうなのは？',
-  'クラスで一番お金持ちになりそうなのは？',
-  'クラスで一番海外に住みそうなのは？',
-  'クラスで一番有名になりそうなのは？',
-  'クラスで一番会社の社長になりそうなのは？',
-  'クラスで一番世界一周しそうなのは？',
-  'クラスで一番すぐ結婚しそうなのは？',
-  'クラスで一番忘れ物が多いのは？',
-  'クラスで一番優しいのは？',
-  'クラスで一番イケメンなのは？',
-  'クラスで一番可愛いのは？',
-    // ...etc
+    'クラスで一番おしゃべりなのは？',
+    'クラスで一番頭がいいのは？',
+    // ...以下省略...
   ];
 
-  /// 表示用に, 質問インデックス => [ (memberName, count), (memberName, count)... ] のように保持
-  Map<int, List<_RankingVote>> rankingVotes = {};
-
-  // メンバーID => メンバー名のマップ
-  Map<String, String> memberNameMap = {};
+  // 質問index => List<RankingVote>
+  Map<int, List<RankingVote>> rankingVotes = {};
 
   Future<void> init(String classId) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      // メンバーID->名前をまとめて取得
-      final memberSnap = await FirebaseFirestore.instance
-          .collection('classes')
-          .doc(classId)
-          .collection('members')
-          .get();
-      memberNameMap = {
-        for (final doc in memberSnap.docs)
-          doc.id: doc.data()['name'] ?? 'unknown'
-      };
-
-      // 0..questionList.length-1 について votesを読み込む
       for (int i = 0; i < questionList.length; i++) {
         final docId = i.toString();
+
+        // /rankings/{docId}/votes 以下を取得
         final votesSnap = await FirebaseFirestore.instance
             .collection('classes')
             .doc(classId)
@@ -58,16 +31,23 @@ class RankingPageModel extends ChangeNotifier {
             .collection('votes')
             .get();
 
-        final list = votesSnap.docs.map((doc) {
-          final count = doc.data()['count'] ?? 0;
-          final memberId = doc.id;
-          final memberName = memberNameMap[memberId] ?? 'unknown';
-          return _RankingVote(memberName, count);
+        // それぞれのvoteDocに { count, avatarIndex, memberName } が入っている
+        final votes = votesSnap.docs.map((voteDoc) {
+          final data = voteDoc.data() as Map<String, dynamic>;
+          final count = data['count'] ?? 0;
+          final avatarIndex = data['avatarIndex'] ?? 0;
+          final memberName = data['memberName'] ?? 'unknown';
+
+          return RankingVote(
+            memberName: memberName,
+            count: count,
+            avatarIndex: avatarIndex,
+          );
         }).toList();
 
-        // count降順でソート
-        list.sort((a, b) => b.count.compareTo(a.count));
-        rankingVotes[i] = list;
+        // 得票数でソート (降順)
+        votes.sort((a, b) => b.count.compareTo(a.count));
+        rankingVotes[i] = votes;
       }
     } finally {
       isLoading = false;
@@ -76,9 +56,15 @@ class RankingPageModel extends ChangeNotifier {
   }
 }
 
-class _RankingVote {
+/// ランキング表示用
+class RankingVote {
   final String memberName;
   final int count;
+  final int avatarIndex;
 
-  _RankingVote(this.memberName, this.count);
+  RankingVote({
+    required this.memberName,
+    required this.count,
+    required this.avatarIndex,
+  });
 }

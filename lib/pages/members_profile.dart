@@ -29,9 +29,9 @@ class ProfilePage extends StatelessWidget {
     final membersModel = context.watch<MembersProfileModel>();
 
     // 初回 (または forceUpdate 時) にfetch
-    if (!membersModel.isFetched && !membersModel.isLoading) {
-      membersModel.fetchClassMembers(classInfo.id,currentMemberId);
-    }
+    // if (!membersModel.isLoading) {
+    //   membersModel.fetchClassMembers(classInfo.id,currentMemberId);
+    // }
 
     return Scaffold(
   // 背景にグラデーションを適用
@@ -40,11 +40,11 @@ class ProfilePage extends StatelessWidget {
     child: SafeArea(
       child: membersModel.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : !membersModel.isEmpty
+          : membersModel.isEmpty
               ? const Center(
                   child: Text(
-                    'あなたのプロフィールが設定されていません',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
+                    'プロフィール設定をしないと見れません',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, ),
                     textAlign: TextAlign.center,
                   ),
                 )
@@ -79,7 +79,7 @@ class ProfilePage extends StatelessWidget {
         backgroundColor: const Color(0xFF9ADBF0),
         onPressed: () async {
           // 強制リロード
-          await membersModel.fetchClassMembers(classInfo.id,currentMemberId, forceUpdate: true);
+          await membersModel.fetchClassMembers(classInfo.id,currentMemberId);
         },
         child: const Icon(Icons.refresh),
       ),
@@ -170,7 +170,7 @@ class ProfilePage extends StatelessWidget {
 
             // 3) motto
             Text(
-              member.motto.isNotEmpty ? member.motto : 'motto未設定',
+              member.motto.isNotEmpty ? member.motto : '',
               style: const TextStyle(fontSize: 14, color: Colors.black87),
               textAlign: TextAlign.center,
             ),
@@ -178,7 +178,7 @@ class ProfilePage extends StatelessWidget {
 
             // 4) futureDream
             Text(
-              member.futureDream.isNotEmpty ? member.futureDream : '夢未設定',
+              member.futureDream.isNotEmpty ? member.futureDream : '',
               style: const TextStyle(fontSize: 14, color: Colors.grey),
               textAlign: TextAlign.center,
             ),

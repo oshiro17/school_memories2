@@ -1,76 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:school_memories2/pages/select_people_model.dart';
-// 投票先メンバーを選択するモデル (SelectPeopleModel)などもインポート
-// 例）import 'select_people_model.dart';
 
 class VoteRankingPageModel extends ChangeNotifier {
   bool isLoading = false;
-  bool isReadyToVote = false;   // 投票ボタンの有効/無効
-  bool hasAlreadyVoted = false; // すでに投票済みなら true
+  bool isReadyToVote = false;
+  bool hasAlreadyVoted = false; 
 
-  // コード中だけで持つランキング設問の一覧 (Firestoreには保存しない)
-    final List<String> questionList = [
+  final List<String> questionList = [
     'クラスで一番モテるのは？',
-  'クラスで一番おしゃべりなのは？',
-  'クラスで一番頭がいいのは？',
-  'クラスで一番妄想が激しいのは？',
-  'クラスで一番結婚が早そうなのは？',
-  'クラスで一番お金持ちになりそうなのは？',
-  'クラスで一番海外に住みそうなのは？',
-  'クラスで一番有名になりそうなのは？',
-  'クラスで一番会社の社長になりそうなのは？',
-  'クラスで一番世界一周しそうなのは？',
-  'クラスで一番すぐ結婚しそうなのは？',
-  'クラスで一番忘れ物が多いのは？',
-  'クラスで一番優しいのは？',
-  'クラスで一番イケメンなのは？',
-  'クラスで一番可愛いのは？',
-    // ...etc
+    'クラスで一番おしゃべりなのは？',
+    // ...以下略...
   ];
-    // ...以下同様
 
-  // クラスのメンバー一覧
   List<SelectPeopleModel> classMembers = [];
-
-  // 選択されたメンバー: 質問のインデックス => 選んだメンバー
-  // (例) selectedMembers[0] => questionList[0]の投票先
   Map<int, SelectPeopleModel?> selectedMembers = {};
 
+  /// 初期化
   Future<void> init(String classId, String currentMemberId) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      // すでに投票済みかどうか判定 (クラス内のmembers/{currentMemberId}.isVoted など)
+      // 1) 投票済みチェック
       final memberDoc = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
           .collection('members')
           .doc(currentMemberId)
           .get();
+
       final isVoted = memberDoc.data()?['isVoted'] ?? false;
       if (isVoted) {
         hasAlreadyVoted = true;
-        return; // 投票済みならそれを通知して終了
+        return;
       }
 
-      // 全質問(0..questionList.length-1)について、まだ選択してないので null で初期化
+      // 2) 未投票の場合 -> 質問数だけ null で初期化
       for (int i = 0; i < questionList.length; i++) {
         selectedMembers[i] = null;
       }
 
-      // メンバー一覧を取得
+      // 3) メンバー一覧を取得 (doc.data() は as Map でキャスト)
       final membersSnap = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
           .collection('members')
           .get();
+
       classMembers = membersSnap.docs.map((doc) {
-        return SelectPeopleModel.fromMap(doc.data());
+        // doc.data() => Object? なので、必ず as Map<String,dynamic> キャスト
+        final map = doc.data() as Map<String, dynamic>;
+        return SelectPeopleModel.fromMap(map);
       }).toList();
 
-      // 投票ボタンの有効/無効を判定
       _updateVoteReadiness();
     } finally {
       isLoading = false;
@@ -78,19 +61,19 @@ class VoteRankingPageModel extends ChangeNotifier {
     }
   }
 
-  // ドロップダウンでメンバーを選択したとき
+  /// メンバー選択
   void setSelectedMember(int questionIndex, SelectPeopleModel? member) {
     selectedMembers[questionIndex] = member;
     _updateVoteReadiness();
   }
 
-  // 全質問に対してメンバーが選ばれているかどうかを判定
+  /// 全質問回答済みかどうか
   void _updateVoteReadiness() {
-    isReadyToVote = selectedMembers.values.every((member) => member != null);
+    isReadyToVote = selectedMembers.values.every((m) => m != null);
     notifyListeners();
   }
 
-  // 投票を実行
+  /// 投票ボタン押下時
   Future<void> submitVotes(String classId, String currentMemberId) async {
     if (!isReadyToVote) {
       throw 'すべての質問に投票してください。';
@@ -102,27 +85,36 @@ class VoteRankingPageModel extends ChangeNotifier {
 
       final batch = FirebaseFirestore.instance.batch();
 
-      // 各設問(= questionIndex)について選択されたメンバーに票を入れる
-      selectedMembers.forEach((questionIndex, member) {
-        final docId = questionIndex.toString();  // "0", "1" のように文字列化
+      // (1) 各設問 => 選択メンバーに票を加算
+      for (final entry in selectedMembers.entries) {
+        final questionIndex = entry.key;
+        final member = entry.value;
+        if (member == null) continue;
+
+        final docId = questionIndex.toString(); // "0","1" など
         final rankingDocRef = FirebaseFirestore.instance
             .collection('classes')
             .doc(classId)
             .collection('rankings')
             .doc(docId);
 
-        // votesサブコレクション下の {member.id} ドキュメントをインクリメント
-        final voteDocRef = rankingDocRef.collection('votes').doc(member!.id);
+        final voteDocRef = rankingDocRef
+            .collection('votes')
+            .doc(member.id); // memberID をドキュメントIDに
+
+        // **ここがポイント**: メンバー名を保存
         batch.set(
           voteDocRef,
           {
             'count': FieldValue.increment(1),
+            'avatarIndex': member.avatarIndex,
+            'memberName': member.name, // これを Firestore に保存
           },
           SetOptions(merge: true),
         );
-      });
+      }
 
-      // 投票したメンバー自身に「投票済み」を記録
+      // (2) 自分の isVoted を true に
       final selfRef = FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
@@ -130,7 +122,7 @@ class VoteRankingPageModel extends ChangeNotifier {
           .doc(currentMemberId);
       batch.update(selfRef, {'isVoted': true});
 
-      // 一括実行
+      // (3) 一括コミット
       await batch.commit();
 
       hasAlreadyVoted = true;

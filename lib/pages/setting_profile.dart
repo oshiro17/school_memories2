@@ -36,14 +36,14 @@ class SettingProfileModel extends ChangeNotifier {
 
     required String classId,
     required String memberId,
-    required int avatarIndex,
+    required int avatarIndex ,
   }) async {
     try {
       isLoading = true;
       notifyListeners();
 
       // classes/{classId}/members/{memberId} を更新
-      final memberData = {
+ final memberData = {
   'callme': callme,
   'birthday': birthday,
   'subject': subject,
@@ -68,8 +68,9 @@ class SettingProfileModel extends ChangeNotifier {
   'goal': goal,
   'futureDream': futureDream,
   'motto': motto,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+  'avatarIndex': avatarIndex, // 追加
+  'updatedAt': FieldValue.serverTimestamp(),
+};
 
       await FirebaseFirestore.instance
           .collection('classes')
@@ -153,7 +154,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
   ];
 
   // 選択中のアバターindex
-  int selectedAvatarIndex = 0; // デフォルト 0
+  int selectedAvatarIndex = 5; // デフォルト 0
 
   /// 入力バリデーション
   bool _validateInputs() {

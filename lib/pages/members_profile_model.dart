@@ -4,16 +4,12 @@ import 'package:flutter/material.dart';
 class MembersProfileModel extends ChangeNotifier {
   List<Member> classMemberList = [];
   bool isLoading = false;
-  bool isFetched = false; 
   bool isEmpty = true;// 一度だけ取得するフラグ
 
-  Future<void> fetchClassMembers(String classId, String currentMemberId ,{bool forceUpdate = false}) async {
-    if (isFetched && !forceUpdate) {
-      return;
-    }
+  Future<void> fetchClassMembers(String classId, String currentMemberId ) async {
+   
     isLoading = true;
     notifyListeners();
-
 
 
     try {
@@ -23,17 +19,22 @@ class MembersProfileModel extends ChangeNotifier {
           .collection('members')
           .doc(currentMemberId)
           .get();
-      if (s.exists) {
-        if (s.data()!['callme'] == '') {
-          isEmpty = true;
-          isLoading = false;
-          return;
-        }
-        else
-        {
-          isEmpty = false;
-        }
-      }
+     if (s.exists) {
+  final callme = s.data()!['callme'];
+  if (callme == null || callme == '') {
+    // `callme` フィールドが存在しないか、空文字列の場合
+    isEmpty = true;
+    isLoading = false;
+    return;
+  } else {
+    // `callme` が空でない場合
+    isEmpty = false;
+    print("デバッグ: メンバーを表示");
+  }
+} else {
+  print("まずい"); // ドキュメントが存在しない場合
+  return;
+}
     
       final snapshot = await FirebaseFirestore.instance
           .collection('classes')
@@ -44,37 +45,18 @@ class MembersProfileModel extends ChangeNotifier {
       final List<Member> list = snapshot.docs.map((doc) {
         final data = doc.data();
 
-        // -- 安全に型変換 or デフォルト値をセットする --
-        // doc.id は必ず string なので null にはならない想定
         final id = doc.id;
 
-        // avatarIndex を int に変換（Firestoreで string や null の可能性も考慮）
-        final dynamic rawAvatarIndex = data['avatarIndex'];
-        int avatarIndex = 0;
-        if (rawAvatarIndex is int) {
-          avatarIndex = rawAvatarIndex;
-        } else if (rawAvatarIndex is String) {
-          avatarIndex = int.tryParse(rawAvatarIndex) ?? 0;
-        } 
+
         // それ以外の型なら 0 のまま
-
-        // name, motto, futureDream を string に安全変換
-        final dynamic rawName = data['name'];
-        final name = (rawName is String) ? rawName : '';
-
-        final dynamic rawMotto = data['motto'];
-        final motto = (rawMotto is String) ? rawMotto : '';
-
-        final dynamic rawFutureDream = data['futureDream'];
-        final futureDream = (rawFutureDream is String) ? rawFutureDream : '';
 
         return Member(
           id: id,
           // avatarIndex: avatarIndex,
-          avatarIndex: 0,
-          name: name,
-          motto: motto,
-          futureDream: futureDream,
+          avatarIndex: data['avatarIndex'] ?? 0,
+          name: data['name'],
+          motto: data['motto'],
+          futureDream: data['futureDream'],
         );
       }).toList();
 
@@ -85,18 +67,15 @@ class MembersProfileModel extends ChangeNotifier {
             || member.futureDream.isNotEmpty;
       }).toList();
 
-      isFetched = true;
     } catch (e) {
       print('エラー: クラスメンバーの取得に失敗 $e');
     } finally {
       isLoading = false;
       notifyListeners();
     }
+      isLoading = false;
   }
 
-  void resetFetchedFlag() {
-    isFetched = false;
-  }
 }
 
 /// Memberクラス
