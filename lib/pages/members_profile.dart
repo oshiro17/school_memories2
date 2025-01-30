@@ -1,62 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:school_memories2/pages/each_profile.dart';
 import 'members_profile_model.dart';
 
 // メンバー一覧表示ページ
 class ProfilePage extends StatelessWidget {
   final String classId;
-
   const ProfilePage({Key? key, required this.classId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => MembersProfileModel()..fetchClassMembers(classId),
-      child: Scaffold(
-        body: Consumer<MembersProfileModel>(
-          builder: (context, model, child) {
-            if (model.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    final membersModel = context.watch<MembersProfileModel>();
 
-            final classMemberList = model.classMemberList;
+    // まだfetchしてなければ最初だけ取得
+    if (!membersModel.isLoading) {
+      membersModel.fetchClassMembers(classId);
+    }
 
-            // 全体をグラデーション背景にする
-            return Container(
-              decoration: _buildBackgroundGradient(),
-              child: classMemberList.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'まだプロフィールがありません🥺',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    )
-                  : PageView.builder(
-                      itemCount: classMemberList.length,
-                      controller: PageController(viewportFraction: 0.85),
-                      itemBuilder: (context, index) {
-                        final member = classMemberList[index];
-                        return GestureDetector(
-                          onTap: () {
-                            // カードをタップしたら、それぞれのメンバーページ(EachProfilePage)へ遷移
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EachProfilePage(member: member),
-                              ),
-                            );
-                          },
-                          child: _buildMemberCard(member),
-                        );
-                      },
-                    ),
-            );
-          },
-        ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('')),
+      body: membersModel.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : membersModel.classMemberList.isEmpty
+              ? const Center(child: Text('メンバーがいません'))
+              : ListView.builder(
+                  itemCount: membersModel.classMemberList.length,
+                  itemBuilder: (context, index) {
+                    final m = membersModel.classMemberList[index];
+                    return ListTile(
+                      title: Text(m.name),
+                      subtitle: Text(m.subject),
+                    );
+                  },
+                ),
+
+      // ★ FloatingActionButton を設置
+      floatingActionButton: FloatingActionButton(
+          backgroundColor: Color(0xFF9ADBF0),
+        onPressed: () async {
+          // 強制リロード
+          await membersModel.fetchClassMembers(classId, forceUpdate: true);
+        },
+        child: const Icon(Icons.refresh),
       ),
     );
   }
+}
+
 
   /// 背景のグラデーション
   BoxDecoration _buildBackgroundGradient() {
@@ -105,7 +94,7 @@ class ProfilePage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
-                classId,
+                member.name,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -175,4 +164,3 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
-}

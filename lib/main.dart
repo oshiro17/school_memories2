@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/pages/members_profile_model.dart';
+import 'package:school_memories2/pages/message.dart';
+import 'package:school_memories2/pages/myprofile_model.dart';
 import 'package:school_memories2/pages/setting_profile.dart';
 import 'package:school_memories2/signup/class_selection_page.dart';
 
@@ -11,7 +14,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+          // 1) MyProfileModel ... (自分のプロフィールを一度取得)
+        ChangeNotifierProvider<MyProfileModel>(
+          create: (_) => MyProfileModel(),
+        ),
         ChangeNotifierProvider(create: (_) => SettingProfileModel()),
+           ChangeNotifierProvider(create: (_) => MembersProfileModel()),
       ],
       child: MaterialApp(
         title: 'School Memories',

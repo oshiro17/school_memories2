@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class RankingPageModel extends ChangeNotifier {
   bool isLoading = false;
+    bool isFetched = false; 
 
   /// コード中だけで持つランキング用の設問
   final List<String> questionList = [

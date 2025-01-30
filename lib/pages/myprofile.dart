@@ -1,10 +1,112 @@
-import 'package:flutter/material.dart';
+  import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
+import 'package:school_memories2/pages/members_profile_model.dart';
 import 'package:school_memories2/pages/myprofile_model.dart';
 import 'package:school_memories2/pages/setting_profile.dart';
 
-/// 自分のプロフィールを表示するページ
+/// ラベルと値を表示する共通Widget
+  Widget _buildProfileItem2(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+
+  
+        Expanded(
+          child:  Text(
+          '$value',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        ),
+
+      ],
+    );
+  }
+  Widget _buildProfileItem(String label, String value, String label2) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+          
+         Text(
+            value.isNotEmpty ? value : '未設定',
+            style: const TextStyle(fontSize: 16, color: Colors.blue),
+
+          ),
+  
+        Expanded(
+          child:  Text(
+          '$label2',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        ),
+
+      ],
+    );
+  }
+ Widget _buildProfileField(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+          ),
+          Text(
+            value,
+            style: TextStyle(fontSize: 16, color: Colors.black),
+          ),
+        ],
+      ),
+    );
+  }
+
+Widget _buildSection(List<Widget> children) {
+  return Container(
+    width: double.infinity, // 横幅いっぱいにする
+    margin: EdgeInsets.symmetric(vertical: 10), // 横のマージンをなくす
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.2),
+          spreadRadius: 2,
+          blurRadius: 5,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    ),
+  );
+}
+
+Widget _buildProfileText(String label, String value, {bool isCallMe = false}) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          if (!isCallMe) TextSpan(text: label, style: TextStyle(color: Colors.black,fontSize: 16)),
+          TextSpan(text: value, style: TextStyle(color: Colors.blue,fontSize: 17)), // 青色
+          if (!isCallMe) TextSpan(text: ' だよ', style: TextStyle(color: Colors.black,fontSize: 16)),
+          if (isCallMe) TextSpan(text: ' って呼んで！', style: TextStyle(color: Colors.black)),
+        ],
+      ),
+    );
+  }
+
 class MyProfilePage extends StatelessWidget {
   final ClassModel classInfo;
   final String currentMemberId;
@@ -17,59 +119,58 @@ class MyProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<MyProfileModel>(
-      create: (context) => MyProfileModel()..init(classInfo.id, currentMemberId),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Consumer<MyProfileModel>(
-          builder: (context, model, child) {
-            if (model.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    // 上位(MultiProvider)で提供された同じ MyProfileModel のインスタンスを使う
+    final model = context.watch<MyProfileModel>();
 
-            // プロフィール未設定(例: subjectが空)の場合
-            final isProfileEmpty = model.callme.isEmpty; 
 
-            if (isProfileEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('まだプロフィールが設定されていません！'),
-                    const Text('早速設定しよう'),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SettingProfilePage(
-                              classInfo: classInfo,
-                              currentMemberId: currentMemberId,
-                            ),
-                          ),
-                        );
-                        if (result == true) {
-                          // 保存後に再取得
-                          await model.fetchProfile(classInfo.id, currentMemberId);
-                        }
-                      },
-                      child: const Text("設定する"),
+    if (model.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // あとは model を使ってUIを構築する
+    final isProfileEmpty = model.callme.isEmpty;
+    if (isProfileEmpty) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            children: [
+              const Text('まだプロフィールが設定されていません'),
+              ElevatedButton(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SettingProfilePage(
+                        classInfo: classInfo,
+                        currentMemberId: currentMemberId,
+                      ),
                     ),
-                  ],
-                ),
-              );
-            }
+                  );
+                  if (result == true) {
+                    print('保存後に再取得');
+                    model.fetchProfileOnce(classInfo.id, currentMemberId);
+                    final membersModel = context.read<MembersProfileModel>();
+      await membersModel.fetchClassMembers(classInfo.id);
+                  }
+                },
+                child: const Text('設定する'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-            // avatarIndex からアセットパスを作る（例: j0.png ~ j19.png）
             final avatarPath = 'assets/j${model.avatarIndex}.png';
-
-            // プロフィール表示UI
-            return SingleChildScrollView(
+    // プロフィールがある場合のUI
+    return Scaffold(
+      body: 
+ SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-   // ...existing code...
 
 Row(
   crossAxisAlignment: CrossAxisAlignment.end,
@@ -154,7 +255,6 @@ _buildSection([
 
         
         const SizedBox(height: 32),
-                        // プロフィール編集ボタン
                         Center(
                           child: ElevatedButton(
                             onPressed: () async {
@@ -168,8 +268,7 @@ _buildSection([
                                 ),
                               );
                               if (result == true) {
-                                // 保存後に再取得
-                                await model.fetchProfile(classInfo.id, currentMemberId);
+                                                        await model.fetchProfileOnce(classInfo.id, currentMemberId);
                               }
                             },
                             child: const Text('プロフィールを編集'),
@@ -180,112 +279,8 @@ _buildSection([
                   ),
                 ],
               ),
+ ),
             );
-          },
-        ),
-      ),
-    );
-  }
-
-  /// ラベルと値を表示する共通Widget
-  Widget _buildProfileItem2(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '$label',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-
-  
-        Expanded(
-          child:  Text(
-          '$value',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        ),
-
-      ],
-    );
-  }
-  Widget _buildProfileItem(String label, String value, String label2) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '$label',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-          
-         Text(
-            value.isNotEmpty ? value : '未設定',
-            style: const TextStyle(fontSize: 16, color: Colors.blue),
-
-          ),
-  
-        Expanded(
-          child:  Text(
-          '$label2',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        ),
-
-      ],
-    );
+    
   }
 }
- Widget _buildProfileField(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[800]),
-          ),
-          Text(
-            value,
-            style: TextStyle(fontSize: 16, color: Colors.black),
-          ),
-        ],
-      ),
-    );
-  }
-
-Widget _buildSection(List<Widget> children) {
-  return Container(
-    width: double.infinity, // 横幅いっぱいにする
-    margin: EdgeInsets.symmetric(vertical: 10), // 横のマージンをなくす
-    padding: EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withOpacity(0.2),
-          spreadRadius: 2,
-          blurRadius: 5,
-          offset: Offset(0, 2),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
-    ),
-  );
-}
-
-Widget _buildProfileText(String label, String value, {bool isCallMe = false}) {
-    return Text.rich(
-      TextSpan(
-        children: [
-          if (!isCallMe) TextSpan(text: label, style: TextStyle(color: Colors.black,fontSize: 16)),
-          TextSpan(text: value, style: TextStyle(color: Colors.blue,fontSize: 17)), // 青色
-          if (!isCallMe) TextSpan(text: ' だよ', style: TextStyle(color: Colors.black,fontSize: 16)),
-          if (isCallMe) TextSpan(text: ' って呼んで！', style: TextStyle(color: Colors.black)),
-        ],
-      ),
-    );
-  }

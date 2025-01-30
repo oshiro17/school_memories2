@@ -6,7 +6,7 @@ import 'package:school_memories2/class_model.dart';
 
 class SettingProfileModel extends ChangeNotifier {
   bool isLoading = false;
-
+  
   /// Firestoreへプロフィールを保存する
   Future<void> saveProfile({
     required String callme,
@@ -184,12 +184,6 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
       '座右の銘': mottoController.text,
     };
 
-
-    // **デバッグログ**
-    debugPrint("==== 入力チェック開始 ====");
-    fields.forEach((key, value) {
-      debugPrint("$key: '${value.trim()}' (length: ${value.trim().length})");
-    });
 
     for (var entry in fields.entries) {
       if (entry.value.trim().isEmpty) {

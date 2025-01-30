@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class MyProfileModel extends ChangeNotifier {
-  // プロフィールデータ
- String callme = '';
+String callme = '';
   String name = '';
   String birthday = '';
   String subject = '';
@@ -28,23 +27,19 @@ class MyProfileModel extends ChangeNotifier {
   String goal = '';
   String futureDream = '';
   String motto = '';
+    int avatarIndex = 0;
+  bool isLoading = false;
 
-  bool isLoading = true;
+  // プロフィールを一度取得したら true にする
 
-  // 追加: アバター番号 (Firestore から取得)
-  int avatarIndex = 0; // デフォルト0
 
-  /// 初期化: プロフィール取得など
-  Future<void> init(String classId, String memberId) async {
-    await fetchProfile(classId, memberId);
-  }
+  Future<void> fetchProfileOnce(String classId, String memberId) async {
 
-  /// Firestoreからメンバーのプロフィールを取得
-  Future<void> fetchProfile(String classId, String memberId) async {
     try {
       isLoading = true;
       notifyListeners();
 
+      // ここで1回だけ Firestoreから取得
       final doc = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
@@ -81,9 +76,8 @@ futureDream = data?['futureDream'] ?? '';
 motto = data?['motto'] ?? '';
 
         avatarIndex = data?['avatarIndex'] ?? 0;
-      } else {
-        print('メンバードキュメントが存在しません: classId=$classId, memberId=$memberId');
       }
+
     } catch (e) {
       print('fetchProfileエラー: $e');
     } finally {
@@ -91,4 +85,8 @@ motto = data?['motto'] ?? '';
       notifyListeners();
     }
   }
+   Future<void> init(String classId, String memberId) async {
+    await fetchProfileOnce(classId, memberId);
+  }
+
 }
