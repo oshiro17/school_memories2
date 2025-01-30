@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/pages/home.dart';
+import 'package:school_memories2/pages/myprofile_model.dart';
 
 class SelectAccountPage extends StatefulWidget {
   final String classId;
@@ -132,6 +134,9 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
       // password: '', 
       // userCount: 0,
     );
+            final model = context.read<MyProfileModel>();
+            await model.fetchProfileOnce(classInfo.id, selectedMemberId!);
+       
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(

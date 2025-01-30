@@ -1,53 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
-import 'members_profile_model.dart';
+import 'package:school_memories2/pages/each_profile.dart';
+import 'package:school_memories2/pages/members_profile_model.dart';
 
 // メンバー一覧表示ページ
 class ProfilePage extends StatelessWidget {
   final ClassModel classInfo;
   const ProfilePage({Key? key, required this.classInfo}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final membersModel = context.watch<MembersProfileModel>();
-
-    // まだfetchしてなければ最初だけ取得
-    if (!membersModel.isLoading) {
-      membersModel.fetchClassMembers(classInfo.id);
-    }
-    print('osuosu');
-    print(classInfo.name);
-    return Scaffold(
-      appBar: AppBar(title:Text(classInfo.name, style: TextStyle(color: Colors.white))),
-      body: membersModel.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : membersModel.classMemberList.isEmpty
-              ? const Center(child: Text('メンバーがいません'))
-              : ListView.builder(
-                  itemCount: membersModel.classMemberList.length,
-                  itemBuilder: (context, index) {
-                    final m = membersModel.classMemberList[index];
-                    return ListTile(
-                      title: Text(m.name),
-                      subtitle: Text(m.subject),
-                    );
-                  },
-                ),
-
-      // ★ FloatingActionButton を設置
-      floatingActionButton: FloatingActionButton(
-          backgroundColor: Color(0xFF9ADBF0),
-        onPressed: () async {
-          // 強制リロード
-          await membersModel.fetchClassMembers(classInfo.id, forceUpdate: true);
-        },
-        child: const Icon(Icons.refresh),
-      ),
-    );
-  }
-}
-
 
   /// 背景のグラデーション
   BoxDecoration _buildBackgroundGradient() {
@@ -63,106 +23,158 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  /// メンバー情報をカード表示
-  ///  - 上: 左上にクラスID
-  ///  - 中: 左に太字で motto, 右にアイコン
-  ///  - 下: 左に futureDream, 右下に "- name -"
-  Widget _buildMemberCard(Member member) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 40),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.90), // 背景を少し透明にしグラデを透かす
-        borderRadius: BorderRadius.circular(15.0),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 5.0,
-            offset: Offset(0, 3),
-          ),
-        ],
+  @override
+  Widget build(BuildContext context) {
+    final membersModel = context.watch<MembersProfileModel>();
+
+    // 初回 (または forceUpdate 時) にfetch
+    if (!membersModel.isFetched && !membersModel.isLoading) {
+      membersModel.fetchClassMembers(classInfo.id);
+    }
+
+    return Scaffold(
+      // 背景にグラデーションを適用
+      body: Container(
+        decoration: _buildBackgroundGradient(),
+        child: SafeArea(
+          child: membersModel.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : membersModel.classMemberList.isEmpty
+                  ? const Center(child: Text('メンバーがいません'))
+                  : Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        // 上部に角丸コンテナで classInfo.name を表示
+                        _buildClassNameContainer(context),
+                        const SizedBox(height: 24),
+                        // 下部: 横スワイプできるカード一覧
+                        Expanded(
+                          child: PageView.builder(
+                            controller: PageController(viewportFraction: 0.85),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: membersModel.classMemberList.length,
+                            itemBuilder: (context, index) {
+                              final m = membersModel.classMemberList[index];
+                              return _buildMemberCard(context, m);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+        ),
       ),
-      // Positioned等を使いたい場合はStackで包むと柔軟ですが、
-      // 今回は単純なColumn配置の中に上部だけPositioned風に作ります
-      child: Stack(
-        children: [
-          // 左上に classId を表示
-          Positioned(
-            top: 8,
-            left: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                member.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          // カード本体の内容
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 36, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // (1) motto + アイコン
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // motto
-                    Expanded(
-                      child: Text(
-                        member.birthday,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                    // 右側にアイコン
-                    const Icon(
-                      Icons.star_rounded,
-                      color: Colors.orangeAccent,
-                      size: 28,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // (2) futureDream + name右下
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // futureDream（左寄せ, 幅調整のためExpandedで包むと良い）
-                    Expanded(
-                      child: Text(
-                        member.subject,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                    // 右下に - name -
-                    Text(
-                      '- ${member.name} -',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+
+      // ★ FloatingActionButton (リロードボタン) は変更しない
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF9ADBF0),
+        onPressed: () async {
+          // 強制リロード
+          await membersModel.fetchClassMembers(classInfo.id, forceUpdate: true);
+        },
+        child: const Icon(Icons.refresh),
       ),
     );
   }
+
+  /// classInfo.name を角丸コンテナで表示
+  Widget _buildClassNameContainer(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Text(
+        classInfo.name,
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Colors.blueAccent,
+        ),
+      ),
+    );
+  }
+
+  /// メンバー情報をカード表示 (横スワイプするための子Widget)
+  ///  - Columnで: 画像, 名前, motto, futureDream を縦に並べる
+  Widget _buildMemberCard(BuildContext context, Member member) {
+    return GestureDetector(
+      onTap: () {
+        // カードをタップすると EachProfilePage へ遷移
+        // member.id を引数として渡す
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (_) => EachProfilePage(memberId: member.id),
+        //   ),
+        // );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 32, horizontal: 8),
+        padding: const EdgeInsets.all(16),
+        width: MediaQuery.of(context).size.width * 0.78,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.90),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 5.0,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 1) 画像
+            ClipRRect(
+              borderRadius: BorderRadius.circular(100), // 丸く切り抜き
+              child: Image.asset(
+                'assets/j${member.avatarIndex}.png', // avatarIndexを使う
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 2) 名前
+            Text(
+              member.name,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 3) motto
+            Text(
+              member.motto.isNotEmpty ? member.motto : 'motto未設定',
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+
+            // 4) futureDream
+            Text(
+              member.futureDream.isNotEmpty ? member.futureDream : '夢未設定',
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
