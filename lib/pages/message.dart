@@ -22,7 +22,8 @@ class MessagePage extends StatelessWidget {
         body: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFFFFEFBA), Color(0xFFffffff)],
+              colors: [ Color(0xFFE0F7FA), // very light cyan
+          Color(0xFFFFEBEE),],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),

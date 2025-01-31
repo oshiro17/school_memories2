@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/pages/home.dart';
@@ -75,13 +76,16 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
-                    controller: passController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'パスワード',
-                      hintText: '0000',
-                    ),
-                  ),
+  controller: passController,
+  obscureText: true,
+  decoration: const InputDecoration(
+    labelText: 'パスワード',
+    hintText: '0000',
+  ),
+  inputFormatters: [
+    LengthLimitingTextInputFormatter(4), // 最大4文字に制限
+  ],
+),
                 ),
                 ElevatedButton(
                   onPressed: _onLoginPressed,

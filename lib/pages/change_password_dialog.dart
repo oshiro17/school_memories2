@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   final String classId;
@@ -67,6 +68,9 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
               labelText: '新しいパスワード',
             ),
             obscureText: true, // パスワード非表示
+             inputFormatters: [
+    LengthLimitingTextInputFormatter(4), // 最大10文字に制限
+  ],
           ),
         ],
       ),

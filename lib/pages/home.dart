@@ -35,7 +35,7 @@ class _HomeState extends State<Home> {
       ),
       ProfilePage(classInfo: widget.classInfo,currentMemberId: widget.currentMemberId),
       MessagePage(classId: widget.classInfo.id, currentMemberId: widget.currentMemberId),
-      RankingPage(classId: widget.classInfo.id),
+      RankingPage(classId: widget.classInfo.id, currentMemberId: widget.currentMemberId),
     ];
   }
 

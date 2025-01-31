@@ -51,12 +51,12 @@ class MembersProfileModel extends ChangeNotifier {
         // それ以外の型なら 0 のまま
 
         return Member(
-          id: id,
           // avatarIndex: avatarIndex,
-          avatarIndex: data['avatarIndex'] ?? 0,
-          name: data['name'],
-          motto: data['motto'],
-          futureDream: data['futureDream'],
+  id: id,
+  avatarIndex: data['avatarIndex'] ?? 0,
+  name: data['name'] ?? '',
+  motto: data['motto'] ?? '',
+  futureDream: data['futureDream'] ?? '',
         );
       }).toList();
 

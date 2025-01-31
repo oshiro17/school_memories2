@@ -2,42 +2,60 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/pages/ranking_page_model.dart';
 
+/// ランキングページ
 class RankingPage extends StatelessWidget {
   final String classId;
+  final String currentMemberId;
 
-  const RankingPage({Key? key, required this.classId}) : super(key: key);
+  const RankingPage({
+    Key? key,
+    required this.classId,
+    required this.currentMemberId,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<RankingPageModel>(
-      create: (_) => RankingPageModel()..init(classId),
+      // RankingPageModelに currentMemberId を渡すようにして、初期化メソッド内でも使えるようにする
+      create: (_) => RankingPageModel()..init(classId, currentMemberId),
       child: Consumer<RankingPageModel>(
         builder: (context, model, child) {
-          if (model.isLoading) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('ランキング結果'),
-              backgroundColor: Colors.pink,
-            ),
             body: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.white, Color(0xFFFFF9C4)], // クリーム色
+                  colors: [
+                    Color(0xFFE0F7FA), // very light cyan
+                    Color(0xFFFFEBEE), // クリーム色
+                  ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
               ),
-              child: ListView.builder(
-                itemCount: model.questionList.length,
-                itemBuilder: (context, i) {
-                  return _buildRankingCard(context, model, i);
-                },
-              ),
+              // isLoadingまたはisVotedによって表示内容を分岐
+              child: () {
+                if (model.isLoading) {
+                  // ローディング時にも背景グラデーションが見えるようにしつつ、中央にインジケータを配置
+                  return const Center(child: CircularProgressIndicator());
+                }
+                // 読み込み完了後、isVoted == false ならランキングを見せない
+                if (!model.isVoted) {
+                  return const Center(
+                    child: Text(
+                      'ランキングはまだ見れません',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  );
+                }
+
+                // isVoted == true の場合はランキングを表示
+                return ListView.builder(
+                  itemCount: model.questionList.length,
+                  itemBuilder: (context, i) {
+                    return _buildRankingCard(context, model, i);
+                  },
+                );
+              }(),
             ),
           );
         },
@@ -45,6 +63,7 @@ class RankingPage extends StatelessWidget {
     );
   }
 
+  /// ランキング表示用カードウィジェット
   Widget _buildRankingCard(BuildContext context, RankingPageModel model, int index) {
     final title = model.questionList[index];
     final votesData = model.rankingVotes[index] ?? [];

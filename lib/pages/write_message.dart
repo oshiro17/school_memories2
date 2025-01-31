@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class WriteMessagePage extends StatelessWidget {
@@ -20,7 +21,7 @@ class WriteMessagePage extends StatelessWidget {
         // AppBarのデザイン変更例（お好みで調整してください）
         appBar: AppBar(
           title: const Text('寄せ書き送信'),
-          backgroundColor: Colors.brown,
+          // backgroundColor: Colors.brown,
           elevation: 5,
         ),
         // 背景を画像 or グラデーションなどお好みで
@@ -85,8 +86,8 @@ class WriteMessagePage extends StatelessWidget {
                       icon: const Icon(Icons.send),
                       label: const Text('送信'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.brown, // ボタンの背景色
-                        foregroundColor: Colors.white,  // 文字とアイコンの色
+                        // backgroundColor: Colors.brown, // ボタンの背景色
+                        // foregroundColor: Colors.white,  // 文字とアイコンの色
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -130,6 +131,9 @@ class WriteMessagePage extends StatelessWidget {
             const SizedBox(height: 10),
             // メッセージ入力
             TextField(
+               inputFormatters: [
+    LengthLimitingTextInputFormatter(250), // 最大10文字に制限
+  ],
               controller: controller,
               decoration: InputDecoration(
                 border: OutlineInputBorder(

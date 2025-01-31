@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'select_account_page.dart';
 
@@ -154,15 +155,24 @@ Widget _buildCreateClassArea() {
       TextField(
         controller: classNameController,
         decoration: const InputDecoration(labelText: 'クラス名'),
+         inputFormatters: [
+    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
+  ],
       ),
       TextField(
         controller: classIdForCreateController,
         decoration: const InputDecoration(labelText: 'クラスID（例: classA）'),
+         inputFormatters: [
+    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
+  ],
       ),
       TextField(
         controller: classPasswordForCreateController,
         decoration: const InputDecoration(labelText: 'クラスのパスワード'),
         obscureText: true,
+ inputFormatters: [
+    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
+  ],
       ),
       const SizedBox(height: 16),
       // メンバー入力欄リスト
@@ -172,6 +182,9 @@ Widget _buildCreateClassArea() {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4.0),
               child: TextField(
+                 inputFormatters: [
+    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
+  ],
                 controller: memberControllers[i],
                 decoration: InputDecoration(
                   labelText: 'メンバー${i + 1}の名前',
@@ -228,15 +241,20 @@ Widget _buildCreateClassArea() {
   Widget _buildJoinClassArea() {
     return Column(
       children: [
-        TextField(
-          controller: classIdForJoinController,
-          decoration: const InputDecoration(labelText: 'クラスID'),
-        ),
-        TextField(
-          controller: classPasswordForJoinController,
-          decoration: const InputDecoration(labelText: 'クラスのパスワード'),
-          obscureText: true,
-        ),
+       TextField(
+  controller: classIdForJoinController,
+  decoration: const InputDecoration(labelText: 'クラスID'),
+  inputFormatters: [
+    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
+  ],
+),
+  TextField(
+  controller: classPasswordForJoinController,
+  decoration: const InputDecoration(labelText: 'パスワード'),
+  inputFormatters: [
+    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
+  ],
+),
         const SizedBox(height: 16),
 ElevatedButton(
   onPressed: () async {
