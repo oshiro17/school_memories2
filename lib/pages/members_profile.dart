@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
+import 'package:school_memories2/color.dart';
 import 'package:school_memories2/pages/each_profile.dart';
 import 'package:school_memories2/pages/members_profile_model.dart';
 
@@ -76,7 +77,7 @@ class ProfilePage extends StatelessWidget {
 
       // ★ FloatingActionButton (リロードボタン) は変更しない
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF9ADBF0),
+        backgroundColor: goldColor,
         onPressed: () async {
           // 強制リロード
           await membersModel.fetchClassMembers(classInfo.id,currentMemberId);
@@ -87,31 +88,25 @@ class ProfilePage extends StatelessWidget {
   }
 
   /// classInfo.name を角丸コンテナで表示
-  Widget _buildClassNameContainer(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+Widget _buildClassNameContainer(BuildContext context) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(left: 38), // 左に余白をつける
+        child: Text(
+          classInfo.name,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: darkBlueColor,
           ),
-        ],
-      ),
-      child: Text(
-        classInfo.name,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Colors.blueAccent,
         ),
       ),
-    );
-  }
+    ],
+  );
+}
+
 
   /// メンバー情報をカード表示 (横スワイプするための子Widget)
   ///  - Columnで: 画像, 名前, motto, futureDream を縦に並べる
@@ -120,15 +115,15 @@ class ProfilePage extends StatelessWidget {
       onTap: () {
         // カードをタップすると EachProfilePage へ遷移
         // member.id を引数として渡す
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (_) => EachProfilePage(memberId: member.id),
-        //   ),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EachProfilePage(memberId: member.id,classId: classInfo.id),
+          ),
+        );
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 32, horizontal: 8),
+        margin: const EdgeInsets.only(top:5, bottom: 25, left: 8, right: 8),
         padding: const EdgeInsets.all(16),
         width: MediaQuery.of(context).size.width * 0.78,
         decoration: BoxDecoration(
@@ -163,7 +158,7 @@ class ProfilePage extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.blueAccent,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 12),
@@ -179,7 +174,7 @@ class ProfilePage extends StatelessWidget {
             // 4) futureDream
             Text(
               member.futureDream.isNotEmpty ? member.futureDream : '',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: const TextStyle(fontSize: 14, color: darkBlueColor),
               textAlign: TextAlign.center,
             ),
           ],

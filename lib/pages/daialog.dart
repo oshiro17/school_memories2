@@ -3,6 +3,8 @@ import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/pages/change_password_dialog.dart';
 import 'package:school_memories2/pages/write_message.dart';
 import 'package:school_memories2/pages/vote.dart';
+import 'package:school_memories2/signup/class_selection_page.dart';
+import 'package:school_memories2/signup/select_account_page.dart';
 
 class MainMemoriesDialog extends StatelessWidget {
   final ClassModel classInfo;
@@ -44,6 +46,34 @@ class MainMemoriesDialog extends StatelessWidget {
                 builder: (context) => VoteRankingPage(
                   classId: classInfo.id,
                   currentMemberId: currentMemberId,
+                ),
+              ),
+            );
+          },
+        ),
+           SimpleDialogOption(
+          child: const Text('他のクラスにログインする'),
+          onPressed: () {
+            Navigator.pop(context); 
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ClassSelectionPage(
+                ),
+              ),
+            );
+          },
+        ),
+           SimpleDialogOption(
+          child: const Text('他のメンバーでログインする'),
+          onPressed: () {
+            Navigator.pop(context); 
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SelectAccountPage(
+                  classId: classInfo.id,
+                  className: classInfo.name,
                 ),
               ),
             );

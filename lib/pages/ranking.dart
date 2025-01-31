@@ -40,12 +40,21 @@ class RankingPage extends StatelessWidget {
                 }
                 // 読み込み完了後、isVoted == false ならランキングを見せない
                 if (!model.isVoted) {
-                  return const Center(
+                  return Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 57, left: 7, right: 7),
                     child: Text(
-                      'ランキングはまだ見れません',
-                      style: TextStyle(fontSize: 16),
+                       'ランキングはまだ見れません\n投票してください。',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                      
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
-                  );
+                  ),
+                );
                 }
 
                 // isVoted == true の場合はランキングを表示

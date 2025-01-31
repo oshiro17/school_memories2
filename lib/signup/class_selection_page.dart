@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../color.dart';
 import 'select_account_page.dart';
 
 /// クラス作成ページ
@@ -38,10 +39,10 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-     'schoolmemories',
+     'School Memories',
           style: GoogleFonts.dancingScript(
       fontSize: 24,
-      color: Colors.white, // 文字色を青にする
+      color: darkBlueColor, // 文字色を青にする
     ),
   ),
       ),
@@ -59,7 +60,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
                         '卒業文集アプリへようこそ！',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color:  Colors.blue,
+                          color: darkBlueColor,
                         ),
                       ),
                        SizedBox(height : 15),
@@ -67,7 +68,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
                         'みんなの思い出を共有しましょう！',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color:  Colors.blue,
+                          color:blackColor,
                         ),
                       ),
                       SizedBox(height : 35),
@@ -88,8 +89,8 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
       child: ElevatedButton(
         onPressed: () => setState(() => isCreating = true),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isCreating ?  Color(0xFF9ADBF0) : Colors.white,
-          foregroundColor: isCreating ? Colors.white :  Color(0xFF9ADBF0),
+          backgroundColor: isCreating ?  darkBlueColor : Colors.white,
+          foregroundColor: isCreating ? goldColor:  darkBlueColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
             side: BorderSide(color: Colors.blue),
@@ -107,11 +108,11 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
       child: ElevatedButton(
         onPressed: () => setState(() => isCreating = false),
         style: ElevatedButton.styleFrom(
-          backgroundColor: !isCreating ?  Color(0xFF9ADBF0) : Colors.white,
-          foregroundColor: !isCreating ? Colors.white : Color(0xFF9ADBF0),
+          backgroundColor: !isCreating ?  darkBlueColor : Colors.white,
+          foregroundColor: !isCreating ?  goldColor:  darkBlueColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.blue),
+            side: BorderSide(color: darkBlueColor),
           ),
           padding: EdgeInsets.symmetric(vertical: 12),
         ),

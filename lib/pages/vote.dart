@@ -66,7 +66,7 @@ class VoteRankingPage extends StatelessWidget {
     final selectedMember = model.selectedMembers[questionIndex];
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      // crossAxisAlignment: CrossAxisAlignment.left,
       children: [
         Text(
           questionText,

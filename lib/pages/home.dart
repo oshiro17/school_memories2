@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:school_memories2/color.dart';
 import 'package:school_memories2/pages/daialog.dart';
 import 'package:school_memories2/pages/members_profile.dart';
 import 'package:school_memories2/pages/message.dart';
@@ -43,31 +44,31 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
       print('classInfo.name: ${widget.classInfo.name}');
     return Scaffold(
-    
+   extendBodyBehindAppBar: true, 
     appBar: AppBar(
-  title: Align(
-    alignment: Alignment.centerLeft, // 左寄せ
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+  backgroundColor: Colors.white.withOpacity(0.5),
+  elevation: 0, // 影をなくす
+  // bottom: PreferredSize(
+  //   preferredSize: const Size.fromHeight(1.0), // ボーダーの高さ
+  //   child: Container(
+  //     color: Colors.black, // ボーダーの色
+  //     height: 1.0, // ボーダーの太さ
+  //   ),
+  // ),
+  title: 
         Text(
-     'School Memories',
+          'School Memories',
           style: GoogleFonts.dancingScript(
-      fontSize: 20,
-      color: Colors.white, // 文字色を青にする
-    ),
-  ),
-        // const Text(
-        //   'schoolmemories',
-        //   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-        // ),
-        // Text(
-        //   widget.classInfo.id,
-        //   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        // ),
-      ],
-    ),
-  ),
+            fontSize: 23,
+            color: Colors.black
+            
+            
+    ,
+          ),
+        ),
+  //     ],
+  //   ),
+  // ),
   actions: [
     IconButton(
       icon: const Icon(Icons.menu),
@@ -88,9 +89,8 @@ class _HomeState extends State<Home> {
        bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (idx) => setState(() => currentIndex = idx),
-        backgroundColor: Colors.white,
-        selectedItemColor: Color(0xFF9ADBF0), // 選択中のアイコンとラベル
-        unselectedItemColor: Colors.black54, // 非選択時のアイコンとラベル
+        selectedItemColor: darkBlueColor, // 選択中のアイコンとラベル
+        unselectedItemColor: Colors.black, // 非選択時のアイコンとラベル
         type: BottomNavigationBarType.fixed, // 背景色を固定
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'マイページ'),

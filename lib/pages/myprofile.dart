@@ -1,6 +1,7 @@
   import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
+import 'package:school_memories2/color.dart';
 import 'package:school_memories2/pages/members_profile_model.dart';
 import 'package:school_memories2/pages/myprofile_model.dart';
 import 'package:school_memories2/pages/setting_profile.dart';
@@ -59,7 +60,7 @@ import 'package:school_memories2/pages/setting_profile.dart';
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: darkBlueColor),
           ),
           Text(
             value,
@@ -99,7 +100,7 @@ Widget _buildProfileText(String label, String value, {bool isCallMe = false}) {
       TextSpan(
         children: [
           if (!isCallMe) TextSpan(text: label, style: TextStyle(color: Colors.black,fontSize: 16)),
-          TextSpan(text: value, style: TextStyle(color: Colors.blue,fontSize: 17)), // 青色
+          TextSpan(text: value, style: TextStyle(color: darkBlueColor,fontSize: 17)), // 青色
           if (!isCallMe) TextSpan(text: ' だよ', style: TextStyle(color: Colors.black,fontSize: 16)),
           if (isCallMe) TextSpan(text: ' って呼んで！', style: TextStyle(color: Colors.black)),
         ],
@@ -138,7 +139,9 @@ class MyProfilePage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center, // 縦方向の中央揃え
     crossAxisAlignment: CrossAxisAlignment.center, 
             children: [
+              const SizedBox(height: 15),
               const Text('まだプロフィールが設定されていません'),
+              const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () async {
                   final result = await Navigator.push(
@@ -173,13 +176,13 @@ class MyProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
+                   
 Row(
   crossAxisAlignment: CrossAxisAlignment.end,
   mainAxisAlignment: MainAxisAlignment.center,
   children: [
     Padding(
-      padding: const EdgeInsets.only(top: 24.0, left: 8.0, right: 8.0),
+      padding: const EdgeInsets.only(top: 100.0, left: 8.0, right: 8.0),
       child: CircleAvatar(
         radius: 50,
         backgroundImage: AssetImage(avatarPath),
@@ -189,7 +192,7 @@ Row(
     Text(
       
       model.name,
-      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
       overflow: TextOverflow.ellipsis,
       maxLines: 1,
     ),

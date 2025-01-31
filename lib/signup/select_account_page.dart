@@ -10,15 +10,28 @@ class SelectAccountPage extends StatefulWidget {
   final String classId;
   final String className;
 
-  const SelectAccountPage({Key? key, required this.classId, required this.className}) : super(key: key);
+  const SelectAccountPage({
+    Key? key,
+    required this.classId,
+    required this.className,
+  }) : super(key: key);
 
   @override
   State<SelectAccountPage> createState() => _SelectAccountPageState();
 }
 
 class _SelectAccountPageState extends State<SelectAccountPage> {
+  // カラー定義
+  final Color _backgroundColor = Colors.white;
+  final Color _darkBlueColor = const Color(0xFF1E3A8A);
+  final Color _goldColor = const Color(0xFFFFD700);
+  final Color _blackColor = Colors.black;
+
+  // メンバーリストと選択情報
   List<Map<String, dynamic>> members = [];
   String? selectedMemberId;
+
+  // パスワード入力用
   final passController = TextEditingController();
 
   @override
@@ -42,57 +55,153 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // 背景色を白に
+      backgroundColor: _backgroundColor,
+
+      // AppBar
       appBar: AppBar(
-        title: const Text('あなたのアカウントを選択'),
+        // ダークブルーをメインカラーとして使用
+        backgroundColor: _darkBlueColor,
+        title: Text(
+          'あなたのアカウントを選択',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
       ),
+
+      // 本体部分
       body: members.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: members.length,
-                    itemBuilder: (context, index) {
-                      final member = members[index];
-                      return RadioListTile<String>(
-                        title: Text(member['name'] ?? '名無し'),
-                        value: member['id'],
-                        groupValue: selectedMemberId,
-                        onChanged: (value) {
-                          setState(() => selectedMemberId = value);
-                        },
-                      );
-                    },
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  // メンバー一覧
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: members.length,
+                      itemBuilder: (context, index) {
+                        final member = members[index];
+                        final memberName = member['name'] ?? '名無し';
+                        final memberId = member['id'] as String?;
+
+                        return Card(
+                          // Cardの枠線や影などを少しモダンに
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: RadioListTile<String>(
+                            title: Text(
+                              memberName,
+                              style: TextStyle(
+                                color: _blackColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            // アクティブ時のラジオボタンカラーをダークブルーへ
+                            activeColor: _darkBlueColor,
+                            // メンバーIDをvalueにセット
+                            value: memberId ?? '',
+                            // 選択中のID
+                            groupValue: selectedMemberId,
+                            onChanged: (value) {
+                              setState(() => selectedMemberId = value);
+                            },
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                  Text('パスワードの初期値は0000です。', 
-      style: TextStyle(fontSize: 12, color: Colors.grey),
-    ),
-                  Text('あとでパスワードは変更してね', 
-      style: TextStyle(fontSize: 12, color: Colors.grey),
-    ),
-                const Text('パスワードを入力してください。'), // ← もはや"初期"に限定しない
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-  controller: passController,
-  obscureText: true,
-  decoration: const InputDecoration(
-    labelText: 'パスワード',
-    hintText: '0000',
-  ),
-  inputFormatters: [
-    LengthLimitingTextInputFormatter(4), // 最大4文字に制限
-  ],
-),
-                ),
-                ElevatedButton(
-                  onPressed: _onLoginPressed,
-                  child: const Text('ログイン'),
-                ),
-                const SizedBox(height: 20),
-              ],
+
+                  const SizedBox(height: 16),
+
+                  // 説明テキスト
+                  Text(
+                    'パスワードの初期値は 0000 です。\nあとでパスワードは変更してね',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    'パスワードを入力してください。',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _blackColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // パスワード入力
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: TextField(
+                      controller: passController,
+                      obscureText: true,
+                      style: TextStyle(color: _blackColor),
+                      decoration: const InputDecoration(
+                        labelText: 'パスワード',
+                        hintText: '0000',
+                        border: InputBorder.none,
+                      ),
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(4), // 最大4文字に制限
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ログインボタン
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      // ダークブルーをベースに、ボタンの角を少し丸く
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _darkBlueColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: _onLoginPressed,
+                      child: Text(
+                        'ログイン',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ゴールドはアクセントとして本当に少しだけ：コピーライトや小さなポイントで使うなど
+                  Text(
+                    '© 2025 School Memories',
+                    style: TextStyle(
+                      color: _goldColor.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                ],
+              ),
             ),
     );
   }
@@ -108,7 +217,7 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
       return;
     }
 
-    // 選択した memberId の Firestore doc を取得して、loginPassword を照合
+    // 選択した memberId の Firestore ドキュメントを取得し、loginPassword をチェック
     final doc = await FirebaseFirestore.instance
         .collection('classes')
         .doc(widget.classId)
@@ -121,7 +230,7 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
       return;
     }
 
-    final storedPass = doc.data()?['loginPassword'] ?? '0000'; 
+    final storedPass = doc.data()?['loginPassword'] ?? '0000';
     // loginPassword が無い場合は '0000' を初期値とする
 
     if (inputPass != storedPass) {
@@ -130,29 +239,33 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
     }
 
     // パスワードOK -> Homeへ移動
-    // print('classnameだせ');
-    print(widget.className);
     final classInfo = ClassModel(
       id: widget.classId,
       name: widget.className,
-      // password: '', 
-      // userCount: 0,
     );
-            final model = context.read<MyProfileModel>();
-            await model.fetchProfileOnce(classInfo.id, selectedMemberId!);
-       
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => Home(
-          classInfo: classInfo,
-          currentMemberId: selectedMemberId!,
-        ),
-      ),
-    );
+    final model = context.read<MyProfileModel>();
+    await model.fetchProfileOnce(classInfo.id, selectedMemberId!);
+
+Navigator.pushAndRemoveUntil(
+  context,
+  MaterialPageRoute(
+    builder: (_) => Home(
+      classInfo: classInfo,
+      currentMemberId: selectedMemberId!,
+    ),
+  ),
+  (route) => false, // すべてのルートを削除（戻れなくする）
+);
+
   }
 
   void _showMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        // ゴールドを目立たせたくなければ、スナックバーは黒やダークブルーにしてもOK
+        backgroundColor: _darkBlueColor.withOpacity(0.9),
+      ),
+    );
   }
 }

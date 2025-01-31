@@ -39,14 +39,14 @@ class MessagePage extends StatelessWidget {
               if (!model.isSent) {
                 return const Center(
                   child: Padding(
-                    padding: EdgeInsets.all(32.0),
+                    padding: EdgeInsets.only(top: 57, left: 7, right: 7),
                     child: Text(
                       'まだ寄せ書きを見ることはできません。\n'
                       'まずはメッセージを送信してください。',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.brown,
+                        fontSize: 16,
+                      
                         fontWeight: FontWeight.bold,
                         height: 1.4,
                       ),
@@ -57,10 +57,19 @@ class MessagePage extends StatelessWidget {
 
               // メッセージが0件
               if (model.messages.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'まだメッセージがありません。',
-                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                return Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 57, left: 7, right: 7),
+                    child: Text(
+                       'まだメッセージがありません。',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                      
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
+                    ),
                   ),
                 );
               }

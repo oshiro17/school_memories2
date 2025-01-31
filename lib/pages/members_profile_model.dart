@@ -66,6 +66,10 @@ class MembersProfileModel extends ChangeNotifier {
             || member.motto.isNotEmpty
             || member.futureDream.isNotEmpty;
       }).toList();
+          // mottoがnullまたは空のメンバーを除外
+    classMemberList = list.where((member) {
+      return member.motto.trim().isNotEmpty;
+    }).toList();
 
     } catch (e) {
       print('エラー: クラスメンバーの取得に失敗 $e');
