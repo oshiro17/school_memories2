@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RankingPageModel extends ChangeNotifier {
   bool isLoading = false;
-  bool isVoted = false; // Firestoreから取得して、trueならランキングを表示
+  bool isVoted = false;
 
   final List<String> questionList = [
     '1番モテるのは？',
@@ -38,15 +40,34 @@ class RankingPageModel extends ChangeNotifier {
     '1番アイドルになりそうなのは？',
   ];
 
-  /// 質問index => List<RankingVote>
   Map<int, List<RankingVote>> rankingVotes = {};
 
   /// FirestoreからisVoted判定 & ランキング情報取得
-  Future<void> init(String classId, String currentMemberId) async {
-    try {
-      isLoading = true;
-      notifyListeners();
+  Future<void> init(String classId, String currentMemberId, {bool forceUpdate = false}) async {
+    isLoading = true;
+    notifyListeners();
 
+    final prefs = await SharedPreferences.getInstance();
+    final cacheKey = 'ranking_${classId}_$currentMemberId';
+
+    // キャッシュが存在する場合はそれを使用（強制更新でない場合）
+    if (!forceUpdate) {
+      final cachedData = prefs.getString(cacheKey);
+      if (cachedData != null) {
+        try {
+          final cachedJson = json.decode(cachedData);
+          _loadFromCache(cachedJson);
+          isLoading = false;
+          notifyListeners();
+          return;
+        } catch (e) {
+          print('キャッシュの読み込みに失敗しました: $e');
+        }
+      }
+    }
+
+    // Firestoreからデータ取得
+    try {
       // まず「現在のメンバーが投票済みかどうか」を確認
       final memberDoc = await FirebaseFirestore.instance
           .collection('classes')
@@ -57,10 +78,8 @@ class RankingPageModel extends ChangeNotifier {
 
       if (memberDoc.exists) {
         final data = memberDoc.data() ?? {};
-        // isVotedフィールドがなければfalseになる
         isVoted = data['isVoted'] ?? false;
       } else {
-        // ドキュメントが存在しなければfalse扱い
         isVoted = false;
       }
 
@@ -68,8 +87,6 @@ class RankingPageModel extends ChangeNotifier {
       if (isVoted) {
         for (int i = 0; i < questionList.length; i++) {
           final docId = i.toString();
-
-          // /classes/{classId}/rankings/{docId}/votes を取得
           final votesSnap = await FirebaseFirestore.instance
               .collection('classes')
               .doc(classId)
@@ -78,29 +95,52 @@ class RankingPageModel extends ChangeNotifier {
               .collection('votes')
               .get();
 
-          // voteDocに { count, avatarIndex, memberName } が入っている想定
           final votes = votesSnap.docs.map((voteDoc) {
             final data = voteDoc.data();
-            final count = data['count'] ?? 0;
-            final avatarIndex = data['avatarIndex'] ?? 0;
-            final memberName = data['memberName'] ?? 'unknown';
-
             return RankingVote(
-              memberName: memberName,
-              count: count,
-              avatarIndex: avatarIndex,
+              memberName: data['memberName'] ?? 'unknown',
+              count: data['count'] ?? 0,
+              avatarIndex: data['avatarIndex'] ?? 0,
             );
           }).toList();
 
-          // 票数降順にソート
           votes.sort((a, b) => b.count.compareTo(a.count));
           rankingVotes[i] = votes;
         }
+
+        // キャッシュを更新
+        await prefs.setString(cacheKey, json.encode(_toCacheJson()));
       }
+    } catch (e) {
+      print('Firestoreからのデータ取得中にエラーが発生しました: $e');
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// キャッシュからデータをロード
+  void _loadFromCache(Map<String, dynamic> cachedJson) {
+    isVoted = cachedJson['isVoted'] ?? false;
+
+    if (isVoted) {
+      final cachedVotes = cachedJson['rankingVotes'] as Map<String, dynamic>;
+      rankingVotes = cachedVotes.map((key, value) {
+        final index = int.parse(key);
+        final votesList = (value as List).map((e) => RankingVote.fromJson(e)).toList();
+        return MapEntry(index, votesList);
+      });
+    }
+  }
+
+  /// キャッシュ用にJSONに変換
+  Map<String, dynamic> _toCacheJson() {
+    return {
+      'isVoted': isVoted,
+      'rankingVotes': rankingVotes.map((key, value) {
+        return MapEntry(key.toString(), value.map((vote) => vote.toJson()).toList());
+      }),
+    };
   }
 }
 
@@ -115,4 +155,22 @@ class RankingVote {
     required this.count,
     required this.avatarIndex,
   });
+
+  /// JSONからのデータ復元
+  factory RankingVote.fromJson(Map<String, dynamic> json) {
+    return RankingVote(
+      memberName: json['memberName'],
+      count: json['count'],
+      avatarIndex: json['avatarIndex'],
+    );
+  }
+
+  /// JSONへの変換
+  Map<String, dynamic> toJson() {
+    return {
+      'memberName': memberName,
+      'count': count,
+      'avatarIndex': avatarIndex,
+    };
+  }
 }

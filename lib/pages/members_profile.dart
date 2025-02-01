@@ -9,6 +9,7 @@ import 'package:school_memories2/pages/members_profile_model.dart';
 class ProfilePage extends StatelessWidget {
   final ClassModel classInfo;
   final String currentMemberId;
+
   const ProfilePage({Key? key, required this.classInfo, required this.currentMemberId}) : super(key: key);
 
   /// 背景のグラデーション

@@ -8,6 +8,7 @@ import 'package:school_memories2/pages/message.dart';
 import 'package:school_memories2/pages/myprofile.dart';
 import 'package:school_memories2/pages/myprofile_model.dart';
 import 'package:school_memories2/pages/ranking.dart';
+import 'package:school_memories2/pages/ranking_page_model.dart';
 import '../class_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -44,6 +45,9 @@ class _HomeState extends State<Home> {
       // MessageModel の初期化
       final messageModel = Provider.of<MessageModel>(context, listen: false);
       messageModel.fetchMessages(widget.classInfo.id, widget.currentMemberId);
+
+       final rankingModel = Provider.of<RankingPageModel>(context, listen: false);
+      rankingModel.init(widget.classInfo.id, widget.currentMemberId);
     });
 
     // タブの初期化
