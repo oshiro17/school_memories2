@@ -39,6 +39,14 @@ class WriteMessagePage extends StatelessWidget {
                 ),
               );
             }
+                        if (!model.isCallme) {
+              return const Center(
+                child: Text(
+                  '先にプロフィール設定をしてください。',
+                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+              );
+            }
 
             // 未送信の場合はメッセージ入力画面を表示
             return Column(
@@ -219,6 +227,7 @@ class WriteMessagePage extends StatelessWidget {
 class WriteMessagePageModel extends ChangeNotifier {
   bool isLoading = false;
   bool isSent = false;
+  bool isCallme = false;
   late String classId;
   late String currentMemberId;
 
@@ -250,6 +259,7 @@ class WriteMessagePageModel extends ChangeNotifier {
           .get();
 
       isSent = memberDoc.data()?['isSent'] ?? false;
+      isCallme = memberDoc.data()?['callme'] ?? false;
       senderName = memberDoc.data()?['name'] ?? 'Unknown';
       avatarIndex = memberDoc.data()?['avatarIndex'] ?? 0;
 

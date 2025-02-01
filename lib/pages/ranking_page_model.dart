@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RankingPageModel extends ChangeNotifier {
-  bool isLoading = false;
-  bool isVoted = false;
+  bool isLoading = false;    // 全体の読み込みフラグ
+  bool isVoted = false;      // 現在ユーザーが投票済みかどうか
 
+  /// 質問一覧
   final List<String> questionList = [
     '1番モテるのは？',
     '1番おしゃべりなのは？',
@@ -40,144 +41,198 @@ class RankingPageModel extends ChangeNotifier {
     '1番アイドルになりそうなのは？',
   ];
 
-  Map<int, List<RankingVote>> rankingVotes = {};
+  /// 質問ごとのランキングデータ  
+  /// - key: 質問のインデックス  
+  /// - value: まだ読み込んでいない(= null) or 取得完了したランキングリスト
+  Map<int, List<RankingVote>?> rankingVotes = {};
 
-  /// FirestoreからisVoted判定 & ランキング情報取得
-  Future<void> init(String classId, String currentMemberId, {bool forceUpdate = false}) async {
+  /// Firestore から投票状況 & ランキングを取得 (質問単位で逐次ロード)
+  Future<void> init(
+    String classId,
+    String currentMemberId, {
+    bool forceUpdate = false,
+  }) async {
     isLoading = true;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
     final cacheKey = 'ranking_${classId}_$currentMemberId';
 
-    // キャッシュが存在する場合はそれを使用（強制更新でない場合）
+    // 1) キャッシュがあれば読む（強制更新でない場合）
     if (!forceUpdate) {
       final cachedData = prefs.getString(cacheKey);
       if (cachedData != null) {
         try {
-          final cachedJson = json.decode(cachedData);
+          final cachedJson = jsonDecode(cachedData);
           _loadFromCache(cachedJson);
+          // いったん読み込みフラグをfalseにして、画面にキャッシュを表示
           isLoading = false;
           notifyListeners();
-          return;
         } catch (e) {
-          print('キャッシュの読み込みに失敗しました: $e');
+          print('キャッシュの読み込みに失敗: $e');
         }
       }
     }
 
-    // Firestoreからデータ取得
+    // 2) Firestore から「投票済みかどうか」を確認
     try {
-      // まず「現在のメンバーが投票済みかどうか」を確認
       final memberDoc = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
           .collection('members')
           .doc(currentMemberId)
           .get();
-
       if (memberDoc.exists) {
         final data = memberDoc.data() ?? {};
         isVoted = data['isVoted'] ?? false;
       } else {
         isVoted = false;
       }
-
-      // isVotedがtrueのときのみランキングを取得
-      if (isVoted) {
-        for (int i = 0; i < questionList.length; i++) {
-          final docId = i.toString();
-          final votesSnap = await FirebaseFirestore.instance
-              .collection('classes')
-              .doc(classId)
-              .collection('rankings')
-              .doc(docId)
-              .collection('votes')
-              .get();
-
-          final votes = votesSnap.docs.map((voteDoc) {
-            final data = voteDoc.data();
-             final votesMembersSnap = await FirebaseFirestore.instance
-              .collection('classes')
-              .doc(classId)
-              .collection('users')
-              .doc( data['memberId'])
-              // .collection('members')
-              .get();
-            return RankingVote(
-              // memberName: data['memberName'] ?? 'unknown',
-              count: data['count'] ?? 0,
-              // avatarIndex: data['avatarIndex'] ?? 0,
-            );
-          }).toList();
-
-          votes.sort((a, b) => b.count.compareTo(a.count));
-          rankingVotes[i] = votes;
-        }
-
-        // キャッシュを更新
-        await prefs.setString(cacheKey, json.encode(_toCacheJson()));
-      }
     } catch (e) {
-      print('Firestoreからのデータ取得中にエラーが発生しました: $e');
-    } finally {
+      print('投票状態チェック失敗: $e');
+    }
+
+    // 投票していないなら、ここで終了
+    if (!isVoted) {
       isLoading = false;
       notifyListeners();
+      return;
     }
+
+    // 3) 投票済みなら順次ランキングをロード
+    isLoading = false; 
+    notifyListeners(); // 画面を部分的に表示可能に
+
+    // 質問数だけループし、各質問の投票情報を取得
+    for (int i = 0; i < questionList.length; i++) {
+      // まだロードしていない項目は null をセット（キャッシュがなければ）
+      rankingVotes.putIfAbsent(i, () => null);
+
+      // Firestore: rankings/i/votes コレクションを取得
+      try {
+        final docId = i.toString();
+        final votesSnap = await FirebaseFirestore.instance
+            .collection('classes')
+            .doc(classId)
+            .collection('rankings')
+            .doc(docId)
+            .collection('votes')
+            .get();
+
+        // 投票ドキュメント一覧 => memberId => membersサブコレクションから最新の name, avatarIndex を取得
+        final votes = await Future.wait(votesSnap.docs.map((voteDoc) async {
+          final data = voteDoc.data();
+          final memberId = data['memberId'] as String?;
+          final count = data['count'] ?? 0;
+
+          if (memberId == null) {
+            // もし memberId がなければ unknown
+            return RankingVote(
+              memberName: 'unknown',
+              avatarIndex: 0,
+              count: count,
+            );
+          }
+
+          // 最新のメンバー情報を参照
+          final memberRef = FirebaseFirestore.instance
+              .collection('classes')
+              .doc(classId)
+              .collection('members')
+              .doc(memberId);
+
+          final memberSnap = await memberRef.get();
+          if (!memberSnap.exists) {
+            // もし該当ユーザーが見つからなければ
+            return RankingVote(
+              memberName: 'unknown',
+              avatarIndex: 0,
+              count: count,
+            );
+          }
+
+          final memberData = memberSnap.data() as Map<String, dynamic>?;
+
+          // 最新の avatarIndex, name を取得
+          final avatarIndex = memberData?['avatarIndex'] ?? 0;
+          final memberName = memberData?['name'] ?? 'unknown';
+
+          return RankingVote(
+            memberName: memberName,
+            avatarIndex: avatarIndex,
+            count: count,
+          );
+        }).toList());
+
+        // 投票数の多い順にソート
+        votes.sort((a, b) => b.count.compareTo(a.count));
+
+        // 読み込み完了
+        rankingVotes[i] = votes;
+        notifyListeners();
+
+      } catch (e) {
+        print('質問$i ロード失敗: $e');
+        // エラーなら空リスト
+        rankingVotes[i] = [];
+        notifyListeners();
+      }
+    }
+
+    // 4) 全部ロード後、キャッシュに保存
+    await prefs.setString(cacheKey, jsonEncode(_toCacheJson()));
   }
 
-  /// キャッシュからデータをロード
+  /// キャッシュから復元
   void _loadFromCache(Map<String, dynamic> cachedJson) {
     isVoted = cachedJson['isVoted'] ?? false;
+    if (!isVoted) return;
 
-    if (isVoted) {
-      final cachedVotes = cachedJson['rankingVotes'] as Map<String, dynamic>;
-      rankingVotes = cachedVotes.map((key, value) {
-        final index = int.parse(key);
-        final votesList = (value as List).map((e) => RankingVote.fromJson(e)).toList();
-        return MapEntry(index, votesList);
-      });
-    }
+    final cachedMap = cachedJson['rankingVotes'] as Map<String, dynamic>;
+    rankingVotes = cachedMap.map((key, value) {
+      final index = int.parse(key);
+      final list = (value as List).map((e) => RankingVote.fromJson(e)).toList();
+      return MapEntry(index, list);
+    });
   }
 
-  /// キャッシュ用にJSONに変換
+  /// キャッシュ用にJSON化
   Map<String, dynamic> _toCacheJson() {
     return {
       'isVoted': isVoted,
       'rankingVotes': rankingVotes.map((key, value) {
-        return MapEntry(key.toString(), value.map((vote) => vote.toJson()).toList());
+        final list = value ?? [];
+        return MapEntry(key.toString(), list.map((v) => v.toJson()).toList());
       }),
     };
   }
 }
 
-/// ランキング表示用データクラス
+/// ランキング用データ
 class RankingVote {
   final String memberName;
-  final int count;
   final int avatarIndex;
+  final int count;
 
   RankingVote({
     required this.memberName,
-    required this.count,
     required this.avatarIndex,
+    required this.count,
   });
 
-  /// JSONからのデータ復元
   factory RankingVote.fromJson(Map<String, dynamic> json) {
     return RankingVote(
       memberName: json['memberName'],
-      count: json['count'],
       avatarIndex: json['avatarIndex'],
+      count: json['count'],
     );
   }
 
-  /// JSONへの変換
   Map<String, dynamic> toJson() {
     return {
       'memberName': memberName,
-      'count': count,
       'avatarIndex': avatarIndex,
+      'count': count,
     };
   }
 }
