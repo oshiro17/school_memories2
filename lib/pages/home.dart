@@ -34,13 +34,16 @@ class _HomeState extends State<Home> {
     super.initState();
 
     // MyProfileModelのfetchProfileOnceを呼び出し
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profileModel = Provider.of<MyProfileModel>(context, listen: false);
       profileModel.fetchProfileOnce(widget.classInfo.id, widget.currentMemberId);
 
-      // MembersProfileModelのfetchClassMembersを呼び出し
       final membersModel = Provider.of<MembersProfileModel>(context, listen: false);
       membersModel.fetchClassMembers(widget.classInfo.id, widget.currentMemberId);
+
+      // MessageModel の初期化
+      final messageModel = Provider.of<MessageModel>(context, listen: false);
+      messageModel.fetchMessages(widget.classInfo.id, widget.currentMemberId);
     });
 
     // タブの初期化

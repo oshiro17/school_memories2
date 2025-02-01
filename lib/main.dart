@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/color.dart';
 import 'package:school_memories2/pages/members_profile_model.dart';
+import 'package:school_memories2/pages/message.dart';
 import 'package:school_memories2/pages/myprofile_model.dart';
 import 'package:school_memories2/pages/setting_profile.dart';
 import 'package:school_memories2/signup/class_selection_page.dart';
@@ -60,6 +61,7 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => SettingProfileModel()),
         ChangeNotifierProvider(create: (_) => MembersProfileModel()),
+           ChangeNotifierProvider<MessageModel>(create: (_) => MessageModel()),
       ],
       child: MaterialApp(
         title: 'School Memories',
