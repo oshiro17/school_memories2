@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 追加
+
 import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/pages/home.dart';
 import 'package:school_memories2/pages/myprofile_model.dart';
@@ -9,29 +11,20 @@ import 'package:school_memories2/pages/myprofile_model.dart';
 class SelectAccountPage extends StatefulWidget {
   final String classId;
   final String className;
-
-  const SelectAccountPage({
-    Key? key,
-    required this.classId,
-    required this.className,
-  }) : super(key: key);
+  const SelectAccountPage({Key? key, required this.classId, required this.className}) : super(key: key);
 
   @override
   State<SelectAccountPage> createState() => _SelectAccountPageState();
 }
 
 class _SelectAccountPageState extends State<SelectAccountPage> {
-  // カラー定義
   final Color _backgroundColor = Colors.white;
   final Color _darkBlueColor = const Color(0xFF1E3A8A);
   final Color _goldColor = const Color(0xFFFFD700);
   final Color _blackColor = Colors.black;
 
-  // メンバーリストと選択情報
   List<Map<String, dynamic>> members = [];
   String? selectedMemberId;
-
-  // パスワード入力用
   final passController = TextEditingController();
 
   @override
@@ -55,21 +48,12 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 背景色を白に
       backgroundColor: _backgroundColor,
-
-      // AppBar
       appBar: AppBar(
-        // ダークブルーをメインカラーとして使用
         backgroundColor: _darkBlueColor,
-        title: Text(
-          'あなたのアカウントを選択',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('あなたのアカウントを選択', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
-
-      // 本体部分
       body: members.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -86,7 +70,6 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                         final memberId = member['id'] as String?;
 
                         return Card(
-                          // Cardの枠線や影などを少しモダンに
                           elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -99,11 +82,8 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            // アクティブ時のラジオボタンカラーをダークブルーへ
                             activeColor: _darkBlueColor,
-                            // メンバーIDをvalueにセット
                             value: memberId ?? '',
-                            // 選択中のID
                             groupValue: selectedMemberId,
                             onChanged: (value) {
                               setState(() => selectedMemberId = value);
@@ -115,28 +95,16 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                   ),
 
                   const SizedBox(height: 16),
-
-                  // 説明テキスト
                   Text(
                     'パスワードの初期値は 0000 です。\nあとでパスワードは変更してね',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
-
                   const SizedBox(height: 12),
-
                   Text(
                     'パスワードを入力してください。',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _blackColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 14, color: _blackColor, fontWeight: FontWeight.bold),
                   ),
-
                   const SizedBox(height: 8),
 
                   // パスワード入力
@@ -157,7 +125,7 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                         border: InputBorder.none,
                       ),
                       inputFormatters: [
-                        LengthLimitingTextInputFormatter(4), // 最大4文字に制限
+                        LengthLimitingTextInputFormatter(4),
                       ],
                     ),
                   ),
@@ -169,7 +137,6 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      // ダークブルーをベースに、ボタンの角を少し丸く
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _darkBlueColor,
                         shape: RoundedRectangleBorder(
@@ -177,28 +144,15 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                         ),
                       ),
                       onPressed: _onLoginPressed,
-                      child: Text(
-                        'ログイン',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: Text('ログイン', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
 
                   const SizedBox(height: 16),
-
-                  // ゴールドはアクセントとして本当に少しだけ：コピーライトや小さなポイントで使うなど
                   Text(
                     '© 2025 School Memories',
-                    style: TextStyle(
-                      color: _goldColor.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: _goldColor.withOpacity(0.7), fontSize: 12),
                   ),
-
                   const SizedBox(height: 10),
                 ],
               ),
@@ -231,12 +185,16 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
     }
 
     final storedPass = doc.data()?['loginPassword'] ?? '0000';
-    // loginPassword が無い場合は '0000' を初期値とする
-
     if (inputPass != storedPass) {
       _showMessage('パスワードが違います');
       return;
     }
+
+    // ========== ここでSharedPreferencesに保存する ==========
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('savedClassId', widget.classId);
+    await prefs.setString('savedMemberId', selectedMemberId!);
+    // =======================================================
 
     // パスワードOK -> Homeへ移動
     final classInfo = ClassModel(
@@ -246,24 +204,22 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
     final model = context.read<MyProfileModel>();
     await model.fetchProfileOnce(classInfo.id, selectedMemberId!);
 
-Navigator.pushAndRemoveUntil(
-  context,
-  MaterialPageRoute(
-    builder: (_) => Home(
-      classInfo: classInfo,
-      currentMemberId: selectedMemberId!,
-    ),
-  ),
-  (route) => false, // すべてのルートを削除（戻れなくする）
-);
-
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Home(
+          classInfo: classInfo,
+          currentMemberId: selectedMemberId!,
+        ),
+      ),
+      (route) => false,
+    );
   }
 
   void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        // ゴールドを目立たせたくなければ、スナックバーは黒やダークブルーにしてもOK
         backgroundColor: _darkBlueColor.withOpacity(0.9),
       ),
     );

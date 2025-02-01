@@ -76,14 +76,15 @@ class ProfilePage extends StatelessWidget {
   // ★ FloatingActionButton (リロードボタン) は変更しない
 
       // ★ FloatingActionButton (リロードボタン) は変更しない
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: goldColor,
-        onPressed: () async {
-          // 強制リロード
-          await membersModel.fetchClassMembers(classInfo.id,currentMemberId);
-        },
-        child: const Icon(Icons.refresh),
-      ),
+floatingActionButton: FloatingActionButton(
+  backgroundColor: goldColor,
+  onPressed: () async {
+    // 強制リロード（Firestoreから再取得）
+    await membersModel.fetchClassMembers(classInfo.id, currentMemberId, forceRefresh: true);
+  },
+  child: const Icon(Icons.refresh),
+),
+
     );
   }
 

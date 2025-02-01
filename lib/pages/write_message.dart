@@ -26,12 +26,6 @@ class WriteMessagePage extends StatelessWidget {
         ),
         // 背景を画像 or グラデーションなどお好みで
         body: Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/paper_texture.jpg'), // お好みの紙や背景画像
-              fit: BoxFit.cover,
-            ),
-          ),
           child: Consumer<WriteMessagePageModel>(
             builder: (context, model, child) {
               // ローディング中

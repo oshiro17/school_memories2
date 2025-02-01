@@ -1,94 +1,106 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MembersProfileModel extends ChangeNotifier {
   List<Member> classMemberList = [];
   bool isLoading = false;
-  bool isEmpty = true;// 一度だけ取得するフラグ
+  bool isEmpty = true;
 
-  Future<void> fetchClassMembers(String classId, String currentMemberId ) async {
-   
-    isLoading = true;
-    notifyListeners();
+  // クラスメンバーを取得（Firestoreからまたはキャッシュから）
+Future<void> fetchClassMembers(String classId, String currentMemberId, {bool forceRefresh = false}) async {
+  isLoading = true;
+  notifyListeners();
 
+  try {
+    final prefs = await SharedPreferences.getInstance();
 
-    try {
-      final s = await FirebaseFirestore.instance
-          .collection('classes')
-          .doc(classId)
-          .collection('members')
-          .doc(currentMemberId)
-          .get();
-     if (s.exists) {
-  final callme = s.data()!['callme'];
-  if (callme == null || callme == '') {
-    // `callme` フィールドが存在しないか、空文字列の場合
-    isEmpty = true;
+    // forceRefreshがtrueならキャッシュを無視してFirestoreから取得
+    if (!forceRefresh) {
+      final cachedData = prefs.getString('classMembers_$classId');
+      if (cachedData != null) {
+        print('キャッシュデータを使用しています');
+        final List<dynamic> decodedList = jsonDecode(cachedData);
+        classMemberList = decodedList.map((json) => Member.fromJson(json)).toList();
+        isEmpty = classMemberList.isEmpty;
+        isLoading = false;
+        notifyListeners();
+        return;
+      }
+    }
+
+    // Firestoreからデータ取得
+    print('Firestoreからデータを取得しています');
+    await _fetchFromFirestore(classId, currentMemberId, prefs);
+
+  } catch (e) {
+    print('エラー: クラスメンバーの取得に失敗 $e');
+  } finally {
     isLoading = false;
-    return;
-  } else {
-    // `callme` が空でない場合
-    isEmpty = false;
-    print("デバッグ: メンバーを表示");
+    notifyListeners();
   }
-} else {
-  print("まずい"); // ドキュメントが存在しない場合
-  return;
 }
-    
-      final snapshot = await FirebaseFirestore.instance
-          .collection('classes')
-          .doc(classId)
-          .collection('members')
-          .get();
-
-      final List<Member> list = snapshot.docs.map((doc) {
-        final data = doc.data();
-
-        final id = doc.id;
 
 
-        // それ以外の型なら 0 のまま
+  // Firestoreからデータを取得し、SharedPreferencesに保存
+  Future<void> _fetchFromFirestore(String classId, String currentMemberId, SharedPreferences prefs) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('classes')
+        .doc(classId)
+        .collection('members')
+        .doc(currentMemberId)
+        .get();
 
-        return Member(
-          // avatarIndex: avatarIndex,
-  id: id,
-  avatarIndex: data['avatarIndex'] ?? 0,
-  name: data['name'] ?? '',
-  motto: data['motto'] ?? '',
-  futureDream: data['futureDream'] ?? '',
-        );
-      }).toList();
+    if (!doc.exists) {
+      print("エラー: ドキュメントが存在しません");
+      isEmpty = true;
+      return;
+    }
 
-      // プロフィール未設定を除外したい場合など
-      classMemberList = list.where((member) {
-        return member.name.isNotEmpty
-            || member.motto.isNotEmpty
-            || member.futureDream.isNotEmpty;
-      }).toList();
-          // mottoがnullまたは空のメンバーを除外
-    classMemberList = list.where((member) {
-      return member.motto.trim().isNotEmpty;
+    final callme = doc.data()?['callme'];
+    if (callme == null || callme.isEmpty) {
+      isEmpty = true;
+      return;
+    } else {
+      isEmpty = false;
+    }
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('classes')
+        .doc(classId)
+        .collection('members')
+        .get();
+
+    final List<Member> list = snapshot.docs.map((doc) {
+      final data = doc.data();
+      return Member(
+        id: doc.id,
+        avatarIndex: data['avatarIndex'] ?? 0,
+        name: data['name'] ?? '',
+        motto: data['motto'] ?? '',
+        futureDream: data['futureDream'] ?? '',
+      );
     }).toList();
 
-    } catch (e) {
-      print('エラー: クラスメンバーの取得に失敗 $e');
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-      isLoading = false;
-  }
+    // 空のフィールドを持つメンバーを除外
+    classMemberList = list.where((member) {
+      return member.name.isNotEmpty || member.motto.isNotEmpty || member.futureDream.isNotEmpty;
+    }).toList();
 
+    // SharedPreferencesに保存（JSON形式で保存）
+    final String encodedData = jsonEncode(classMemberList.map((member) => member.toJson()).toList());
+    await prefs.setString('classMembers_$classId', encodedData);
+  }
 }
 
 /// Memberクラス
 class Member {
-  final String id;         // Firestore doc.id
-  final int avatarIndex;   // アバター画像用のインデックス
-  final String name;       // 名前
-  final String motto;      // モットー
-  final String futureDream;// 将来の夢等
+  final String id;
+  final int avatarIndex;
+  final String name;
+  final String motto;
+  final String futureDream;
 
   Member({
     required this.id,
@@ -97,4 +109,26 @@ class Member {
     required this.motto,
     required this.futureDream,
   });
+
+  // JSONからMemberインスタンスを生成
+  factory Member.fromJson(Map<String, dynamic> json) {
+    return Member(
+      id: json['id'],
+      avatarIndex: json['avatarIndex'],
+      name: json['name'],
+      motto: json['motto'],
+      futureDream: json['futureDream'],
+    );
+  }
+
+  // MemberインスタンスをJSON形式に変換
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'avatarIndex': avatarIndex,
+      'name': name,
+      'motto': motto,
+      'futureDream': futureDream,
+    };
+  }
 }

@@ -5,6 +5,8 @@ import 'package:school_memories2/pages/write_message.dart';
 import 'package:school_memories2/pages/vote.dart';
 import 'package:school_memories2/signup/class_selection_page.dart';
 import 'package:school_memories2/signup/select_account_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MainMemoriesDialog extends StatelessWidget {
   final ClassModel classInfo;
@@ -53,7 +55,11 @@ class MainMemoriesDialog extends StatelessWidget {
         ),
            SimpleDialogOption(
           child: const Text('他のクラスにログインする'),
-          onPressed: () {
+          onPressed: () async{
+
+               final prefs = await SharedPreferences.getInstance();  // awaitを使用
+    await prefs.remove('savedClassId');
+    await prefs.remove('savedMemberId');
             Navigator.pop(context); 
             Navigator.push(
               context,
@@ -66,7 +72,13 @@ class MainMemoriesDialog extends StatelessWidget {
         ),
            SimpleDialogOption(
           child: const Text('他のメンバーでログインする'),
-          onPressed: () {
+          onPressed: () async{
+   final prefs = await SharedPreferences.getInstance();  // awaitを使用
+    await prefs.remove('savedClassId');
+    await prefs.remove('savedMemberId');
+//             final prefs = await SharedPreferences.getInstance();
+// await prefs.remove('savedClassId');
+// await prefs.remove('savedMemberId');
             Navigator.pop(context); 
             Navigator.push(
               context,
