@@ -20,86 +20,85 @@ class MessagePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final model = Provider.of<MessageModel>(context);
 
-    return Scaffold(
-      // 全体背景にグラデーションを設定
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFE0F7FA), Color(0xFFFFEBEE)], // グラデーション
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Builder(
-          builder: (context) {
-            // ローディング中の表示
-            if (model.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            // メッセージ未送信の場合
-            if (!model.isSent) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 57, left: 7, right: 7),
-                  child: Text(
-                    'まだ寄せ書きを見ることはできません。\n'
-                    'まずはメッセージを送信してください。',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            // メッセージが存在しない場合
-            if (model.messages.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 57, left: 7, right: 7),
-                  child: Text(
-                    'まだメッセージがありません。',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            // メッセージがある場合: リスト表示
-            return RefreshIndicator(
-              onRefresh: () => model.fetchMessages(classId, currentMemberId, forceUpdate: true),
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                itemCount: model.messages.length,
-                itemBuilder: (context, index) {
-                  final msg = model.messages[index];
-                  final dateTime = msg.timestamp?.toDate();
-                  return _buildMessageBubble(msg, dateTime);
-                },
-              ),
-            );
-          },
-        ),
+ return Scaffold(
+  body: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color(0xFFE0F7FA), Color(0xFFFFEBEE)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: goldColor,
-  onPressed: () {
-    final model = Provider.of<MessageModel>(context, listen: false);
-    model.fetchMessages(classId, currentMemberId, forceUpdate: true);
-  },
-  child: const Icon(Icons.refresh),
-),
+    ),
+    child: Builder(
+      builder: (context) {
+        if (model.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    );
+        if (!model.isSent) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 57, left: 7, right: 7),
+              child: Text(
+                'まだ寄せ書きを見ることはできません。\n'
+                'まずはメッセージを送信してください。',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (model.messages.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 57, left: 7, right: 7),
+              child: Text(
+                'まだメッセージがありません。',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          );
+        }
+
+        // AppBarの高さ分の余白を追加
+        return RefreshIndicator(
+          onRefresh: () => model.fetchMessages(classId, currentMemberId, forceUpdate: true),
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            itemCount: model.messages.length + 1, // SizedBox分を考慮
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return const SizedBox(height: kToolbarHeight); // AppBarの高さ分の余白
+              }
+              final msg = model.messages[index - 1];
+              final dateTime = msg.timestamp?.toDate();
+              return _buildMessageBubble(msg, dateTime);
+            },
+          ),
+        );
+      },
+    ),
+  ),
+  floatingActionButton: FloatingActionButton(
+    backgroundColor: goldColor,
+    onPressed: () {
+      final model = Provider.of<MessageModel>(context, listen: false);
+      model.fetchMessages(classId, currentMemberId, forceUpdate: true);
+    },
+    child: const Icon(Icons.refresh),
+  ),
+);
+
   }
 
   /// メッセージの吹き出しUI

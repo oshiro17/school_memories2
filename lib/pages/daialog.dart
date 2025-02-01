@@ -74,7 +74,7 @@ class MainMemoriesDialog extends StatelessWidget {
           child: const Text('他のメンバーでログインする'),
           onPressed: () async{
    final prefs = await SharedPreferences.getInstance();  // awaitを使用
-    await prefs.remove('savedClassId');
+    // await prefs.remove('savedClassId');
     await prefs.remove('savedMemberId');
 //             final prefs = await SharedPreferences.getInstance();
 // await prefs.remove('savedClassId');
