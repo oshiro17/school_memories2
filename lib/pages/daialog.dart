@@ -6,7 +6,6 @@ import 'package:school_memories2/pages/vote.dart';
 import 'package:school_memories2/signup/class_selection_page.dart';
 import 'package:school_memories2/signup/select_account_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class MainMemoriesDialog extends StatelessWidget {
   final ClassModel classInfo;
@@ -26,7 +25,7 @@ class MainMemoriesDialog extends StatelessWidget {
         SimpleDialogOption(
           child: const Text('寄せ書きを書く'),
           onPressed: () {
-            Navigator.pop(context); // ダイアログを閉じる
+            Navigator.pop(context);
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -41,7 +40,7 @@ class MainMemoriesDialog extends StatelessWidget {
         SimpleDialogOption(
           child: const Text('ランキングを投票する'),
           onPressed: () {
-            Navigator.pop(context); 
+            Navigator.pop(context);
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -53,34 +52,28 @@ class MainMemoriesDialog extends StatelessWidget {
             );
           },
         ),
-           SimpleDialogOption(
+        SimpleDialogOption(
           child: const Text('他のクラスにログインする'),
-          onPressed: () async{
-
-               final prefs = await SharedPreferences.getInstance();  // awaitを使用
-    await prefs.remove('savedClassId');
-    await prefs.remove('savedMemberId');
-    await  prefs.remove('savedClassName');
-            Navigator.pop(context); 
+          onPressed: () async {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('savedClassId');
+            await prefs.remove('savedMemberId');
+            await prefs.remove('savedClassName');
+            Navigator.pop(context);
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ClassSelectionPage(
-                ),
+                builder: (context) => ClassSelectionPage(),
               ),
             );
           },
         ),
-           SimpleDialogOption(
+        SimpleDialogOption(
           child: const Text('他のメンバーでログインする'),
-          onPressed: () async{
-   final prefs = await SharedPreferences.getInstance();  // awaitを使用
-    // await prefs.remove('savedClassId');
-    await prefs.remove('savedMemberId');
-//             final prefs = await SharedPreferences.getInstance();
-// await prefs.remove('savedClassId');
-// await prefs.remove('savedMemberId');
-            Navigator.pop(context); 
+          onPressed: () async {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('savedMemberId');
+            Navigator.pop(context);
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -92,19 +85,47 @@ class MainMemoriesDialog extends StatelessWidget {
             );
           },
         ),
-        // 追加:
         SimpleDialogOption(
           child: const Text('パスワードを変更する'),
           onPressed: () {
-            Navigator.pop(context); // まずダイアログを閉じる
-
-            // パスワード変更ダイアログを表示
+            Navigator.pop(context);
             showDialog(
               context: context,
               builder: (context) {
                 return ChangePasswordDialog(
                   classId: classInfo.id,
                   memberId: currentMemberId,
+                );
+              },
+            );
+          },
+        ),
+        SimpleDialogOption(
+          child: const Text('お問い合わせ'),
+          onPressed: () {
+            Navigator.pop(context);
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text('お問い合わせ'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('メール: nonokuwapiano@gmail.com'),
+                      SizedBox(height: 8),
+                      Text('Twitter: @ora_nonoka'),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('閉じる'),
+                    ),
+                  ],
                 );
               },
             );

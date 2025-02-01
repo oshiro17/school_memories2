@@ -1,7 +1,10 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:school_memories2/signup/PrivacyPolicyPage.dart';
+import 'package:school_memories2/signup/TermsOfServicePage.dart';
 import '../color.dart';
 import 'select_account_page.dart';
 
@@ -225,7 +228,11 @@ Widget _buildCreateClassArea() {
       ),
       const SizedBox(height: 19),
 
-      
+
+      // 同意文言とリンク追加
+      _buildAgreementText(),
+
+      const SizedBox(height: 19), 
       // "クラスを作成"ボタン
       Center(
         child:
@@ -234,6 +241,49 @@ Widget _buildCreateClassArea() {
         child: const Text('クラスを作成'),
       ),),
     ],
+  );
+}
+Widget _buildAgreementText() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    child: RichText(
+      text: TextSpan(
+        text: 'クラスを作成・参加することで、',
+        style: const TextStyle(color: Colors.black),
+        children: [
+          TextSpan(
+            text: 'プライバシーポリシー',
+            style: const TextStyle(
+              color: darkBlueColor,
+              decoration: TextDecoration.underline,
+            ),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PrivacyPolicyPage()),
+                );
+              },
+          ),
+          const TextSpan(text: ' および '),
+          TextSpan(
+            text: '利用規約',
+            style: const TextStyle(
+              color: darkBlueColor,
+              decoration: TextDecoration.underline,
+            ),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TermsOfServicePage()),
+                );
+              },
+          ),
+          const TextSpan(text: ' に同意したことになります。'),
+        ],
+      ),
+    ),
   );
 }
 
@@ -257,6 +307,9 @@ Widget _buildCreateClassArea() {
   ],
 ),
         const SizedBox(height: 16),
+              _buildAgreementText(),
+
+      const SizedBox(height: 16),
 ElevatedButton(
   onPressed: () async {
     await _joinClass(
