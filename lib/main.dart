@@ -8,40 +8,32 @@ import 'package:school_memories2/pages/myprofile_model.dart';
 import 'package:school_memories2/pages/ranking_page_model.dart';
 import 'package:school_memories2/pages/setting_profile.dart';
 import 'package:school_memories2/signup/class_selection_page.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 追加
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../class_model.dart';
 import '../pages/home.dart';
-
-// const Color goldColor = Color(0xFFFFD700);
-// const Color blackColor = Color(0xFF000000);
-// const Color darkBlueColor = Color(0xFF1E3A8A);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // --- ここで SharedPreferences を読み込む ---
   final prefs = await SharedPreferences.getInstance();
   final savedClassId = prefs.getString('savedClassId');
   final savedMemberId = prefs.getString('savedMemberId');
+  final savedClassName = prefs.getString('savedClassName');
 
-  // 初期画面 (Widget) を決める変数
   Widget firstPage;
 
-  if (savedClassId != null && savedMemberId != null) {
-    // すでに保存情報があれば、Home画面を初期画面に設定
-    // ただし本当は Firestore にそのクラスやメンバーが存在するか確認するとさらに安全
+  if (savedClassId != null && savedMemberId != null && savedClassName != null) {
     final classInfo = ClassModel(
       id: savedClassId,
-      name: '', // クラス名の保持が必要であれば、同様にSharedPreferencesに保存しておく
+      name: savedClassName,
     );
     firstPage = Home(
       classInfo: classInfo,
       currentMemberId: savedMemberId,
     );
   } else {
-    // 保存情報が無ければ、従来どおり ClassSelectionPage へ
     firstPage = const ClassSelectionPage();
   }
 
@@ -49,7 +41,6 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  // 追加: 初期画面を受け取る
   final Widget firstPage;
   const MyApp({super.key, required this.firstPage});
 
@@ -57,13 +48,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<MyProfileModel>(
-          create: (_) => MyProfileModel(),
-        ),
+        ChangeNotifierProvider(create: (_) => MyProfileModel()),
         ChangeNotifierProvider(create: (_) => SettingProfileModel()),
         ChangeNotifierProvider(create: (_) => MembersProfileModel()),
-           ChangeNotifierProvider<MessageModel>(create: (_) => MessageModel()),
-              ChangeNotifierProvider(create: (_) => RankingPageModel()),
+        ChangeNotifierProvider(create: (_) => MessageModel()),
+        ChangeNotifierProvider(create: (_) => RankingPageModel()),
       ],
       child: MaterialApp(
         title: 'School Memories',
@@ -81,7 +70,6 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        // home を差し替え
         home: firstPage,
       ),
     );

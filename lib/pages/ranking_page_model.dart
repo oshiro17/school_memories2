@@ -97,10 +97,17 @@ class RankingPageModel extends ChangeNotifier {
 
           final votes = votesSnap.docs.map((voteDoc) {
             final data = voteDoc.data();
+             final votesMembersSnap = await FirebaseFirestore.instance
+              .collection('classes')
+              .doc(classId)
+              .collection('users')
+              .doc( data['memberId'])
+              // .collection('members')
+              .get();
             return RankingVote(
-              memberName: data['memberName'] ?? 'unknown',
+              // memberName: data['memberName'] ?? 'unknown',
               count: data['count'] ?? 0,
-              avatarIndex: data['avatarIndex'] ?? 0,
+              // avatarIndex: data['avatarIndex'] ?? 0,
             );
           }).toList();
 

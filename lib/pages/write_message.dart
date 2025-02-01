@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/color.dart';
 
 class WriteMessagePage extends StatelessWidget {
   final String classId;
@@ -18,88 +19,95 @@ class WriteMessagePage extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => WriteMessagePageModel()..initialize(classId, currentMemberId),
       child: Scaffold(
-        // AppBarのデザイン変更例（お好みで調整してください）
         appBar: AppBar(
           title: const Text('寄せ書き送信'),
-          // backgroundColor: Colors.brown,
           elevation: 5,
         ),
-        // 背景を画像 or グラデーションなどお好みで
-        body: Container(
-          child: Consumer<WriteMessagePageModel>(
-            builder: (context, model, child) {
-              // ローディング中
-              if (model.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+        body: Consumer<WriteMessagePageModel>(
+          builder: (context, model, child) {
+            // ローディング中
+            if (model.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-              // 既に送信済み
-              if (model.isSent) {
-                return const Center(
-                  child: Text(
-                    '既にメッセージを送信しました。',
-                    style: TextStyle(fontSize: 16, color: Colors.black87),
-                  ),
-                );
-              }
-
-              return Column(
-                children: [
-                  // リスト部分
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                      itemCount: model.memberList.length,
-                      itemBuilder: (context, index) {
-                        final member = model.memberList[index];
-                        final controller = model.messageControllers[index];
-
-                        return _buildMessageCard(member, controller);
-                      },
-                    ),
-                  ),
-
-                  // 送信ボタン
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        try {
-                          await model.sendMessages();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('メッセージを送信しました！')),
-                          );
-                          Navigator.pop(context);
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(e.toString())),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.send),
-                      label: const Text('送信'),
-                      style: ElevatedButton.styleFrom(
-                        // backgroundColor: Colors.brown, // ボタンの背景色
-                        // foregroundColor: Colors.white,  // 文字とアイコンの色
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-                ],
+            // 既に送信済み
+            if (model.isSent) {
+              return const Center(
+                child: Text(
+                  '既にメッセージを送信しました。',
+                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                ),
               );
-            },
-          ),
+            }
+
+            // 未送信の場合はメッセージ入力画面を表示
+            return Column(
+              children: [
+                // リスト部分
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    itemCount: model.memberList.length,
+                    itemBuilder: (context, index) {
+                      final member = model.memberList[index];
+                      // TextField 用の3種類のコントローラを取得
+                      final likeController = model.likeControllers[index];
+                      final requestController = model.requestControllers[index];
+                      final personalController = model.personalMessageControllers[index];
+
+                      return _buildMessageCard(
+                        member: member,
+                        likeController: likeController,
+                        requestController: requestController,
+                        personalController: personalController,
+                      );
+                    },
+                  ),
+                ),
+
+                // 送信ボタン
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        await model.sendMessages();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('メッセージを送信しました！')),
+                        );
+                        Navigator.pop(context);
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString())),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.send),
+                    label: const Text('送信'),
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
   /// 宛先メンバーごとのメッセージ入力カード
-  Widget _buildMessageCard(Map<String, dynamic> member, TextEditingController controller) {
+  Widget _buildMessageCard({
+    required Map<String, dynamic> member,
+    required TextEditingController likeController,
+    required TextEditingController requestController,
+    required TextEditingController personalController,
+  }) {
     return Card(
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -113,22 +121,21 @@ class WriteMessagePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 宛先: ~
+            // 宛先: ~の好きなところ, すごいところ
             Text(
-              '宛先: ${member['name']}',
+              '${member['name']}の好きなところ,すごいところ',
               style: const TextStyle(
-                fontSize: 16, 
-                fontWeight: FontWeight.bold, 
-                color: Colors.brown,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: darkBlueColor,
               ),
             ),
             const SizedBox(height: 10),
-            // メッセージ入力
             TextField(
-               inputFormatters: [
-    LengthLimitingTextInputFormatter(250), // 最大10文字に制限
-  ],
-              controller: controller,
+              controller: likeController,
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(20), // 最大20文字に制限
+              ],
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -138,6 +145,69 @@ class WriteMessagePage extends StatelessWidget {
                 hintText: 'メッセージを入力してください',
               ),
               maxLines: 3,
+            ),
+            const SizedBox(height: 10),
+
+            // 宛先: ~へのお願い事
+            Text(
+              '${member['name']}へのお願い事',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: darkBlueColor,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: requestController,
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(20), // 最大20文字に制限
+              ],
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                fillColor: Colors.white,
+                filled: true,
+                hintText: 'メッセージを入力してください',
+              ),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 10),
+
+            // 宛先: ~への個別メッセージ
+            Text(
+              '${member['name']}へメッセージ',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: darkBlueColor,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: personalController,
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(250), // 最大250文字に制限
+              ],
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                fillColor: Colors.white,
+                filled: true,
+                hintText: 'メッセージを入力してください',
+              ),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 5),
+             Text(
+              '※この個別メッセージは${member['name']}のみ読むことができます。',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: darkBlueColor,
+              ),
             ),
           ],
         ),
@@ -149,10 +219,16 @@ class WriteMessagePage extends StatelessWidget {
 class WriteMessagePageModel extends ChangeNotifier {
   bool isLoading = false;
   bool isSent = false;
-  List<Map<String, dynamic>> memberList = [];
-  List<TextEditingController> messageControllers = [];
   late String classId;
   late String currentMemberId;
+
+  List<Map<String, dynamic>> memberList = [];
+
+  // 各メンバーに紐づく 3つのコントローラをそれぞれ配列で用意
+  List<TextEditingController> likeControllers = [];
+  List<TextEditingController> requestControllers = [];
+  List<TextEditingController> personalMessageControllers = [];
+
   String senderName = '';
   int avatarIndex = 0;
 
@@ -194,12 +270,12 @@ class WriteMessagePageModel extends ChangeNotifier {
           };
         }).toList();
 
-        // "自分から自分へのメッセージ" を除外
         memberList = allMembers.where((m) => m['id'] != currentMemberId).toList();
 
-        // メンバーの件数分だけTextEditingControllerを作る
-        messageControllers =
-            List.generate(memberList.length, (_) => TextEditingController());
+        // メンバーの件数分だけ TextEditingController を作成
+        likeControllers = List.generate(memberList.length, (_) => TextEditingController());
+        requestControllers = List.generate(memberList.length, (_) => TextEditingController());
+        personalMessageControllers = List.generate(memberList.length, (_) => TextEditingController());
       }
     } finally {
       isLoading = false;
@@ -209,9 +285,13 @@ class WriteMessagePageModel extends ChangeNotifier {
 
   /// メッセージを全員に送信
   Future<void> sendMessages() async {
-    // 空メッセージがあるかチェック
-    if (messageControllers.any((controller) => controller.text.trim().isEmpty)) {
-      throw '全員にメッセージを入力してください。';
+    // 3つのコントローラのうち、どれかが未入力のままではないかチェック
+    for (int i = 0; i < memberList.length; i++) {
+      if (likeControllers[i].text.trim().isEmpty ||
+          requestControllers[i].text.trim().isEmpty ||
+          personalMessageControllers[i].text.trim().isEmpty) {
+        throw 'すべての項目にメッセージを入力してください。';
+      }
     }
 
     isLoading = true;
@@ -221,7 +301,9 @@ class WriteMessagePageModel extends ChangeNotifier {
       // 各メンバーへメッセージ送信
       for (int i = 0; i < memberList.length; i++) {
         final member = memberList[i];
-        final message = messageControllers[i].text.trim();
+        final likeText = likeControllers[i].text.trim();
+        final requestText = requestControllers[i].text.trim();
+        final personalText = personalMessageControllers[i].text.trim();
 
         await FirebaseFirestore.instance
             .collection('classes')
@@ -230,7 +312,9 @@ class WriteMessagePageModel extends ChangeNotifier {
             .doc(member['id'])
             .collection('messages')
             .add({
-          'message': message,
+          'likeMessage': likeText,
+          'requestMessage': requestText,
+          'message': personalText,
           'avatarIndex': avatarIndex,  // 自分のアバター番号
           'senderName': senderName,    // 自分の名前
           'timestamp': FieldValue.serverTimestamp(),
@@ -254,7 +338,14 @@ class WriteMessagePageModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    for (final controller in messageControllers) {
+    // 生成したすべてのコントローラを破棄
+    for (final controller in likeControllers) {
+      controller.dispose();
+    }
+    for (final controller in requestControllers) {
+      controller.dispose();
+    }
+    for (final controller in personalMessageControllers) {
       controller.dispose();
     }
     super.dispose();

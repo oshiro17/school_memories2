@@ -60,6 +60,7 @@ class MainMemoriesDialog extends StatelessWidget {
                final prefs = await SharedPreferences.getInstance();  // awaitを使用
     await prefs.remove('savedClassId');
     await prefs.remove('savedMemberId');
+    await  prefs.remove('savedClassName');
             Navigator.pop(context); 
             Navigator.push(
               context,
