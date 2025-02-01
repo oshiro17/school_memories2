@@ -131,16 +131,16 @@ class VoteRankingPageModel extends ChangeNotifier {
 
         // **ここがポイント**: メンバー名を保存
         batch.set(
-          voteDocRef,
-          {
-            'count': FieldValue.increment(1),
-            'memberId' = member.id,
-            
-            // 'avatarIndex': member.avatarIndex,
-            // 'memberName': member.name, // これを Firestore に保存
-          },
-          SetOptions(merge: true),
-        );
+                  voteDocRef,
+                  {
+                    'count': FieldValue.increment(1),
+                    'memberId': member.id,
+                    
+                    // 'avatarIndex': member.avatarIndex,
+                    // 'memberName': member.name, // これを Firestore に保存
+                  },
+                  SetOptions(merge: true),
+                );
       }
 
       // (2) 自分の isVoted を true に
