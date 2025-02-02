@@ -40,7 +40,7 @@ class TermsOfServicePage extends StatelessWidget {
                 '・第三者の権利を侵害する行為\n\n'
                 '不適切な投稿や行為を見かけた場合は、以下の連絡先までご報告ください。確認の上、必要な対応を行います。\n'
                 'メール: nonokuwapiano@gmail.com\n'
-                'Twitter: https://twitter.com/ora_nonoka',
+                'x: https://x.com/ora_nonoka',
               ),
               SizedBox(height: 16),
               Text(
@@ -74,9 +74,9 @@ class TermsOfServicePage extends StatelessWidget {
               SizedBox(height: 16),
               Text(
                 '9. お問い合わせ\n'
-                '本規約に関するご質問や、不適切な投稿の報告は、以下のメールアドレスまたはTwitterアカウントまでご連絡ください。\n\n'
+                '本規約に関するご質問や、不適切な投稿の報告は、以下のメールアドレスまたはxアカウントまでご連絡ください。\n\n'
                 'メール: nonokuwapiano@gmail.com\n'
-                'Twitter: https://twitter.com/ora_nonoka',
+                'x: https://x.com/ora_nonoka',
               ),
             ],
           ),

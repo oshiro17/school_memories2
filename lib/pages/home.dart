@@ -82,7 +82,7 @@ class _HomeState extends State<Home> {
         backgroundColor: Colors.white.withOpacity(0.5),
         elevation: 0,
         title: Text(
-          'School Memories',
+          'Sotsu Bun',
           style: GoogleFonts.dancingScript(fontSize: 23, color: Colors.black),
         ),
         actions: [

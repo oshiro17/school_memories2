@@ -42,7 +42,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-     'School Memories',
+     'Sotsu Bun',
           style: GoogleFonts.dancingScript(
       fontSize: 24,
       color: darkBlueColor, // 文字色を青にする
