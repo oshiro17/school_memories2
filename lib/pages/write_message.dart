@@ -142,7 +142,8 @@ class WriteMessagePage extends StatelessWidget {
             TextField(
               controller: likeController,
               inputFormatters: [
-                LengthLimitingTextInputFormatter(20), // 最大20文字に制限
+                LengthLimitingTextInputFormatter(20), 
+                inputFormatter,
               ],
               decoration: InputDecoration(
                 border: OutlineInputBorder(
@@ -169,7 +170,8 @@ class WriteMessagePage extends StatelessWidget {
             TextField(
               controller: requestController,
               inputFormatters: [
-                LengthLimitingTextInputFormatter(20), // 最大20文字に制限
+                LengthLimitingTextInputFormatter(20), 
+              inputFormatter,
               ],
               decoration: InputDecoration(
                 border: OutlineInputBorder(
@@ -196,7 +198,8 @@ class WriteMessagePage extends StatelessWidget {
             TextField(
               controller: personalController,
               inputFormatters: [
-                LengthLimitingTextInputFormatter(250), // 最大250文字に制限
+                LengthLimitingTextInputFormatter(250),
+                inputFormatter, // 最大250文字に制限
               ],
               decoration: InputDecoration(
                 border: OutlineInputBorder(

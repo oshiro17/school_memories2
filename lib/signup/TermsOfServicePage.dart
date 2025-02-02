@@ -22,7 +22,8 @@ class TermsOfServicePage extends StatelessWidget {
               SizedBox(height: 16),
               Text(
                 '1. はじめに\n'
-                'この利用規約（以下「本規約」）は、「卒業文集」（以下「本アプリ」）の利用条件を定めるものです。本アプリを利用することで、本規約に同意したものとみなされます。本アプリは、クラスメイト同士が思い出を共有することを目的としています。',
+                'この利用規約（以下「本規約」）は、「卒業文集」（以下「本アプリ」）の利用条件を定めるものです。本アプリを利用することで、本規約に同意したものとみなされます。本アプリは、クラスメイト同士が思い出を共有することを目的としています。\n\n'
+                '本アプリは、**知り合い同士での利用を前提**としています。知らない人とのやり取りや公開範囲外での使用はご遠慮ください。',
               ),
               SizedBox(height: 16),
               Text(
@@ -36,7 +37,10 @@ class TermsOfServicePage extends StatelessWidget {
                 '3. 禁止事項\n'
                 '・不正アクセスやシステムの改ざん\n'
                 '・他人への嫌がらせや誹謗中傷行為\n'
-                '・第三者の権利を侵害する行為',
+                '・第三者の権利を侵害する行為\n\n'
+                '不適切な投稿や行為を見かけた場合は、以下の連絡先までご報告ください。確認の上、必要な対応を行います。\n'
+                'メール: nonokuwapiano@gmail.com\n'
+                'Twitter: https://twitter.com/ora_nonoka',
               ),
               SizedBox(height: 16),
               Text(
@@ -70,7 +74,7 @@ class TermsOfServicePage extends StatelessWidget {
               SizedBox(height: 16),
               Text(
                 '9. お問い合わせ\n'
-                '本規約に関するご質問は、以下のメールアドレスまたはTwitterアカウントまでご連絡ください。\n\n'
+                '本規約に関するご質問や、不適切な投稿の報告は、以下のメールアドレスまたはTwitterアカウントまでご連絡ください。\n\n'
                 'メール: nonokuwapiano@gmail.com\n'
                 'Twitter: https://twitter.com/ora_nonoka',
               ),

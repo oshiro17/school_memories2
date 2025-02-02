@@ -101,14 +101,14 @@ class MainMemoriesDialog extends StatelessWidget {
           },
         ),
         SimpleDialogOption(
-          child: const Text('お問い合わせ'),
+          child: const Text('お問い合わせ\n不適切ユーザーの報告'),
           onPressed: () {
             Navigator.pop(context);
             showDialog(
               context: context,
               builder: (context) {
                 return AlertDialog(
-                  title: const Text('お問い合わせ'),
+                  title: const Text('お問い合わせ 報告'),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,

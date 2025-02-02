@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
+import 'package:school_memories2/color.dart';
 
 class SettingProfileModel extends ChangeNotifier {
   bool isLoading = false;
@@ -237,6 +238,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
         keyboardType:
             isLongText ? TextInputType.multiline : TextInputType.text,
         inputFormatters: [
+          inputFormatter,
           LengthLimitingTextInputFormatter(maxLength)
         ], // 文字数制限
         decoration: InputDecoration(
@@ -267,6 +269,7 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
         keyboardType:
             isLongText ? TextInputType.multiline : TextInputType.text,
         inputFormatters: [
+          inputFormatter,
           LengthLimitingTextInputFormatter(maxLength)
         ], // 文字数制限
         decoration: InputDecoration(

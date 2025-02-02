@@ -69,7 +69,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
             ),
             obscureText: true, // パスワード非表示
              inputFormatters: [
-    LengthLimitingTextInputFormatter(4), // 最大10文字に制限
+    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
   ],
           ),
         ],
