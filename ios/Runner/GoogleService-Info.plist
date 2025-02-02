@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyD7I2yAh6edKEiJNzeiicC5Z7YkyEnB6zE</string>
+	<string>AIzaSyBWbPyhLeS-6yaogMqK2n2EngoImqHxgE4</string>
 	<key>GCM_SENDER_ID</key>
-	<string>84634948455</string>
+	<string>1061875334743</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.schoolMemories2</string>
+	<string>org.cocoapods.TOCropViewControllerBundle</string>
 	<key>PROJECT_ID</key>
-	<string>schoolmemories2-6ece3</string>
+	<string>stsubun</string>
 	<key>STORAGE_BUCKET</key>
-	<string>schoolmemories2-6ece3.firebasestorage.app</string>
+	<string>stsubun.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:84634948455:ios:d532a8da01ab40b93bd5c2</string>
+	<string>1:1061875334743:ios:d12515a4009c2c16872d12</string>
 </dict>
 </plist>

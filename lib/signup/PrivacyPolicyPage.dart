@@ -61,9 +61,9 @@ class PrivacyPolicyPage extends StatelessWidget {
               SizedBox(height: 16),
  Text(
   '8. お問い合わせ\n'
-  '本規約に関するご質問は、以下のメールアドレスまたはTwitterアカウントまでご連絡ください。\n\n'
+  '本規約に関するご質問は、以下のメールアドレスまたはXアカウントまでご連絡ください。\n\n'
   'メール: nonokuwapiano@gmail.com\n'
-  'Twitter: https://twitter.com/ora_nonoka',
+  'x: https://x.com/ora_nonoka',
 ),
 
             ],
