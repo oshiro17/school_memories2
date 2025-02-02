@@ -238,6 +238,9 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
         keyboardType:
             isLongText ? TextInputType.multiline : TextInputType.text,
         inputFormatters: [
+                       FilteringTextInputFormatter.allow(
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+),
           LengthLimitingTextInputFormatter(maxLength)
         ], // 文字数制限
         decoration: InputDecoration(
@@ -268,6 +271,9 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
         keyboardType:
             isLongText ? TextInputType.multiline : TextInputType.text,
         inputFormatters: [
+                       FilteringTextInputFormatter.allow(
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+),
           LengthLimitingTextInputFormatter(maxLength)
         ], // 文字数制限
         decoration: InputDecoration(

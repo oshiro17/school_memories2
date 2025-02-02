@@ -160,6 +160,9 @@ Widget _buildCreateClassArea() {
         controller: classNameController,
         decoration: const InputDecoration(labelText: 'クラス名'),
          inputFormatters: [
+ FilteringTextInputFormatter.allow(
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+),
     LengthLimitingTextInputFormatter(10), // 最大10文字に制限
   ],
       ),
@@ -167,6 +170,9 @@ Widget _buildCreateClassArea() {
         controller: classIdForCreateController,
         decoration: const InputDecoration(labelText: 'クラスID（例: classA）'),
          inputFormatters: [
+FilteringTextInputFormatter.allow(
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+),
     LengthLimitingTextInputFormatter(10), // 最大10文字に制限
   ],
       ),
@@ -186,7 +192,9 @@ Widget _buildCreateClassArea() {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4.0),
               child: TextField(
-                 inputFormatters: [
+                 inputFormatters: [FilteringTextInputFormatter.allow(
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+),
     LengthLimitingTextInputFormatter(10), // 最大10文字に制限
   ],
                 controller: memberControllers[i],
@@ -295,6 +303,9 @@ Widget _buildAgreementText() {
   controller: classIdForJoinController,
   decoration: const InputDecoration(labelText: 'クラスID'),
   inputFormatters: [
+    FilteringTextInputFormatter.allow(
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+),
     LengthLimitingTextInputFormatter(10), // 最大10文字に制限
   ],
 ),
@@ -302,6 +313,7 @@ Widget _buildAgreementText() {
   controller: classPasswordForJoinController,
   decoration: const InputDecoration(labelText: 'パスワード'),
   inputFormatters: [
+
     LengthLimitingTextInputFormatter(10), // 最大10文字に制限
   ],
 ),

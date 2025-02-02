@@ -140,8 +140,12 @@ class WriteMessagePage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             TextField(
+
               controller: likeController,
               inputFormatters: [
+                             FilteringTextInputFormatter.allow(
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+),
                 LengthLimitingTextInputFormatter(20), 
               ],
               decoration: InputDecoration(
@@ -169,6 +173,9 @@ class WriteMessagePage extends StatelessWidget {
             TextField(
               controller: requestController,
               inputFormatters: [
+                FilteringTextInputFormatter.allow(
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+),
                 LengthLimitingTextInputFormatter(20), 
               ],
               decoration: InputDecoration(
@@ -196,6 +203,9 @@ class WriteMessagePage extends StatelessWidget {
             TextField(
               controller: personalController,
               inputFormatters: [
+                             FilteringTextInputFormatter.allow(
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+),
                 LengthLimitingTextInputFormatter(250),
               ],
               decoration: InputDecoration(
