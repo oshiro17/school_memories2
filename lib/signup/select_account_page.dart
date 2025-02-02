@@ -166,8 +166,6 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
         ),
         inputFormatters: [
           LengthLimitingTextInputFormatter(10),
-
-    inputFormatter, // 文字制限
         ],
       ),
     );
@@ -238,7 +236,7 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
     return Column(
       children: [
         Text(
-          '© 2025 School Memories',
+          '© 2025 卒業文集',
           style: TextStyle(color: _goldColor.withOpacity(0.7), fontSize: 12),
         ),
         const SizedBox(height: 10),

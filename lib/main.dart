@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RankingPageModel()),
       ],
       child: MaterialApp(
-        title: 'School Memories',
+        title: 'Sotsu Bun',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primaryColor: darkBlueColor,

@@ -238,7 +238,6 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
         keyboardType:
             isLongText ? TextInputType.multiline : TextInputType.text,
         inputFormatters: [
-          inputFormatter,
           LengthLimitingTextInputFormatter(maxLength)
         ], // 文字数制限
         decoration: InputDecoration(
@@ -269,7 +268,6 @@ class _SettingProfilePageState extends State<SettingProfilePage> {
         keyboardType:
             isLongText ? TextInputType.multiline : TextInputType.text,
         inputFormatters: [
-          inputFormatter,
           LengthLimitingTextInputFormatter(maxLength)
         ], // 文字数制限
         decoration: InputDecoration(

@@ -143,7 +143,6 @@ class WriteMessagePage extends StatelessWidget {
               controller: likeController,
               inputFormatters: [
                 LengthLimitingTextInputFormatter(20), 
-                inputFormatter,
               ],
               decoration: InputDecoration(
                 border: OutlineInputBorder(
@@ -171,7 +170,6 @@ class WriteMessagePage extends StatelessWidget {
               controller: requestController,
               inputFormatters: [
                 LengthLimitingTextInputFormatter(20), 
-              inputFormatter,
               ],
               decoration: InputDecoration(
                 border: OutlineInputBorder(
@@ -199,7 +197,6 @@ class WriteMessagePage extends StatelessWidget {
               controller: personalController,
               inputFormatters: [
                 LengthLimitingTextInputFormatter(250),
-                inputFormatter, // 最大250文字に制限
               ],
               decoration: InputDecoration(
                 border: OutlineInputBorder(
