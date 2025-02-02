@@ -156,13 +156,13 @@ class RankingPage extends StatelessWidget {
                   ),
                   title: Text(
                     vote.memberName,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis, // 長すぎる場合は省略
                   ),
                   trailing: Text(
                     '${vote.count}票',
-                    style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                   ),
                 );
               }),

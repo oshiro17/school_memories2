@@ -127,7 +127,7 @@ class VoteRankingPageModel extends ChangeNotifier {
 
         final voteDocRef = rankingDocRef
             .collection('votes')
-            .doc(); // memberID をドキュメントIDに
+            .doc(member.id); // memberID をドキュメントIDに
 
         // **ここがポイント**: メンバー名を保存
         batch.set(
