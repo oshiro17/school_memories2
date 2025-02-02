@@ -173,17 +173,15 @@ final TextEditingController mottoController = TextEditingController();
     'assets/j18.png',
     'assets/j19.png',
   ];
-
   // 選択中のアバターindex
   int selectedAvatarIndex = 5; // デフォルト 0
-
-  /// 入力バリデーション
   bool _validateInputs() {
   final fields = {
+     
       '呼んでほしい名前': nameController.text,
       '何座?': birthdayController.text,
       '好きな教科、分野は?': subjectController.text,
-      'あなたは一言で言うとどんな人？': bloodTypeController.text,
+      'あなたは一言で表すとどんな人？': bloodTypeController.text,
       '身長': heightController.text,
       'MBTI': mbtiController.text,
       '趣味・特技': hobbyController.text,
@@ -193,21 +191,16 @@ final TextEditingController mottoController = TextEditingController();
       '好きな映画': favoriteMovieController.text,
       '好きな人はいる？': favoritePersonController.text,
       '好きなタイプは？': favoriteTypeController.text,
-
       'たからもの': treasureController.text,
       '最近ゲットした一番高いもの': thingController.text,
       '今一番欲しいもの': wantController.text,
-
       '好きな場所は': favoritePlaceController.text,
       '最近の事件': recentEventController.text,
-
       'きのう、何した？': whatDidController.text,
-
       '今までに達成した一番の偉業は？': achievementController.text,
       '長所': strengthController.text,
       '短所': weaknessController.text,
       '1億あったら何したい？': futurePlanController.text,
-
       '尊敬している人は誰？': lifeStoryController.text,
       '10年後自分は何をしてると思う？': futureSelfController.text,
       '明日の目標は？': goalController.text,
@@ -399,14 +392,11 @@ final TextEditingController mottoController = TextEditingController();
                     ],
                   ),
                 );
-              },
-            ),
-
+              },),
             const SizedBox(height: 20),
   Text('秘密にしたいときは左の鍵マークを押してね！', 
       style: TextStyle(fontSize: 12, color: Colors.grey),
     ),
-            // プロフィール入力フィールド
       _buildSection([
       _buildProfileField('呼んでほしい名前', nameController, 10, hintText: '例: のんたん'),
       _buildProfileField('何座?', birthdayController, 10, hintText: '例: 獅子座'),
@@ -423,7 +413,6 @@ final TextEditingController mottoController = TextEditingController();
       _buildProfileField('好きなタイプは？', favoriteTypeController, 15, hintText: '例: ワイルドな人'),
       _buildProfileField('たからもの', treasureController, 15, hintText: '例: 弟'),
       _buildProfileField('最近ゲットした一番高いもの', thingController, 20, hintText: '例: 天体望遠鏡'),
-     
       _buildProfileField('今一番欲しいもの', wantController, 20, hintText: '例: オープンカー'),
       _buildProfileField('好きな場所は', favoritePlaceController, 15, hintText: '例: 蛍のいる田んぼ'),
       _buildProfileField('最近の事件', recentEventController, 30, isLongText: true, hintText: '例: 合唱コンクール金賞！'),

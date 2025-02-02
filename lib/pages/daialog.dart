@@ -115,7 +115,7 @@ class MainMemoriesDialog extends StatelessWidget {
                     children: const [
                       Text('メール: nonokuwapiano@gmail.com'),
                       SizedBox(height: 8),
-                      Text('Twitter: @ora_nonoka'),
+                      Text('X: @ora_nonoka'),
                     ],
                   ),
                   actions: [

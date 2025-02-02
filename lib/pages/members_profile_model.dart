@@ -58,7 +58,7 @@ Future<void> fetchClassMembers(String classId, String currentMemberId, {bool for
       return;
     }
 
-    final callme = doc.data()?['callme'];
+    final callme = doc.data()?['q1'];
     if (callme == null || callme.isEmpty) {
       isEmpty = true;
       return;
@@ -78,8 +78,8 @@ Future<void> fetchClassMembers(String classId, String currentMemberId, {bool for
         id: doc.id,
         avatarIndex: data['avatarIndex'] ?? 0,
         name: data['name'] ?? '',
-        motto: data['motto'] ?? '',
-        futureDream: data['futureDream'] ?? '',
+        motto: data['q29'] ?? '',
+        futureDream: data['q28'] ?? '',
       );
     }).toList();
 
@@ -116,8 +116,8 @@ class Member {
       id: json['id'],
       avatarIndex: json['avatarIndex'],
       name: json['name'],
-      motto: json['motto'],
-      futureDream: json['futureDream'],
+      motto: json['q29'],
+      futureDream: json['q28'],
     );
   }
 
@@ -127,8 +127,8 @@ class Member {
       'id': id,
       'avatarIndex': avatarIndex,
       'name': name,
-      'motto': motto,
-      'futureDream': futureDream,
+      'q29': motto,
+      'q28': futureDream,
     };
   }
 }

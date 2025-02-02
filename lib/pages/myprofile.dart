@@ -131,7 +131,7 @@ class MyProfilePage extends StatelessWidget {
     }
 
     // あとは model を使ってUIを構築する
-    final isProfileEmpty = model.callme.isEmpty;
+    final isProfileEmpty = model.q1.isEmpty;
     if (isProfileEmpty) {
       return Scaffold(
         body: Center(
@@ -205,13 +205,13 @@ Row(
     mainAxisSize: MainAxisSize.min, // 必要な分だけ高さを確保
     crossAxisAlignment: CrossAxisAlignment.center, // 横方向の中央揃え
  children: [
-  _buildProfileText('こんにちは ', model.name),
-  _buildProfileText('', model.callme, isCallMe: true),
-  _buildProfileText('生年月日は ', model.birthday),
-  _buildProfileText('好きな教科は ', model.subject),
-  _buildProfileText('血液型は ', model.bloodType),
-  _buildProfileText('身長は今, ', model.height),
-  _buildProfileText('MBTIは ', model.mbti),
+_buildProfileText('こんにちは ', model.name),
+_buildProfileText('', model.q1, isCallMe: true),
+_buildProfileText('星座は', model.q2),
+_buildProfileText('好きな教科は ', model.q3),
+_buildProfileText('私を一言で表すと ', model.q4),
+_buildProfileText('身長は今, ', model.q5),
+_buildProfileText('MBTIは ', model.q6),
 ],
   ),
 ),
@@ -222,63 +222,65 @@ Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSection([
-  _buildProfileField('趣味特技', model.hobby),
-  _buildProfileField('部活', model.club),
-  _buildProfileField('なりたい職業', model.dream),
-  _buildProfileField('好きな歌', model.favoriteSong),
-  _buildProfileField('好きな人', model.favoritePerson),
-  _buildProfileField('たからもの', model.treasure),
+     _buildProfileField('趣味特技', model.q7),
+        _buildProfileField('部活', model.q8),
+        _buildProfileField('なりたい職業', model.q9),
+        _buildProfileField('好きな歌', model.q10),
+        _buildProfileField('好きな映画', model.q11),
+        _buildProfileField('好きな人', model.q12),
+        _buildProfileField('好きなタイプ', model.q13),
+        _buildProfileField('たからもの', model.q14),
+        _buildProfileField('最近ゲットした一番高いもの', model.q15),
+        _buildProfileField('今一番欲しいもの', model.q16),
+        _buildProfileField('好きな場所', model.q17),
 ]),
 
 _buildSection([
-  _buildProfileField('最近の事件は？', model.recentEvent),
-  _buildProfileField('学校生活どうだった？', model.schoolLife),
-  _buildProfileField('学校生活で達成した一番の偉業は？', model.achievement),
+    _buildProfileField('最近の事件は？', model.q18),
+        _buildProfileField('きのう、何した？', model.q19),
+        _buildProfileField('学校生活で達成した一番の偉業は？', model.q20),
 ]),
 
 _buildSection([
-  _buildProfileField('長所', model.strength),
-  _buildProfileField('短所', model.weakness),
+    _buildProfileField('長所', model.q21),
+        _buildProfileField('短所', model.q22),
 ]),
 
 _buildSection([
-  _buildProfileField('100万あったら何したい？', model.futurePlan),
-  _buildProfileField('あなたがこれまでどんな人生を歩んできたのか、教えて下さい。', model.lifeStory),
-]),
+  _buildProfileField('1億あったら何したい？', model.q23),
+        _buildProfileField('尊敬している人は誰？', model.q24),
+        _buildProfileField('10年後自分は何してると思う？', model.q25),
+        _buildProfileField('明日の目標は？', model.q26),
+        _buildProfileField('叶えたい夢は？', model.q27),]),
 
 _buildSection([
-  _buildProfileField('10年後自分は何してると思う？', model.futureSelf),
-  _buildProfileField('10年後の自分へメッセージ', model.futureMessage),
+        _buildProfileField('みんなへメッセージ', model.q28),
+        _buildProfileField('座右の銘', model.q29),
 ]),
 
-_buildSection([
-  _buildProfileField('これからの目標', model.goal),
-  _buildProfileField('将来の夢', model.futureDream),
-  _buildProfileField('座右の銘', model.motto),
-]),
 
 
         
-        const SizedBox(height: 32),
-                        Center(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SettingProfilePage(
-                                    classInfo: classInfo,
-                                    currentMemberId: currentMemberId,
-                                  ),
-                                ),
-                              );
-                              if (result == true) {
-                                                        await model.fetchProfileOnce(classInfo.id, currentMemberId);
-                              }
-                            },
-                            child: const Text('プロフィールを編集'),
-                          ),
-                        ),
+        // const SizedBox(height: 32),
+        //                 Center(
+        //                   child: ElevatedButton(
+        //                     onPressed: () async {
+        //                       final result = await Navigator.push(
+        //                         context,
+        //                         MaterialPageRoute(
+        //                           builder: (context) => SettingProfilePage(
+        //                             classInfo: classInfo,
+        //                             currentMemberId: currentMemberId,
+        //                           ),
+        //                         ),
+        //                       );
+        //                       if (result == true) {
+        //                                                 await model.fetchProfileOnce(classInfo.id, currentMemberId);
+        //                       }
+        //                     },
+        //                     child: const Text('プロフィールを編集'),
+        //                   ),
+        //                 ),
                       ],
                     ),
                   ),
