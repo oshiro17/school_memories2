@@ -261,8 +261,13 @@ class WriteMessagePageModel extends ChangeNotifier {
           .doc(currentMemberId)
           .get();
 
+      if (memberDoc.data()?['callme']!= null) {
+        isCallme = true;
+      } else {
+        isCallme = false;
+      }
       isSent = memberDoc.data()?['isSent'] ?? false;
-      isCallme = memberDoc.data()?['callme'] ?? false;
+      // isCallme = memberDoc.data()?['callme'] ?? true;
       senderName = memberDoc.data()?['name'] ?? 'Unknown';
       avatarIndex = memberDoc.data()?['avatarIndex'] ?? 0;
 
