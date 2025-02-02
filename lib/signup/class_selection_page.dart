@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,6 +28,9 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
   final classIdForCreateController = TextEditingController();
   final classPasswordForCreateController = TextEditingController();
 
+  // パスワードの表示・非表示状態（クラス作成用）
+  bool _obscureCreatePassword = true;
+
   // ★ 初期からメンバー2名分のテキストフィールドを用意
   List<TextEditingController> memberControllers = [
     TextEditingController(), // メンバー1
@@ -37,17 +41,54 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
   final classIdForJoinController = TextEditingController();
   final classPasswordForJoinController = TextEditingController();
 
+  // パスワードの表示・非表示状態（クラス参加用）
+  bool _obscureJoinPassword = true;
+
+  /// パスワードのバリデーション（大文字、小文字、数字の組み合わせで6文字以上）
+  bool _validatePassword(String password) {
+    final regex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$');
+    return regex.hasMatch(password);
+  }
+
+  /// クラス作成用パスワードを一時的に表示する（3秒後に非表示）
+  void _showCreatePasswordTemporarily() {
+    setState(() {
+      _obscureCreatePassword = false;
+    });
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _obscureCreatePassword = true;
+        });
+      }
+    });
+  }
+
+  /// クラス参加用パスワードを一時的に表示する（3秒後に非表示）
+  void _showJoinPasswordTemporarily() {
+    setState(() {
+      _obscureJoinPassword = false;
+    });
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _obscureJoinPassword = true;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-     'Sotsu Bun',
+          'Sotsu Bun',
           style: GoogleFonts.dancingScript(
-      fontSize: 24,
-      color: darkBlueColor, // 文字色を青にする
-    ),
-  ),
+            fontSize: 24,
+            color: darkBlueColor, // 文字色を青にする
+          ),
+        ),
       ),
       // Stackを使ってローディングを重ねて表示
       body: Stack(
@@ -58,83 +99,80 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
             child: Column(
               children: [
                 // タブ切り替え
-                 SizedBox(height : 35),
+                const SizedBox(height: 35),
                 Text(
-                        '卒業文集アプリへようこそ！',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: darkBlueColor,
-                        ),
-                      ),
-                       SizedBox(height : 15),
-                       Text(
-                        'みんなの思い出を共有しましょう！',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color:blackColor,
-                        ),
-                      ),
-                      SizedBox(height : 35),
-                        Text(
-                        'クラスを作成、又は既存のクラスに参加してください',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color:  Colors.grey,
-                        ),
-                      ),
-                      SizedBox(height : 30),
-
+                  '卒業文集アプリへようこそ！',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: darkBlueColor,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  'みんなの思い出を共有しましょう！',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: blackColor,
+                  ),
+                ),
+                const SizedBox(height: 35),
+                Text(
+                  'クラスを作成、又は既存のクラスに参加してください',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 30),
                 Row(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    Expanded(
-      child: ElevatedButton(
-        onPressed: () => setState(() => isCreating = true),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isCreating ?  darkBlueColor : Colors.white,
-          foregroundColor: isCreating ? goldColor:  darkBlueColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.blue),
-          ),
-          padding: EdgeInsets.symmetric(vertical: 12),
-        ),
-        child: Text(
-          'クラスを作成',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-    ),
-    const SizedBox(width: 10),
-    Expanded(
-      child: ElevatedButton(
-        onPressed: () => setState(() => isCreating = false),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: !isCreating ?  darkBlueColor : Colors.white,
-          foregroundColor: !isCreating ?  goldColor:  darkBlueColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: darkBlueColor),
-          ),
-          padding: EdgeInsets.symmetric(vertical: 12),
-        ),
-        child: Text(
-          'クラスに参加',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-    ),
-  ],
-),
-
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => setState(() => isCreating = true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isCreating ? darkBlueColor : Colors.white,
+                          foregroundColor: isCreating ? goldColor : darkBlueColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(color: Colors.blue),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'クラスを作成',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => setState(() => isCreating = false),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: !isCreating ? darkBlueColor : Colors.white,
+                          foregroundColor: !isCreating ? goldColor : darkBlueColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(color: darkBlueColor),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'クラスに参加',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 16),
                 // タブ切り替えでUI表示
                 isCreating ? _buildCreateClassArea() : _buildJoinClassArea(),
               ],
             ),
           ),
-
           // ローディング表示 (_isLoading == true のときだけ表示)
           if (_isLoading)
             Container(
@@ -151,187 +189,201 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
   }
 
   /// クラスを作成するUI
-  /// クラスを作成するUI
-Widget _buildCreateClassArea() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      TextField(
-        controller: classNameController,
-        decoration: const InputDecoration(labelText: 'クラス名'),
-         inputFormatters: [
- FilteringTextInputFormatter.allow(
-  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
-),
-    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
-  ],
-      ),
-      TextField(
-        controller: classIdForCreateController,
-        decoration: const InputDecoration(labelText: 'クラスID（例: classA）'),
-         inputFormatters: [
-FilteringTextInputFormatter.allow(
-  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
-),
-    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
-  ],
-      ),
-      TextField(
-        controller: classPasswordForCreateController,
-        decoration: const InputDecoration(labelText: 'クラスのパスワード'),
-        obscureText: true,
- inputFormatters: [
-    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
-  ],
-      ),
-      const SizedBox(height: 16),
-      // メンバー入力欄リスト
-      Column(
-        children: [
-          for (int i = 0; i < memberControllers.length; i++)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
-              child: TextField(
-                 inputFormatters: [FilteringTextInputFormatter.allow(
-  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
-),
-    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
-  ],
-                controller: memberControllers[i],
-                decoration: InputDecoration(
-                  labelText: 'メンバー${i + 1}の名前',
+  Widget _buildCreateClassArea() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: classNameController,
+          decoration: const InputDecoration(labelText: 'クラス名'),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(
+              RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-]'),
+            ),
+            LengthLimitingTextInputFormatter(10), // 最大10文字に制限
+          ],
+        ),
+        TextField(
+          controller: classIdForCreateController,
+          decoration: const InputDecoration(labelText: 'クラスID（例: classA）'),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(
+              RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-]'),
+            ),
+            LengthLimitingTextInputFormatter(10), // 最大10文字に制限
+          ],
+        ),
+        TextField(
+          controller: classPasswordForCreateController,
+          decoration: InputDecoration(
+            labelText: 'クラスのパスワード',
+            helperText: '大文字、小文字、数字の組み合わせで6文字以上でないと承認されません',
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureCreatePassword ? Icons.visibility : Icons.visibility_off,
+              ),
+              onPressed: _showCreatePasswordTemporarily,
+              tooltip: 'パスワードを一時的に表示',
+            ),
+          ),
+          obscureText: _obscureCreatePassword,
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(10), // 最大10文字に制限
+          ],
+        ),
+        const SizedBox(height: 16),
+        // メンバー入力欄リスト
+        Column(
+          children: [
+            for (int i = 0; i < memberControllers.length; i++)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: TextField(
+                  controller: memberControllers[i],
+                  decoration: InputDecoration(
+                    labelText: 'メンバー${i + 1}の名前',
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-]'),
+                    ),
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                 ),
               ),
-            ),
-        ],
-      ),
-      const SizedBox(height: 16),
-
-      // 「クラスメイトを追加」「クラスメイトを減らす」ボタン
-      Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                memberControllers.add(TextEditingController());
-              });
-            },
-            child: const Text('追加'),
-          ),
-          const SizedBox(width: 10),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                // 最低2人は残すようにする
-                if (memberControllers.length > 2) {
-                  memberControllers.removeLast();
-                }
-              });
-            },
-            child: const Text('消去'),
-          ),
-        ],
-      ),
-      const SizedBox(height: 19),
-
-
-      // 同意文言とリンク追加
-      _buildAgreementText(),
-
-      const SizedBox(height: 19), 
-      // "クラスを作成"ボタン
-      Center(
-        child:
-      ElevatedButton(
-        onPressed: _onPressCreateClass,
-        child: const Text('クラスを作成'),
-      ),),
-    ],
-  );
-}
-Widget _buildAgreementText() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-    child: RichText(
-      text: TextSpan(
-        text: 'クラスを作成・参加することで、',
-        style: const TextStyle(color: Colors.black),
-        children: [
-          TextSpan(
-            text: 'プライバシーポリシー',
-            style: const TextStyle(
-              color: darkBlueColor,
-              decoration: TextDecoration.underline,
-            ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => PrivacyPolicyPage()),
-                );
+          ],
+        ),
+        const SizedBox(height: 16),
+        // 「クラスメイトを追加」「クラスメイトを減らす」ボタン
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  memberControllers.add(TextEditingController());
+                });
               },
-          ),
-          const TextSpan(text: ' および '),
-          TextSpan(
-            text: '利用規約',
-            style: const TextStyle(
-              color: darkBlueColor,
-              decoration: TextDecoration.underline,
+              child: const Text('追加'),
             ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => TermsOfServicePage()),
-                );
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  // 最低2人は残すようにする
+                  if (memberControllers.length > 2) {
+                    memberControllers.removeLast();
+                  }
+                });
               },
+              child: const Text('消去'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 19),
+        // 同意文言とリンク追加
+        _buildAgreementText(),
+        const SizedBox(height: 19),
+        // "クラスを作成"ボタン
+        Center(
+          child: ElevatedButton(
+            onPressed: _onPressCreateClass,
+            child: const Text('クラスを作成'),
           ),
-          const TextSpan(text: ' に同意したことになります。'),
-        ],
-      ),
-    ),
-  );
-}
+        ),
+      ],
+    );
+  }
 
+  Widget _buildAgreementText() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: RichText(
+        text: TextSpan(
+          text: 'クラスを作成・参加することで、',
+          style: const TextStyle(color: Colors.black),
+          children: [
+            TextSpan(
+              text: 'プライバシーポリシー',
+              style: const TextStyle(
+                color: darkBlueColor,
+                decoration: TextDecoration.underline,
+              ),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PrivacyPolicyPage()),
+                  );
+                },
+            ),
+            const TextSpan(text: ' および '),
+            TextSpan(
+              text: '利用規約',
+              style: const TextStyle(
+                color: darkBlueColor,
+                decoration: TextDecoration.underline,
+              ),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TermsOfServicePage()),
+                  );
+                },
+            ),
+            const TextSpan(text: ' に同意したことになります。'),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// 既存クラスに参加するUI
   Widget _buildJoinClassArea() {
     return Column(
       children: [
-       TextField(
-  controller: classIdForJoinController,
-  decoration: const InputDecoration(labelText: 'クラスID'),
-  inputFormatters: [
-    FilteringTextInputFormatter.allow(
-  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
-),
-    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
-  ],
-),
-  TextField(
-  controller: classPasswordForJoinController,
-  decoration: const InputDecoration(labelText: 'パスワード'),
-  inputFormatters: [
-
-    LengthLimitingTextInputFormatter(10), // 最大10文字に制限
-  ],
-),
+        TextField(
+          controller: classIdForJoinController,
+          decoration: const InputDecoration(labelText: 'クラスID'),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(
+              RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-]'),
+            ),
+            LengthLimitingTextInputFormatter(10),
+          ],
+        ),
+        TextField(
+          controller: classPasswordForJoinController,
+          decoration: InputDecoration(
+            labelText: 'パスワード',
+            helperText: '大文字、小文字、数字の組み合わせで6文字以上でないと承認されません',
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureJoinPassword ? Icons.visibility : Icons.visibility_off,
+              ),
+              onPressed: _showJoinPasswordTemporarily,
+              tooltip: 'パスワードを一時的に表示',
+            ),
+          ),
+          obscureText: _obscureJoinPassword,
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(10),
+          ],
+        ),
         const SizedBox(height: 16),
-              _buildAgreementText(),
-
-      const SizedBox(height: 16),
-ElevatedButton(
-  onPressed: () async {
-    await _joinClass(
-      classIdForJoinController.text.trim(),
-      classPasswordForJoinController.text.trim(),
-      classNameController.text.trim(),
-    );
-  },
-  child: const Text('クラスに参加'),
-),
-
+        _buildAgreementText(),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () async {
+            await _joinClass(
+              classIdForJoinController.text.trim(),
+              classPasswordForJoinController.text.trim(),
+              classNameController.text.trim(),
+            );
+          },
+          child: const Text('クラスに参加'),
+        ),
       ],
     );
   }
@@ -350,6 +402,10 @@ ElevatedButton(
     // --- バリデーション ---
     if (className.isEmpty || classId.isEmpty || password.isEmpty) {
       _showMessage('未入力の項目があります');
+      return;
+    }
+    if (!_validatePassword(password)) {
+      _showMessage('パスワードは大文字、小文字、数字の組み合わせで6文字以上でないと承認されません');
       return;
     }
     if (members.length < 2) {
@@ -444,7 +500,7 @@ ElevatedButton(
       // 成功時は遷移
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId,className:className)),
+        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId, className: className)),
         (route) => false,
       );
     } catch (e) {
@@ -458,53 +514,57 @@ ElevatedButton(
   }
 
   /// 既存クラスに参加
-  Future<void> _joinClass(String classId, String password ,String className) async {
-  if (_isLoading) return; // 二重押し防止
+  Future<void> _joinClass(String classId, String password, String className) async {
+    if (_isLoading) return; // 二重押し防止
 
-  // ローディング開始
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
+    // 入力チェック
     if (classId.isEmpty || password.isEmpty) {
       _showMessage('クラスIDとパスワードを入力してください');
       return;
     }
-
-    final doc = await FirebaseFirestore.instance
-        .collection('classes')
-        .doc(classId)
-        .get();
-    if (!doc.exists) {
-      _showMessage('指定のクラスIDは存在しません');
+    // クラス参加時にもパスワードの形式チェック（※ Firestore上のパスワードと一致するかは別途確認）
+    if (!_validatePassword(password)) {
+      _showMessage('パスワードは大文字、小文字、数字の組み合わせで6文字以上でないと承認されません');
       return;
     }
 
-    final data = doc.data()!;
-    if (data['password'] != password) {
-      _showMessage('パスワードが違います');
-      return;
-    }
-    className = data['name'];
-
-    // OK → アカウント選択画面へ
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId, className: className)),
-      (route) => false,
-    );
-  } catch (e) {
-    _showMessage('エラー: $e');
-  } finally {
-    // ローディング終了
+    // ローディング開始
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId)
+          .get();
+      if (!doc.exists) {
+        _showMessage('指定のクラスIDは存在しません');
+        return;
+      }
+
+      final data = doc.data()!;
+      if (data['password'] != password) {
+        _showMessage('パスワードが違います');
+        return;
+      }
+      className = data['name'];
+
+      // OK → アカウント選択画面へ
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId, className: className)),
+        (route) => false,
+      );
+    } catch (e) {
+      _showMessage('エラー: $e');
+    } finally {
+      // ローディング終了
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
-}
-
-
 
   void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
@@ -533,10 +593,6 @@ class ConfirmationPage extends StatefulWidget {
 }
 
 class _ConfirmationPageState extends State<ConfirmationPage> {
-  // ここでローディングを管理してもOKだが、
-  // 今回はメンバー倍増を防ぐため、親側で isLoading を管理し onConfirm 二重押しをブロックしています。
-  // ここでは Overflow 対策 & UI 調整を中心に
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

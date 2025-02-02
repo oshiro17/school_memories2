@@ -144,7 +144,7 @@ class WriteMessagePage extends StatelessWidget {
               controller: likeController,
               inputFormatters: [
                              FilteringTextInputFormatter.allow(
-  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]?!？！'),
 ),
                 LengthLimitingTextInputFormatter(20), 
               ],
@@ -174,7 +174,7 @@ class WriteMessagePage extends StatelessWidget {
               controller: requestController,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(
-  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]?!？！'),
 ),
                 LengthLimitingTextInputFormatter(20), 
               ],
@@ -204,7 +204,7 @@ class WriteMessagePage extends StatelessWidget {
               controller: personalController,
               inputFormatters: [
                              FilteringTextInputFormatter.allow(
-  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]')
+  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]?!？！'),
 ),
                 LengthLimitingTextInputFormatter(250),
               ],

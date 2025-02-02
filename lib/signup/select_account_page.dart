@@ -70,20 +70,30 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
-                    SizedBox(
-                      height: 300, // 修正: ListViewの高さを固定
-                      child: _buildMemberList(),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildPasswordInfo(),
+                     _buildMemberList(),
+                      Text(
+          'パスワードの初期値は 0000 です。\nあとで必ずパスワードは変更してね',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'パスワードを入力してください。',
+          style: TextStyle(fontSize: 14, color: _blackColor, fontWeight: FontWeight.bold),
+        ),
+                  //   SizedBox(
+                  //     height: 300, // 修正: ListViewの高さを固定
+                  //     child: _buildMemberList(),
+                  //   ),
+                  //   // const SizedBox(height: 16),
                     const SizedBox(height: 8),
                     _buildAgreementText(),
                     const SizedBox(height: 8),
                     _buildPasswordInput(),
                     const SizedBox(height: 24),
                     _buildLoginButton(),
-                    const SizedBox(height: 16),
-                    _buildFooter(),
+                  //   // const SizedBox(height: 16),
+                  //   _buildFooter(),
                   ],
                 ),
               ),
@@ -123,6 +133,7 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
           ),
         );
       },
+      // _buildPasswordInfo(),
     );
   }
 
