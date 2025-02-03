@@ -50,19 +50,6 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
     return regex.hasMatch(password);
   }
 
-  /// クラス作成用パスワードを一時的に表示する（3秒後に非表示）
-  void _showCreatePasswordTemporarily() {
-    setState(() {
-      _obscureCreatePassword = false;
-    });
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _obscureCreatePassword = true;
-        });
-      }
-    });
-  }
 
   /// クラス参加用パスワードを一時的に表示する（3秒後に非表示）
   void _showJoinPasswordTemporarily() {

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:school_memories2/color.dart';
 import 'package:school_memories2/signup/PrivacyPolicyPage.dart';
 import 'package:school_memories2/signup/TermsOfServicePage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
