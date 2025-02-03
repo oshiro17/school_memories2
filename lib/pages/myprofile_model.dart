@@ -39,8 +39,12 @@ class MyProfileModel extends ChangeNotifier {
   int avatarIndex = 0;
   bool isLoading = false;
 
+  String? errorMessage;
+
+  /// 自分のプロフィールを一度だけ取得する
   Future<void> fetchProfileOnce(String classId, String memberId) async {
     isLoading = true;
+    errorMessage = null; // エラー状態をリセット
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
@@ -48,14 +52,18 @@ class MyProfileModel extends ChangeNotifier {
     final cachedProfile = prefs.getString(cacheKey);
 
     bool needsFetchFromFirebase = true;
-
     if (cachedProfile != null) {
-      final cachedData = json.decode(cachedProfile);
-      _loadProfileFromJson(cachedData);
+      try {
+        final cachedData = json.decode(cachedProfile);
+        _loadProfileFromJson(cachedData);
 
-      // q1 が空でない場合はキャッシュを使用
-      if (q1.isNotEmpty) {
-        needsFetchFromFirebase = false;
+        // キャッシュに十分なデータがある場合はFirestoreからの再取得をスキップ
+        if (q1.isNotEmpty) {
+          needsFetchFromFirebase = false;
+        }
+      } catch (e) {
+        // キャッシュのパースに失敗した場合はFirestoreから取得
+        needsFetchFromFirebase = true;
       }
     }
 
@@ -68,15 +76,18 @@ class MyProfileModel extends ChangeNotifier {
             .doc(memberId)
             .get();
 
-        if (doc.exists) {
+        if (doc.exists && doc.data() != null) {
           final data = doc.data();
           _loadProfileFromJson(data);
-
-          // データをキャッシュに保存
+          // キャッシュにも保存
           await prefs.setString(cacheKey, json.encode(data));
+        } else {
+          errorMessage = 'ドキュメントが存在しません。';
         }
+      } on FirebaseException catch (e) {
+        errorMessage = 'Firestoreエラー: ${e.message}';
       } catch (e) {
-        print('fetchProfileエラー: $e');
+        errorMessage = 'プロフィールの取得に失敗しました: $e';
       }
     }
 

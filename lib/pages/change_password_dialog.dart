@@ -18,6 +18,7 @@ class ChangePasswordDialog extends StatefulWidget {
 class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  String? errorMessage; // エラー状態を保持する変数
 
   Future<void> _changePassword() async {
     final newPass = _passwordController.text.trim();
@@ -29,10 +30,13 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      errorMessage = null; // 処理開始時にエラー状態をリセット
+    });
 
     try {
-      // Firestore のメンバー doc に新しいパスワードを更新
+      // Firestore のメンバーdocに新しいパスワードを更新
       await FirebaseFirestore.instance
           .collection('classes')
           .doc(widget.classId)
@@ -44,13 +48,20 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
 
       // 成功したらダイアログを閉じる
       Navigator.pop(context);
+    } on FirebaseException catch (e) {
+      // Firebase固有の例外の場合
+      setState(() {
+        errorMessage = 'Firestoreエラー: ${e.message}';
+      });
     } catch (e) {
-      print('パスワード変更時にエラー: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラー: $e')),
-      );
+      // その他の例外の場合
+      setState(() {
+        errorMessage = 'パスワード変更に失敗しました: $e';
+      });
     } finally {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -68,6 +79,14 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
             ),
             obscureText: true, // パスワード非表示
           ),
+          // エラー発生時にエラーメッセージを表示
+          if (errorMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              errorMessage!,
+              style: const TextStyle(color: Colors.red),
+            ),
+          ],
         ],
       ),
       actions: [

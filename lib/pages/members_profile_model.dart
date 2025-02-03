@@ -7,43 +7,45 @@ class MembersProfileModel extends ChangeNotifier {
   List<Member> classMemberList = [];
   bool isLoading = false;
   bool isEmpty = true;
+  String? errorMessage; // エラー状態を保持するフィールド
 
-  // クラスメンバーを取得（Firestoreからまたはキャッシュから）
-Future<void> fetchClassMembers(String classId, String currentMemberId, {bool forceRefresh = false}) async {
-  isLoading = true;
-  notifyListeners();
-
-  try {
-    final prefs = await SharedPreferences.getInstance();
-
-    // forceRefreshがtrueならキャッシュを無視してFirestoreから取得
-    if (!forceRefresh) {
-      final cachedData = prefs.getString('classMembers_$classId');
-      if (cachedData != null) {
-        print('キャッシュデータを使用しています');
-        final List<dynamic> decodedList = jsonDecode(cachedData);
-        classMemberList = decodedList.map((json) => Member.fromJson(json)).toList();
-        isEmpty = classMemberList.isEmpty;
-        isLoading = false;
-        notifyListeners();
-        return;
-      }
-    }
-
-    // Firestoreからデータ取得
-    print('Firestoreからデータを取得しています');
-    await _fetchFromFirestore(classId, currentMemberId, prefs);
-
-  } catch (e) {
-    print('エラー: クラスメンバーの取得に失敗 $e');
-  } finally {
-    isLoading = false;
+  /// クラスメンバーを取得（Firestoreからまたはキャッシュから）
+  Future<void> fetchClassMembers(String classId, String currentMemberId, {bool forceRefresh = false}) async {
+    isLoading = true;
+    errorMessage = null; // 処理開始時にエラー状態をリセット
     notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // forceRefreshがtrueならキャッシュを無視してFirestoreから取得
+      if (!forceRefresh) {
+        final cachedData = prefs.getString('classMembers_$classId');
+        if (cachedData != null) {
+          print('キャッシュデータを使用しています');
+          final List<dynamic> decodedList = jsonDecode(cachedData);
+          classMemberList = decodedList.map((json) => Member.fromJson(json)).toList();
+          isEmpty = classMemberList.isEmpty;
+          isLoading = false;
+          notifyListeners();
+          return;
+        }
+      }
+
+      // Firestoreからデータ取得
+      print('Firestoreからデータを取得しています');
+      await _fetchFromFirestore(classId, currentMemberId, prefs);
+    } on FirebaseException catch (e) {
+      errorMessage = 'Firestoreエラー: ${e.message}';
+    } catch (e) {
+      errorMessage = 'クラスメンバーの取得に失敗しました: $e';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
-}
 
-
-  // Firestoreからデータを取得し、SharedPreferencesに保存
+  /// Firestoreからデータを取得し、SharedPreferencesに保存
   Future<void> _fetchFromFirestore(String classId, String currentMemberId, SharedPreferences prefs) async {
     final doc = await FirebaseFirestore.instance
         .collection('classes')
@@ -53,7 +55,7 @@ Future<void> fetchClassMembers(String classId, String currentMemberId, {bool for
         .get();
 
     if (!doc.exists) {
-      print("エラー: ドキュメントが存在しません");
+      errorMessage = "エラー: ドキュメントが存在しません";
       isEmpty = true;
       return;
     }

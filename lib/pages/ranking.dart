@@ -47,6 +47,37 @@ class RankingPage extends StatelessWidget {
 
   /// メインの表示ロジック
   Widget _buildBodyContent(RankingPageModel model) {
+    // エラー状態がある場合はエラーメッセージと再試行ボタンを表示
+    if (model.errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 40.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                model.errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  // 再試行（forceUpdate: true で再読み込み）
+                  model.init(classId, currentMemberId, forceUpdate: true);
+                },
+                child: const Text('再試行'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     // 1) 全体ロード中
     if (model.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -76,7 +107,7 @@ class RankingPage extends StatelessWidget {
       itemCount: model.questionList.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
-          // 先頭にAppBarスペース
+          // 先頭にAppBar分の余白用
           return const SizedBox(height: kToolbarHeight + 12);
         }
         return _buildRankingCard(context, model, index - 1);
@@ -113,7 +144,6 @@ class RankingPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
             if (votes == null)
               // ロード中
               const Center(
@@ -129,23 +159,22 @@ class RankingPage extends StatelessWidget {
                 style: TextStyle(fontSize: 16, color: Colors.black54),
               )
             else
-              // 上位3名
+              // 上位3名のリスト
               ...topVotes.asMap().entries.map((entry) {
                 final rank = entry.key; // 0=1位,1=2位,2=3位
                 final vote = entry.value;
                 return ListTile(
-                  // leading で、avatar の左に 王冠 と rank を表示
                   leading: SizedBox(
                     width: 60,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // avatar
+                        // avatar画像
                         CircleAvatar(
                           radius: 28,
                           backgroundImage: AssetImage('assets/j${vote.avatarIndex}.png'),
                         ),
-                        // 王冠 + rank数字
+                        // 王冠と順位
                         Positioned(
                           top: -2,
                           left: -4,
@@ -158,7 +187,7 @@ class RankingPage extends StatelessWidget {
                     vote.memberName,
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis, // 長すぎる場合は省略
+                    overflow: TextOverflow.ellipsis,
                   ),
                   trailing: Text(
                     '${vote.count}票',
@@ -172,9 +201,8 @@ class RankingPage extends StatelessWidget {
     );
   }
 
-  /// 王冠を表示 + rank 数字
+  /// 王冠と順位を表示するウィジェット
   Widget _buildCrownWithRank(int rank) {
-    // rank=0 -> 1位(金), rank=1 -> 2位(銀), rank=2 -> 3位(銅)
     late Color crownColor;
     switch (rank) {
       case 0:
@@ -187,20 +215,17 @@ class RankingPage extends StatelessWidget {
         crownColor = Colors.brown;  // 銅
         break;
       default:
-        // 3位以降は表示しない
         return const SizedBox.shrink();
     }
 
     return Stack(
       alignment: Alignment.center,
       children: [
-        // 王冠アイコン
         Icon(
           Icons.emoji_events,
           color: crownColor,
           size: 35,
         ),
-        // 王冠の上に順位の数字 (1, 2, 3)
         Positioned(
           top: 4,
           child: Text(

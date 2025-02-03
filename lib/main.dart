@@ -13,10 +13,28 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../class_model.dart';
 import '../pages/home.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    // Firebase初期化に失敗した場合は、エラーメッセージを表示するシンプルなUIを起動する
+    runApp(MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: const Text('エラー')),
+        body: Center(
+          child: Text(
+            'Firebaseの初期化に失敗しました。\nエラー: $e',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    ));
+    return;
+  }
 
+  // Firebase初期化成功後の処理
   final prefs = await SharedPreferences.getInstance();
   final savedClassId = prefs.getString('savedClassId');
   final savedMemberId = prefs.getString('savedMemberId');
@@ -39,6 +57,7 @@ void main() async {
 
   runApp(MyApp(firstPage: firstPage));
 }
+
 
 class MyApp extends StatelessWidget {
   final Widget firstPage;

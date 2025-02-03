@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class RankingPageModel extends ChangeNotifier {
   bool isLoading = false;    // 全体の読み込みフラグ
   bool isVoted = false;      // 現在ユーザーが投票済みかどうか
+  String? errorMessage;      // エラー状態を保持するフィールド
 
   /// 質問一覧
   final List<String> questionList = [
@@ -53,6 +54,7 @@ class RankingPageModel extends ChangeNotifier {
     bool forceUpdate = false,
   }) async {
     isLoading = true;
+    errorMessage = null; // 初期化時にエラー状態をリセット
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
@@ -65,11 +67,12 @@ class RankingPageModel extends ChangeNotifier {
         try {
           final cachedJson = jsonDecode(cachedData);
           _loadFromCache(cachedJson);
-          // いったん読み込みフラグをfalseにして、画面にキャッシュを表示
           isLoading = false;
           notifyListeners();
         } catch (e) {
           print('キャッシュの読み込みに失敗: $e');
+          errorMessage = 'キャッシュの読み込みに失敗しました: $e';
+          notifyListeners();
         }
       }
     }
@@ -90,6 +93,8 @@ class RankingPageModel extends ChangeNotifier {
       }
     } catch (e) {
       print('投票状態チェック失敗: $e');
+      errorMessage = '投票状態のチェックに失敗しました: $e';
+      notifyListeners();
     }
 
     // 投票していないなら、ここで終了
@@ -101,14 +106,12 @@ class RankingPageModel extends ChangeNotifier {
 
     // 3) 投票済みなら順次ランキングをロード
     isLoading = false; 
-    notifyListeners(); // 画面を部分的に表示可能に
+    notifyListeners(); // 画面更新可能に
 
-    // 質問数だけループし、各質問の投票情報を取得
     for (int i = 0; i < questionList.length; i++) {
-      // まだロードしていない項目は null をセット（キャッシュがなければ）
+      // キャッシュがなければ null をセット
       rankingVotes.putIfAbsent(i, () => null);
 
-      // Firestore: rankings/i/votes コレクションを取得
       try {
         final docId = i.toString();
         final votesSnap = await FirebaseFirestore.instance
@@ -119,14 +122,13 @@ class RankingPageModel extends ChangeNotifier {
             .collection('votes')
             .get();
 
-        // 投票ドキュメント一覧 => memberId => membersサブコレクションから最新の name, avatarIndex を取得
+        // 投票ドキュメント一覧から、各メンバーの最新情報を取得
         final votes = await Future.wait(votesSnap.docs.map((voteDoc) async {
           final data = voteDoc.data();
           final memberId = data['memberId'] as String?;
           final count = data['count'] ?? 0;
 
           if (memberId == null) {
-            // もし memberId がなければ unknown
             return RankingVote(
               memberName: 'unknown',
               avatarIndex: 0,
@@ -134,7 +136,6 @@ class RankingPageModel extends ChangeNotifier {
             );
           }
 
-          // 最新のメンバー情報を参照
           final memberRef = FirebaseFirestore.instance
               .collection('classes')
               .doc(classId)
@@ -143,7 +144,6 @@ class RankingPageModel extends ChangeNotifier {
 
           final memberSnap = await memberRef.get();
           if (!memberSnap.exists) {
-            // もし該当ユーザーが見つからなければ
             return RankingVote(
               memberName: 'unknown',
               avatarIndex: 0,
@@ -152,8 +152,6 @@ class RankingPageModel extends ChangeNotifier {
           }
 
           final memberData = memberSnap.data() as Map<String, dynamic>?;
-
-          // 最新の avatarIndex, name を取得
           final avatarIndex = memberData?['avatarIndex'] ?? 0;
           final memberName = memberData?['name'] ?? 'unknown';
 
@@ -167,20 +165,24 @@ class RankingPageModel extends ChangeNotifier {
         // 投票数の多い順にソート
         votes.sort((a, b) => b.count.compareTo(a.count));
 
-        // 読み込み完了
         rankingVotes[i] = votes;
         notifyListeners();
-
       } catch (e) {
         print('質問$i ロード失敗: $e');
-        // エラーなら空リスト
         rankingVotes[i] = [];
+        errorMessage = '質問$i のロードに失敗しました: $e';
         notifyListeners();
       }
     }
 
     // 4) 全部ロード後、キャッシュに保存
-    await prefs.setString(cacheKey, jsonEncode(_toCacheJson()));
+    try {
+      await prefs.setString(cacheKey, jsonEncode(_toCacheJson()));
+    } catch (e) {
+      print('キャッシュ保存に失敗しました: $e');
+      errorMessage = 'キャッシュ保存に失敗しました: $e';
+      notifyListeners();
+    }
   }
 
   /// キャッシュから復元

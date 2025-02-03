@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
-import 'package:school_memories2/pages/message.dart';
-import 'package:school_memories2/pages/select_people_model.dart';
+import 'package:school_memories2/pages/select_people_model.dart'; // Provider とモデルの定義があると仮定
 import 'write_message.dart';
 
 enum ClassMemberAction { writeMessage, voteRanking }
@@ -12,7 +11,8 @@ class ClassMemberPage extends StatelessWidget {
   final ClassMemberAction action;
   final ClassModel classInfo;
 
-  const ClassMemberPage({required this.action, required this.classInfo});
+  const ClassMemberPage({Key? key, required this.action, required this.classInfo})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +25,31 @@ class ClassMemberPage extends StatelessWidget {
             if (model.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
-
+            // エラーがある場合はエラーメッセージと再試行ボタンを表示
+            if (model.errorMessage != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      model.errorMessage!,
+                      style: const TextStyle(fontSize: 16, color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        model.fetchMembers(classInfo.id);
+                      },
+                      child: const Text('再試行'),
+                    ),
+                  ],
+                ),
+              );
+            }
             if (model.members.isEmpty) {
               return const Center(child: Text('メンバーがいません。'));
             }
-
             return ListView.builder(
               itemCount: model.members.length,
               itemBuilder: (context, index) {
@@ -37,38 +57,28 @@ class ClassMemberPage extends StatelessWidget {
                 return ListTile(
                   title: Text(member.name),
                   onTap: () {
-                    // if (action == ClassMemberAction.writeMessage) {
-                    //   // メンバー情報を次画面へ渡す
-                    //   Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(
-                    //       builder: (context) => WritingMessagePage(selectMember: member),
-                    //     ),
-                    //   );
-                    // } else {
-                      // 投票用ダイアログ
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('投票'),
-                            content: Text('${member.name} に投票しますか？'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context), // キャンセル
-                                child: const Text('キャンセル'),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context, member); // 投票先を返す
-                                },
-                                child: const Text('投票する'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    // }
+                    // 投票用ダイアログ（必要に応じてコメントアウト部分を切り替え）
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('投票'),
+                          content: Text('${member.name} に投票しますか？'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context), // キャンセル
+                              child: const Text('キャンセル'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context, member); // 投票先を返す
+                              },
+                              child: const Text('投票する'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
                   },
                 );
               },
@@ -79,15 +89,16 @@ class ClassMemberPage extends StatelessWidget {
     );
   }
 }
-
 class SelectPeopleModelProvider extends ChangeNotifier {
   List<SelectPeopleModel> members = [];
   bool isLoading = false;
+  String? errorMessage; // エラー状態を保持するフィールド
 
   /// クラスのメンバーリストを取得
   Future<void> fetchMembers(String classId) async {
     try {
       isLoading = true;
+      errorMessage = null; // エラー状態をリセット
       notifyListeners();
 
       final snapshot = await FirebaseFirestore.instance
@@ -102,6 +113,7 @@ class SelectPeopleModelProvider extends ChangeNotifier {
       }).toList();
     } catch (e) {
       print('メンバー取得エラー: $e');
+      errorMessage = 'メンバーの取得に失敗しました: $e';
       members = [];
     } finally {
       isLoading = false;

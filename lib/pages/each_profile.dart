@@ -120,6 +120,13 @@ class EachProfilePage extends StatelessWidget {
       child: Consumer<EachProfileModel>(
         builder: (context, model, child) {
           // ローディング中
+          if(model.errorMessage != null) {
+            return Scaffold(
+              body: Center(
+                child: Text(model.errorMessage!),
+              ),
+            );
+          }
           if (model.isLoading) {
             return Scaffold(
               extendBodyBehindAppBar: true, 

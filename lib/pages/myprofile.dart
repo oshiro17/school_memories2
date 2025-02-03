@@ -123,7 +123,24 @@ class MyProfilePage extends StatelessWidget {
     // 上位(MultiProvider)で提供された同じ MyProfileModel のインスタンスを使う
     final model = context.watch<MyProfileModel>();
 
-
+    if(model.errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('エラーが発生しました'),
+              ElevatedButton(
+                onPressed: () {
+                  model.fetchProfileOnce(classInfo.id, currentMemberId);
+                },
+                child: const Text('再試行'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     if (model.isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
