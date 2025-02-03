@@ -115,7 +115,7 @@ class MyProfileModel extends ChangeNotifier {
     q27 = data?['q27'] ?? '';
     q28 = data?['q28'] ?? '';
     q29 = data?['q29'] ?? '';
-
+    name = data?['name'] ?? '';
     avatarIndex = data?['avatarIndex'] ?? 0;
   }
 }

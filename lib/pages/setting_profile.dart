@@ -261,9 +261,18 @@ final TextEditingController mottoController = TextEditingController();
         keyboardType:
             isLongText ? TextInputType.multiline : TextInputType.text,
         inputFormatters: [
-                       FilteringTextInputFormatter.allow(
-  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]?！？!')
+FilteringTextInputFormatter.allow(
+  RegExp(
+    r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF'  // 英数字、日本語
+    r'\u3000\u3001\u3002'                                   // 全角スペース、、「。」
+    r'\uFF01\uFF1F'                                       // 全角感嘆符、疑問符
+    r'\uFF08\uFF09'                                       // 全角丸括弧
+    r'\u300C\u300D\u300E\u300F'                            // 鉤括弧、二重鉤括弧
+    r'\u301C\uFF5E'                                       // 波ダッシュ（どちらかまたは両方）
+    r']+'
+  ),
 ),
+
           LengthLimitingTextInputFormatter(maxLength)
         ], // 文字数制限
         decoration: InputDecoration(
@@ -294,9 +303,18 @@ final TextEditingController mottoController = TextEditingController();
         keyboardType:
             isLongText ? TextInputType.multiline : TextInputType.text,
         inputFormatters: [
-                       FilteringTextInputFormatter.allow(
-  RegExp(r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF@_\-・ー（）「」、。 　]?！？!')
+FilteringTextInputFormatter.allow(
+  RegExp(
+    r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF'  // 英数字、日本語
+    r'\u3000\u3001\u3002'                                   // 全角スペース、、「。」
+    r'\uFF01\uFF1F'                                       // 全角感嘆符、疑問符
+    r'\uFF08\uFF09'                                       // 全角丸括弧
+    r'\u300C\u300D\u300E\u300F'                            // 鉤括弧、二重鉤括弧
+    r'\u301C\uFF5E'                                       // 波ダッシュ（どちらかまたは両方）
+    r']+'
+  ),
 ),
+
           LengthLimitingTextInputFormatter(maxLength)
         ], // 文字数制限
         decoration: InputDecoration(

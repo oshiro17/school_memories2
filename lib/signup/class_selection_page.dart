@@ -223,10 +223,9 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
                 _obscureCreatePassword ? Icons.visibility : Icons.visibility_off,
               ),
               onPressed: _showCreatePasswordTemporarily,
-              tooltip: 'パスワードを一時的に表示',
             ),
           ),
-          obscureText: _obscureCreatePassword,
+          obscureText: false,
           inputFormatters: [
             LengthLimitingTextInputFormatter(10), // 最大10文字に制限
           ],
