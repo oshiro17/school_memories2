@@ -14,86 +14,84 @@ class MessageModel extends ChangeNotifier {
 
   /// Firestoreからメッセージを取得
   Future<void> fetchMessages(String classId, String memberId, {bool forceUpdate = false}) async {
-    final prefs = await SharedPreferences.getInstance();
-    final cacheKey = 'messages_${classId}_$memberId';
-    
-    // 処理開始時にエラー状態をリセット
-    errorMessage = null;
-    
-    // キャッシュがあれば優先的に読み込む（forceUpdateがfalseの場合）
-    if (!forceUpdate) {
-      final cachedData = prefs.getString(cacheKey);
-      if (cachedData != null) {
-        try {
-          final cachedMessages = json.decode(cachedData) as List;
-          messages = cachedMessages.map((e) => MessageData.fromJson(e)).toList();
-          isFetched = true;
-          isSent = true; // キャッシュがあれば以前送信済みとみなす
-          notifyListeners();
-          return;
-        } catch (e) {
-          print("キャッシュデータのデコードに失敗しました: $e");
-        }
+  final prefs = await SharedPreferences.getInstance();
+  final cacheKey = 'messages_${classId}_$memberId';
+  errorMessage = null;
+  if (!forceUpdate) {
+    final cachedData = prefs.getString(cacheKey);
+    if (cachedData != null) {
+      try {
+        final cachedMessages = json.decode(cachedData) as List;
+        messages = cachedMessages.map((e) => MessageData.fromJson(e)).toList();
+        isFetched = true;
+        isSent = true;
+        notifyListeners();
+        return;
+      } catch (e) {
+        print("キャッシュデータのデコードに失敗しました: $e");
       }
     }
+  }
 
-    isLoading = true;
-    notifyListeners();
+  isLoading = true;
+  notifyListeners();
 
-    try {
-      // (1) 自分の isSent フラグ確認
-      final memberDoc = await FirebaseFirestore.instance
+  try {
+    final memberDoc = await FirebaseFirestore.instance
+        .collection('classes')
+        .doc(classId)
+        .collection('members')
+        .doc(memberId)
+        .get();
+    isSent = memberDoc.data()?['isSent'] ?? false;
+
+    if (isSent) {
+      final snapshot = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
           .collection('members')
           .doc(memberId)
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
           .get();
-      isSent = memberDoc.data()?['isSent'] ?? false;
 
-      // (2) もし isSent = true なら、実際にメッセージ群を取得
-      if (isSent) {
-        final snapshot = await FirebaseFirestore.instance
-            .collection('classes')
-            .doc(classId)
-            .collection('members')
-            .doc(memberId)
-            .collection('messages')
-            .orderBy('timestamp', descending: true)
-            .get();
-
-        messages = snapshot.docs.map((doc) {
-          final data = doc.data();
-          return MessageData(
-            avatarIndex: data['avatarIndex'] ?? 0,
-            likeMessage: data['likeMessage'] ?? '',
-            requestMessage: data['requestMessage'] ?? '',
-            message: data['message'] ?? '',
-            senderName: data['senderName'] ?? 'Unknown',
-            timestamp: data['timestamp'] as Timestamp?,
-          );
-        }).toList();
-
-        // (3) キャッシュ保存
-        await prefs.setString(
-          cacheKey,
-          json.encode(messages.map((msg) => msg.toJson()).toList()),
+      messages = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return MessageData(
+          avatarIndex: data['avatarIndex'] ?? 0,
+          likeMessage: data['likeMessage'] ?? '',
+          requestMessage: data['requestMessage'] ?? '',
+          message: data['message'] ?? '',
+          senderName: data['senderName'] ?? 'Unknown',
+          timestamp: data['timestamp'] as Timestamp?,
         );
-      } else {
-        // まだ送信していない場合はメッセージなし
-        messages = [];
-      }
-    } on FirebaseException catch (e) {
-      errorMessage = 'Firestoreエラー: ${e.message}';
-      print('メッセージ取得中にエラーが発生: $e');
-    } catch (e) {
-      errorMessage = 'メッセージ取得中にエラーが発生しました: $e';
-      print('メッセージ取得中にエラーが発生: $e');
-    } finally {
-      isLoading = false;
-      isFetched = true;
-      notifyListeners();
+      }).toList();
+
+      await prefs.setString(
+        cacheKey,
+        json.encode(messages.map((msg) => msg.toJson()).toList()),
+      );
+    } else {
+      messages = [];
     }
+  } on FirebaseException catch (e) {
+    if (e.code == 'unavailable') {
+      errorMessage = 'ネットワークエラーです。';
+      // 例: navigatorKey.currentState?.pushAndRemoveUntil(OfflinePage(...), (route)=>false);
+    } else {
+      errorMessage = 'Firestoreエラー: ${e.message}';
+    }
+    print('メッセージ取得中にエラーが発生: $e');
+  } catch (e) {
+    errorMessage = 'メッセージ取得中にエラーが発生しました: $e';
+    print('メッセージ取得中にエラーが発生: $e');
+  } finally {
+    isLoading = false;
+    isFetched = true;
+    notifyListeners();
   }
+}
+
 }
 
 /// メッセージ1件分のデータクラス

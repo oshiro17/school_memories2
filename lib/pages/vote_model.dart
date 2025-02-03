@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:school_memories2/offline_page.dart';
 import 'package:school_memories2/pages/select_people_model.dart';
 
 class VoteRankingPageModel extends ChangeNotifier {
@@ -101,63 +102,68 @@ class VoteRankingPageModel extends ChangeNotifier {
   }
 
   /// 投票ボタン押下時
-  Future<void> submitVotes(String classId, String currentMemberId) async {
-    if (!isReadyToVote) {
-      throw 'すべての質問に投票してください。';
-    }
+Future<void> submitVotes(String classId, String currentMemberId) async {
+  if (!isReadyToVote) {
+    throw 'すべての質問に投票してください。';
+  }
 
-    try {
-      isLoading = true;
-      notifyListeners();
+  try {
+    isLoading = true;
+    notifyListeners();
 
-      final batch = FirebaseFirestore.instance.batch();
+    final batch = FirebaseFirestore.instance.batch();
 
-      // (1) 各設問 => 選択メンバーに票を加算
-      for (final entry in selectedMembers.entries) {
-        final questionIndex = entry.key;
-        final member = entry.value;
-        if (member == null) continue;
+    for (final entry in selectedMembers.entries) {
+      final questionIndex = entry.key;
+      final member = entry.value;
+      if (member == null) continue;
 
-        final docId = questionIndex.toString(); // "0","1" など
-        final rankingDocRef = FirebaseFirestore.instance
-            .collection('classes')
-            .doc(classId)
-            .collection('rankings')
-            .doc(docId);
-
-        final voteDocRef = rankingDocRef
-            .collection('votes')
-            .doc(member.id); // memberID をドキュメントIDに
-
-        // **ここがポイント**: メンバー名を保存
-        batch.set(
-                  voteDocRef,
-                  {
-                    'count': FieldValue.increment(1),
-                    'memberId': member.id,
-                    
-                    // 'avatarIndex': member.avatarIndex,
-                    // 'memberName': member.name, // これを Firestore に保存
-                  },
-                  SetOptions(merge: true),
-                );
-      }
-
-      // (2) 自分の isVoted を true に
-      final selfRef = FirebaseFirestore.instance
+      final docId = questionIndex.toString();
+      final rankingDocRef = FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
-          .collection('members')
-          .doc(currentMemberId);
-      batch.update(selfRef, {'isVoted': true});
+          .collection('rankings')
+          .doc(docId);
 
-      // (3) 一括コミット
-      await batch.commit();
+      final voteDocRef = rankingDocRef.collection('votes').doc(member.id);
 
-      hasAlreadyVoted = true;
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      batch.set(
+        voteDocRef,
+        {
+          'count': FieldValue.increment(1),
+          'memberId': member.id,
+        },
+        SetOptions(merge: true),
+      );
     }
+
+    final selfRef = FirebaseFirestore.instance
+        .collection('classes')
+        .doc(classId)
+        .collection('members')
+        .doc(currentMemberId);
+    batch.update(selfRef, {'isVoted': true});
+
+    await batch.commit();
+
+    hasAlreadyVoted = true;
+  } on FirebaseException catch (e) {
+    if (e.code == 'unavailable') {
+      // ネットワークエラーの場合
+      // ここも navigatorKey を利用して OfflinePage へ遷移する
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => OfflinePage(error: e.message ?? 'Network error')),
+        (route) => false,
+      );
+    } else {
+      throw 'Firebaseエラー: ${e.message}';
+    }
+  } catch (e) {
+    throw 'エラー: $e';
+  } finally {
+    isLoading = false;
+    notifyListeners();
   }
+}
+
 }

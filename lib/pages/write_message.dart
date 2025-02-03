@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/color.dart';
+import 'package:school_memories2/offline_page.dart';
 
 class WriteMessagePage extends StatelessWidget {
   final String classId;
@@ -259,6 +260,7 @@ FilteringTextInputFormatter.allow(
   }
 }
 
+
 class WriteMessagePageModel extends ChangeNotifier {
   bool isLoading = false;
   bool isSent = false;
@@ -268,7 +270,7 @@ class WriteMessagePageModel extends ChangeNotifier {
 
   List<Map<String, dynamic>> memberList = [];
 
-  // 各メンバーに紐づく 3つのコントローラをそれぞれ配列で用意
+  // 各メンバーに紐づく3種類のTextEditingControllerを用意
   List<TextEditingController> likeControllers = [];
   List<TextEditingController> requestControllers = [];
   List<TextEditingController> messageControllers = [];
@@ -293,13 +295,12 @@ class WriteMessagePageModel extends ChangeNotifier {
           .doc(currentMemberId)
           .get();
 
-      if (memberDoc.data()?['q1']!= null) {
+      if (memberDoc.data()?['q1'] != null) {
         isCallme = true;
       } else {
         isCallme = false;
       }
       isSent = memberDoc.data()?['isSent'] ?? false;
-      // isCallme = memberDoc.data()?['callme'] ?? true;
       senderName = memberDoc.data()?['name'] ?? 'Unknown';
       avatarIndex = memberDoc.data()?['avatarIndex'] ?? 0;
 
@@ -316,13 +317,13 @@ class WriteMessagePageModel extends ChangeNotifier {
           return {
             'id': doc.id,
             'name': doc.data()['name'] ?? 'Unknown',
-            'avatarIndex': doc.data()['avatarIndex'] ?? 0
+            'avatarIndex': doc.data()['avatarIndex'] ?? 0,
           };
         }).toList();
 
         memberList = allMembers.where((m) => m['id'] != currentMemberId).toList();
 
-        // メンバーの件数分だけ TextEditingController を作成
+        // 各メンバーの件数分だけTextEditingControllerを作成
         likeControllers = List.generate(memberList.length, (_) => TextEditingController());
         requestControllers = List.generate(memberList.length, (_) => TextEditingController());
         messageControllers = List.generate(memberList.length, (_) => TextEditingController());
@@ -335,7 +336,7 @@ class WriteMessagePageModel extends ChangeNotifier {
 
   /// メッセージを全員に送信
   Future<void> sendMessages() async {
-    // 3つのコントローラのうち、どれかが未入力のままではないかチェック
+    // 各コントローラーが未入力でないかチェック
     for (int i = 0; i < memberList.length; i++) {
       if (likeControllers[i].text.trim().isEmpty ||
           requestControllers[i].text.trim().isEmpty ||
@@ -365,8 +366,8 @@ class WriteMessagePageModel extends ChangeNotifier {
           'likeMessage': likeText,
           'requestMessage': requestText,
           'message': personalText,
-          'avatarIndex': avatarIndex,  // 自分のアバター番号
-          'senderName': senderName,    // 自分の名前
+          'avatarIndex': avatarIndex, // 自分のアバター番号
+          'senderName': senderName,   // 自分の名前
           'timestamp': FieldValue.serverTimestamp(),
         });
       }
@@ -380,6 +381,18 @@ class WriteMessagePageModel extends ChangeNotifier {
           .update({'isSent': true});
 
       isSent = true;
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable') {
+        // ネットワークエラーの場合、OfflinePage へ遷移
+        navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => OfflinePage(error: e.message ?? 'Network error')),
+          (route) => false,
+        );
+      } else {
+        throw 'Firebaseエラー: ${e.message}';
+      }
+    } catch (e) {
+      throw 'エラー: $e';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -388,7 +401,6 @@ class WriteMessagePageModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    // 生成したすべてのコントローラを破棄
     for (final controller in likeControllers) {
       controller.dispose();
     }

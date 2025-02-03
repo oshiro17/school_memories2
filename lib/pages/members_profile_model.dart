@@ -10,40 +10,41 @@ class MembersProfileModel extends ChangeNotifier {
   String? errorMessage; // エラー状態を保持するフィールド
 
   /// クラスメンバーを取得（Firestoreからまたはキャッシュから）
-  Future<void> fetchClassMembers(String classId, String currentMemberId, {bool forceRefresh = false}) async {
-    isLoading = true;
-    errorMessage = null; // 処理開始時にエラー状態をリセット
-    notifyListeners();
+Future<void> fetchClassMembers(String classId, String currentMemberId, {bool forceRefresh = false}) async {
+  isLoading = true;
+  errorMessage = null;
+  notifyListeners();
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      // forceRefreshがtrueならキャッシュを無視してFirestoreから取得
-      if (!forceRefresh) {
-        final cachedData = prefs.getString('classMembers_$classId');
-        if (cachedData != null) {
-          print('キャッシュデータを使用しています');
-          final List<dynamic> decodedList = jsonDecode(cachedData);
-          classMemberList = decodedList.map((json) => Member.fromJson(json)).toList();
-          isEmpty = classMemberList.isEmpty;
-          isLoading = false;
-          notifyListeners();
-          return;
-        }
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    if (!forceRefresh) {
+      final cachedData = prefs.getString('classMembers_$classId');
+      if (cachedData != null) {
+        final List<dynamic> decodedList = jsonDecode(cachedData);
+        classMemberList = decodedList.map((json) => Member.fromJson(json)).toList();
+        isEmpty = classMemberList.isEmpty;
+        isLoading = false;
+        notifyListeners();
+        return;
       }
-
-      // Firestoreからデータ取得
-      print('Firestoreからデータを取得しています');
-      await _fetchFromFirestore(classId, currentMemberId, prefs);
-    } on FirebaseException catch (e) {
-      errorMessage = 'Firestoreエラー: ${e.message}';
-    } catch (e) {
-      errorMessage = 'クラスメンバーの取得に失敗しました: $e';
-    } finally {
-      isLoading = false;
-      notifyListeners();
     }
+
+    await _fetchFromFirestore(classId, currentMemberId, prefs);
+  } on FirebaseException catch (e) {
+    if (e.code == 'unavailable') {
+      errorMessage = 'ネットワークエラーです。';
+      // 必要に応じて、navigatorKey.currentState?.pushAndRemoveUntil(...) で OfflinePage に遷移させてもよい
+    } else {
+      errorMessage = 'Firestoreエラー: ${e.message}';
+    }
+  } catch (e) {
+    errorMessage = 'クラスメンバーの取得に失敗しました: $e';
+  } finally {
+    isLoading = false;
+    notifyListeners();
   }
+}
+
 
   /// Firestoreからデータを取得し、SharedPreferencesに保存
   Future<void> _fetchFromFirestore(String classId, String currentMemberId, SharedPreferences prefs) async {

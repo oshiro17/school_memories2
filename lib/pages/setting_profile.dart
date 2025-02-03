@@ -4,47 +4,44 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/color.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:school_memories2/offline_page.dart';
+import 'package:school_memories2/main.dart'; // navigatorKey が定義されているファイル
 
 class SettingProfileModel extends ChangeNotifier {
   bool isLoading = false;
   
   /// Firestoreへプロフィールを保存する
   Future<void> saveProfile({
-    required String q1,  // 例: callme
-  required String q2,  // 例: birthday
-  required String q3,  // 例: subject
-  required String q4,  // 例: bloodType
-  required String q5,  // 例: height
-  required String q6,  // 例: mbti
-  required String q7,  // 例: hobby
-  required String q8,  // 例: club
-  required String q9,  // 例: dream
-  required String q10, // 例: favoriteSong
-  required String q11, // 例: favoriteMovie
-  required String q12, // 例: favoritePerson
-  required String q13, // 例: favoriteType
-  required String q14, // 例: treasure
-  required String q15, // 例: thing
-  required String q16, // 例: want
-  required String q17, // 例: favoritePlace
-  required String q18, // 例: recentEvent
-  required String q19, // 例: whatDid
-  required String q20, // 例: achievement
-  required String q21, // 例: strength
-  required String q22, // 例: weakness
-  required String q23, // 例: futurePlan
-  required String q24, // 例: lifeStory
-  required String q25, // 例: futureSelf
-  required String q26, // 例: goal
-  required String q27, // 例: goalBig
-  required String q28, // 例: futureDream
-  required String q29, // 例: motto,
-
-  // 下記3つはそのまま
-  // required String classId,
-  // required String memberId,
-  // required int avatarIndex,
-    
+    required String q1,
+    required String q2,
+    required String q3,
+    required String q4,
+    required String q5,
+    required String q6,
+    required String q7,
+    required String q8,
+    required String q9,
+    required String q10,
+    required String q11,
+    required String q12,
+    required String q13,
+    required String q14,
+    required String q15,
+    required String q16,
+    required String q17,
+    required String q18,
+    required String q19,
+    required String q20,
+    required String q21,
+    required String q22,
+    required String q23,
+    required String q24,
+    required String q25,
+    required String q26,
+    required String q27,
+    required String q28,
+    required String q29,
     required String classId,
     required String memberId,
     required int avatarIndex,
@@ -53,40 +50,39 @@ class SettingProfileModel extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
-      // classes/{classId}/members/{memberId} を更新
- final memberData = {
-   'q1':  q1,
-      'q2':  q2,
-      'q3':  q3,
-      'q4':  q4,
-      'q5':  q5,
-      'q6':  q6,
-      'q7':  q7,
-      'q8':  q8,
-      'q9':  q9,
-      'q10': q10,
-      'q11': q11,
-      'q12': q12,
-      'q13': q13,
-      'q14': q14,
-      'q15': q15,
-      'q16': q16,
-      'q17': q17,
-      'q18': q18,
-      'q19': q19,
-      'q20': q20,
-      'q21': q21,
-      'q22': q22,
-      'q23': q23,
-      'q24': q24,
-      'q25': q25,
-      'q26': q26,
-      'q27': q27,
-      'q28': q28,
-      'q29': q29,
-      'avatarIndex': avatarIndex, 
-  'updatedAt': FieldValue.serverTimestamp(),
-};
+      final memberData = {
+        'q1':  q1,
+        'q2':  q2,
+        'q3':  q3,
+        'q4':  q4,
+        'q5':  q5,
+        'q6':  q6,
+        'q7':  q7,
+        'q8':  q8,
+        'q9':  q9,
+        'q10': q10,
+        'q11': q11,
+        'q12': q12,
+        'q13': q13,
+        'q14': q14,
+        'q15': q15,
+        'q16': q16,
+        'q17': q17,
+        'q18': q18,
+        'q19': q19,
+        'q20': q20,
+        'q21': q21,
+        'q22': q22,
+        'q23': q23,
+        'q24': q24,
+        'q25': q25,
+        'q26': q26,
+        'q27': q27,
+        'q28': q28,
+        'q29': q29,
+        'avatarIndex': avatarIndex,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
 
       await FirebaseFirestore.instance
           .collection('classes')
@@ -94,6 +90,16 @@ class SettingProfileModel extends ChangeNotifier {
           .collection('members')
           .doc(memberId)
           .set(memberData, SetOptions(merge: true));
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable') {
+        // ネットワークエラーの場合、OfflinePage へ遷移
+        navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => OfflinePage(error: e.message ?? 'Network error')),
+          (route) => false,
+        );
+      } else {
+        rethrow;
+      }
     } catch (e) {
       rethrow;
     } finally {
@@ -102,6 +108,7 @@ class SettingProfileModel extends ChangeNotifier {
     }
   }
 }
+
 
 /// プロフィールの新規設定・編集ページ
 class SettingProfilePage extends StatefulWidget {

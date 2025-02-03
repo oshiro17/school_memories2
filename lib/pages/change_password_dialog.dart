@@ -1,5 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:school_memories2/main.dart'; // navigatorKey が定義されているファイル
+import 'package:school_memories2/offline_page.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   final String classId;
@@ -36,7 +39,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     });
 
     try {
-      // Firestore のメンバーdocに新しいパスワードを更新
+      // Firestore のメンバードキュメントに新しいパスワードを更新
       await FirebaseFirestore.instance
           .collection('classes')
           .doc(widget.classId)
@@ -49,12 +52,18 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
       // 成功したらダイアログを閉じる
       Navigator.pop(context);
     } on FirebaseException catch (e) {
-      // Firebase固有の例外の場合
-      setState(() {
-        errorMessage = 'Firestoreエラー: ${e.message}';
-      });
+      if (e.code == 'unavailable') {
+        // ネットワークエラーの場合、OfflinePage へ遷移
+        navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => OfflinePage(error: e.message ?? 'Network error')),
+          (route) => false,
+        );
+      } else {
+        setState(() {
+          errorMessage = 'Firestoreエラー: ${e.message}';
+        });
+      }
     } catch (e) {
-      // その他の例外の場合
       setState(() {
         errorMessage = 'パスワード変更に失敗しました: $e';
       });
@@ -77,7 +86,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
             decoration: const InputDecoration(
               labelText: '新しいパスワード',
             ),
-            obscureText: true, // パスワード非表示
+            obscureText: true,
           ),
           // エラー発生時にエラーメッセージを表示
           if (errorMessage != null) ...[

@@ -42,58 +42,61 @@ class MyProfileModel extends ChangeNotifier {
   String? errorMessage;
 
   /// 自分のプロフィールを一度だけ取得する
-  Future<void> fetchProfileOnce(String classId, String memberId) async {
-    isLoading = true;
-    errorMessage = null; // エラー状態をリセット
-    notifyListeners();
+ Future<void> fetchProfileOnce(String classId, String memberId) async {
+  isLoading = true;
+  errorMessage = null; // エラー状態をリセット
+  notifyListeners();
 
-    final prefs = await SharedPreferences.getInstance();
-    final cacheKey = 'profile_${classId}_$memberId';
-    final cachedProfile = prefs.getString(cacheKey);
+  final prefs = await SharedPreferences.getInstance();
+  final cacheKey = 'profile_${classId}_$memberId';
+  final cachedProfile = prefs.getString(cacheKey);
 
-    bool needsFetchFromFirebase = true;
-    if (cachedProfile != null) {
-      try {
-        final cachedData = json.decode(cachedProfile);
-        _loadProfileFromJson(cachedData);
-
-        // キャッシュに十分なデータがある場合はFirestoreからの再取得をスキップ
-        if (q1.isNotEmpty) {
-          needsFetchFromFirebase = false;
-        }
-      } catch (e) {
-        // キャッシュのパースに失敗した場合はFirestoreから取得
-        needsFetchFromFirebase = true;
+  bool needsFetchFromFirebase = true;
+  if (cachedProfile != null) {
+    try {
+      final cachedData = json.decode(cachedProfile);
+      _loadProfileFromJson(cachedData);
+      if (q1.isNotEmpty) {
+        needsFetchFromFirebase = false;
       }
+    } catch (e) {
+      needsFetchFromFirebase = true;
     }
-
-    if (needsFetchFromFirebase) {
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('classes')
-            .doc(classId)
-            .collection('members')
-            .doc(memberId)
-            .get();
-
-        if (doc.exists && doc.data() != null) {
-          final data = doc.data();
-          _loadProfileFromJson(data);
-          // キャッシュにも保存
-          await prefs.setString(cacheKey, json.encode(data));
-        } else {
-          errorMessage = 'ドキュメントが存在しません。';
-        }
-      } on FirebaseException catch (e) {
-        errorMessage = 'Firestoreエラー: ${e.message}';
-      } catch (e) {
-        errorMessage = 'プロフィールの取得に失敗しました: $e';
-      }
-    }
-
-    isLoading = false;
-    notifyListeners();
   }
+
+  if (needsFetchFromFirebase) {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId)
+          .collection('members')
+          .doc(memberId)
+          .get();
+
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        _loadProfileFromJson(data);
+        await prefs.setString(cacheKey, json.encode(data));
+      } else {
+        errorMessage = 'ドキュメントが存在しません。';
+      }
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable') {
+        // ネットワークエラーの場合は、UI で OfflinePage への遷移を検討するか errorMessage を設定
+        errorMessage = 'ネットワークエラーです。';
+        // 例：navigatorKey.currentState?.pushAndRemoveUntil(OfflinePage(...), (route)=>false);
+      } else {
+        errorMessage = 'Firestoreエラー: ${e.message}';
+      }
+    } catch (e) {
+      errorMessage = 'プロフィールの取得に失敗しました: $e';
+    }
+  }
+
+  isLoading = false;
+  notifyListeners();
+}
+
 
   void _loadProfileFromJson(Map<String, dynamic>? data) {
     // Firestoreのフィールド名も q1〜q25 に合わせる

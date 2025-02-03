@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:school_memories2/offline_page.dart';
 import 'package:school_memories2/signup/PrivacyPolicyPage.dart';
 import 'package:school_memories2/signup/TermsOfServicePage.dart';
 import '../color.dart';
@@ -208,7 +209,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
             labelText: 'クラスのパスワード',
             helperText: '大文字、小文字、数字の組み合わせで6文字以上',
           ),
-          obscureText: _obscureCreatePassword,
+          obscureText: false,
           inputFormatters: [
             LengthLimitingTextInputFormatter(10),
           ],
@@ -429,107 +430,176 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
 
   /// 確認画面から「進む」ボタンを押した時に呼ばれるメソッド
   /// ※ クラス作成 → 参加フロー
-  Future<void> _joinClassAfterConfirm(
-    String className,
-    String classId,
-    String password,
-    List<String> trimmedNames,
-  ) async {
-    if (_isLoading) return;
-    setState(() {
-      _isLoading = true;
+Future<void> _joinClassAfterConfirm(
+  String className,
+  String classId,
+  String password,
+  List<String> trimmedNames,
+) async {
+  if (_isLoading) return;
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    final classRef = FirebaseFirestore.instance.collection('classes').doc(classId);
+    final docSnap = await classRef.get();
+    if (docSnap.exists) {
+      _showMessage('クラスIDがもう使われています');
+      return;
+    }
+
+    await classRef.set({
+      'id': classId,
+      'name': className,
+      'password': password,
+      'createdAt': DateTime.now(),
     });
 
-    try {
-      final classRef = FirebaseFirestore.instance.collection('classes').doc(classId);
-      final docSnap = await classRef.get();
-      if (docSnap.exists) {
-        _showMessage('クラスIDがもう使われています');
-        return;
-      }
-
-      await classRef.set({
-        'id': classId,
-        'name': className,
-        'password': password,
-        'createdAt': DateTime.now(),
-      });
-
-      for (final name in trimmedNames) {
-        final memberDoc = classRef.collection('members').doc();
-        await memberDoc.set({
-          'id': memberDoc.id,
-          'name': name,
-        });
-      }
-
-      _showMessage('クラス「$className」作成完了！');
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId, className: className)),
-        (route) => false,
-      );
-    } on FirebaseException catch (e) {
-      _showMessage('Firebaseエラー: ${e.message}');
-    } catch (e) {
-      _showMessage('エラー: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
+    for (final name in trimmedNames) {
+      final memberDoc = classRef.collection('members').doc();
+      await memberDoc.set({
+        'id': memberDoc.id,
+        'name': name,
       });
     }
+
+    _showMessage('クラス「$className」作成完了！');
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId, className: className)),
+      (route) => false,
+    );
+  } on FirebaseException catch (e) {
+    if (e.code == 'unavailable') {
+      // ネットワークエラーなどの場合、OfflinePage に遷移
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => OfflinePage(error: e.message ?? 'Network error')),
+        (route) => false,
+      );
+    } else {
+      _showMessage('Firebaseエラー: ${e.message}');
+    }
+  } catch (e) {
+    _showMessage('エラー: $e');
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
+
+  // Future<void> _joinClassAfterConfirm(
+  //   String className,
+  //   String classId,
+  //   String password,
+  //   List<String> trimmedNames,
+  // ) async {
+  //   if (_isLoading) return;
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
+
+  //   try {
+  //     final classRef = FirebaseFirestore.instance.collection('classes').doc(classId);
+  //     final docSnap = await classRef.get();
+  //     if (docSnap.exists) {
+  //       _showMessage('クラスIDがもう使われています');
+  //       return;
+  //     }
+
+  //     await classRef.set({
+  //       'id': classId,
+  //       'name': className,
+  //       'password': password,
+  //       'createdAt': DateTime.now(),
+  //     });
+
+  //     for (final name in trimmedNames) {
+  //       final memberDoc = classRef.collection('members').doc();
+  //       await memberDoc.set({
+  //         'id': memberDoc.id,
+  //         'name': name,
+  //       });
+  //     }
+
+  //     _showMessage('クラス「$className」作成完了！');
+
+  //     Navigator.pushAndRemoveUntil(
+  //       context,
+  //       MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId, className: className)),
+  //       (route) => false,
+  //     );
+  //   } on FirebaseException catch (e) {
+  //     _showMessage('Firebaseエラー: ${e.message}');
+  //   } catch (e) {
+  //     _showMessage('エラー: $e');
+  //   } finally {
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //   }
+  // }
 
   /// 既存クラスに参加する処理
   Future<void> _joinClass(String classId, String password, String className) async {
-    if (_isLoading) return;
+  if (_isLoading) return;
 
-    if (classId.isEmpty || password.isEmpty) {
-      _showMessage('クラスIDとパスワードを入力してください');
+  if (classId.isEmpty || password.isEmpty) {
+    _showMessage('クラスIDとパスワードを入力してください');
+    return;
+  }
+  if (!_validatePassword(password)) {
+    _showMessage('パスワードは大文字、小文字、数字の組み合わせで6文字以上でないと承認されません');
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    final doc = await FirebaseFirestore.instance
+        .collection('classes')
+        .doc(classId)
+        .get();
+    if (!doc.exists) {
+      _showMessage('指定のクラスIDは存在しません');
       return;
     }
-    if (!_validatePassword(password)) {
-      _showMessage('パスワードは大文字、小文字、数字の組み合わせで6文字以上でないと承認されません');
+
+    final data = doc.data()!;
+    if (data['password'] != password) {
+      _showMessage('パスワードが違います');
       return;
     }
+    className = data['name'];
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('classes')
-          .doc(classId)
-          .get();
-      if (!doc.exists) {
-        _showMessage('指定のクラスIDは存在しません');
-        return;
-      }
-
-      final data = doc.data()!;
-      if (data['password'] != password) {
-        _showMessage('パスワードが違います');
-        return;
-      }
-      className = data['name'];
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId, className: className)),
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => SelectAccountPage(classId: classId, className: className)),
+      (route) => false,
+    );
+  } on FirebaseException catch (e) {
+    if (e.code == 'unavailable') {
+      // ネットワークエラーの場合、OfflinePage へ遷移
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => OfflinePage(error: e.message ?? 'Network error')),
         (route) => false,
       );
-    } on FirebaseException catch (e) {
+    } else {
       _showMessage('Firebaseエラー: ${e.message}');
-    } catch (e) {
-      _showMessage('エラー: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
+  } catch (e) {
+    _showMessage('エラー: $e');
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
+
 
   void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
