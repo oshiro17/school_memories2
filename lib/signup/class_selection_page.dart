@@ -217,13 +217,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
           controller: classPasswordForCreateController,
           decoration: InputDecoration(
             labelText: 'クラスのパスワード',
-            helperText: '大文字、小文字、数字の組み合わせで6文字以上でないと承認されません',
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscureCreatePassword ? Icons.visibility : Icons.visibility_off,
-              ),
-              onPressed: _showCreatePasswordTemporarily,
-            ),
+            helperText: '大文字、小文字、数字の組み合わせで6文字以上',
           ),
           obscureText: false,
           inputFormatters: [
@@ -356,7 +350,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
           controller: classPasswordForJoinController,
           decoration: InputDecoration(
             labelText: 'パスワード',
-            helperText: '大文字、小文字、数字の組み合わせで6文字以上でないと承認されません',
+            helperText: '大文字、小文字、数字の組み合わせで6文字以上',
             suffixIcon: IconButton(
               icon: Icon(
                 _obscureJoinPassword ? Icons.visibility : Icons.visibility_off,
@@ -595,45 +589,127 @@ class _ConfirmationPageState extends State<ConfirmationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('確認'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('クラス名: ${widget.className}', style: const TextStyle(fontSize: 18)),
-            Text('クラスID: ${widget.classId}', style: const TextStyle(fontSize: 18)),
-            Text('パスワード: ${widget.password}', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 16),
-            const Text('メンバー:', style: TextStyle(fontSize: 18)),
-            ...widget.members.map(
-              (member) => Text(member, style: const TextStyle(fontSize: 16)),
+  appBar: AppBar(
+    title: const Text('確認'),
+    centerTitle: true,
+    backgroundColor: Colors.white,
+  ),
+  body: SafeArea(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 内容部分をCardで囲む
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
             ),
-            const SizedBox(height: 32),
-            const Text(
-              'クラス作成後は編集できません。よろしいですか？',
-              style: TextStyle(fontSize: 16, color: Colors.red),
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'クラス名 ${widget.className}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'クラスID ${widget.classId}',
+                    style: const TextStyle(fontSize: 18),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'パスワード ${widget.password}',
+                    style: const TextStyle(fontSize: 18),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'メンバー',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // 各メンバーの名前を表示
+                  ...widget.members.map(
+                    (member) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2.0),
+                      child: Text(
+                        member,
+                        style: const TextStyle(fontSize: 16),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('編集'),
+          ),
+          const SizedBox(height: 24),
+          // 注意文言
+          Center(
+            child: Text(
+              'クラス作成後は編集できません。\nよろしいですか？',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+          // ボタンエリア
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[400],
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                // 「進む」ボタンを押すと 親の onConfirm() を呼ぶ
-                ElevatedButton(
-                  onPressed: widget.onConfirm,
-                  child: const Text('進む'),
+                child: const Text(
+                  '編集',
+                  style: TextStyle(fontSize: 16),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              ElevatedButton(
+                onPressed: widget.onConfirm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: darkBlueColor,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  '進む',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
-    );
+    ),
+  ),
+);
+
   }
 }

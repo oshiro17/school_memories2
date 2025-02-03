@@ -140,16 +140,17 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
   Widget _buildPasswordInfo() {
     return Column(
       children: [
+        const SizedBox(height: 12),
         Text(
           'パスワードの初期値は 0000 です。\nあとで必ずパスワードは変更してね',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
         const SizedBox(height: 12),
-        Text(
-          'パスワードを入力してください。',
-          style: TextStyle(fontSize: 14, color: _blackColor, fontWeight: FontWeight.bold),
-        ),
+Text(
+  '本人の同意がないログインや\nなりすまし行為は固く禁止されています。',
+  style: TextStyle(fontSize: 14, color: Colors.red, fontWeight: FontWeight.bold),
+),
       ],
     );
   }
@@ -243,17 +244,17 @@ class _SelectAccountPageState extends State<SelectAccountPage> {
     );
   }
 
-  Widget _buildFooter() {
-    return Column(
-      children: [
-        Text(
-          '© 2025 卒業文集',
-          style: TextStyle(color: _goldColor.withOpacity(0.7), fontSize: 12),
-        ),
-        const SizedBox(height: 10),
-      ],
-    );
-  }
+  // Widget _buildFooter() {
+  //   return Column(
+  //     children: [
+  //       Text(
+  //         '© 2025 卒業文集',
+  //         style: TextStyle(color: _goldColor.withOpacity(0.7), fontSize: 12),
+  //       ),
+  //       const SizedBox(height: 10),
+  //     ],
+  //   );
+  // }
 
   Future<void> _onLoginPressed() async {
     if (selectedMemberId == null) {

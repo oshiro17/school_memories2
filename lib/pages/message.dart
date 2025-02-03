@@ -199,7 +199,7 @@ class MessagePage extends StatelessWidget {
                             ), 
                             const SizedBox(height: 8),
                     ],
-                    if (msg.personalMessage.isNotEmpty) ...[
+                    if (msg.message.isNotEmpty) ...[
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -344,7 +344,7 @@ class MessageModel extends ChangeNotifier {
             avatarIndex: data['avatarIndex'] ?? 0,
             likeMessage: data['likeMessage'] ?? '',
             requestMessage: data['requestMessage'] ?? '',
-            personalMessage: data['personalMessage'] ?? '',
+            message: data['message'] ?? '',
             senderName: data['senderName'] ?? 'Unknown',
             timestamp: data['timestamp'] as Timestamp?,
           );
@@ -380,7 +380,7 @@ class MessageData {
   final String requestMessage;
 
   /// 「個別メッセージ」
-  final String personalMessage;
+  final String message;
 
   final String senderName;
   final Timestamp? timestamp;
@@ -389,7 +389,7 @@ class MessageData {
     required this.avatarIndex,
     required this.likeMessage,
     required this.requestMessage,
-    required this.personalMessage,
+    required this.message,
     required this.senderName,
     required this.timestamp,
   });
@@ -400,7 +400,7 @@ class MessageData {
       avatarIndex: json['avatarIndex'] ?? 0,
       likeMessage: json['likeMessage'] ?? '',
       requestMessage: json['requestMessage'] ?? '',
-      personalMessage: json['personalMessage'] ?? '',
+      message: json['message'] ?? '',
       senderName: json['senderName'] ?? 'Unknown',
       timestamp: json['timestamp'] != null
           ? Timestamp.fromMillisecondsSinceEpoch(json['timestamp'])
@@ -414,7 +414,7 @@ class MessageData {
       'avatarIndex': avatarIndex,
       'likeMessage': likeMessage,
       'requestMessage': requestMessage,
-      'personalMessage': personalMessage,
+      'message': message,
       'senderName': senderName,
       'timestamp': timestamp?.millisecondsSinceEpoch,
     };

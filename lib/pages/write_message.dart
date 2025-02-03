@@ -61,13 +61,13 @@ class WriteMessagePage extends StatelessWidget {
                       // TextField 用の3種類のコントローラを取得
                       final likeController = model.likeControllers[index];
                       final requestController = model.requestControllers[index];
-                      final personalController = model.personalMessageControllers[index];
+                      final messageController = model.messageControllers[index];
 
                       return _buildMessageCard(
                         member: member,
                         likeController: likeController,
                         requestController: requestController,
-                        personalController: personalController,
+                        messageController: messageController,
                       );
                     },
                   ),
@@ -114,7 +114,7 @@ class WriteMessagePage extends StatelessWidget {
     required Map<String, dynamic> member,
     required TextEditingController likeController,
     required TextEditingController requestController,
-    required TextEditingController personalController,
+    required TextEditingController messageController,
   }) {
     return Card(
       elevation: 3,
@@ -218,7 +218,7 @@ class WriteMessagePage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             TextField(
-              controller: personalController,
+              controller: messageController,
               inputFormatters: [
 FilteringTextInputFormatter.allow(
   RegExp(
@@ -271,7 +271,7 @@ class WriteMessagePageModel extends ChangeNotifier {
   // 各メンバーに紐づく 3つのコントローラをそれぞれ配列で用意
   List<TextEditingController> likeControllers = [];
   List<TextEditingController> requestControllers = [];
-  List<TextEditingController> personalMessageControllers = [];
+  List<TextEditingController> messageControllers = [];
 
   String senderName = '';
   int avatarIndex = 0;
@@ -325,7 +325,7 @@ class WriteMessagePageModel extends ChangeNotifier {
         // メンバーの件数分だけ TextEditingController を作成
         likeControllers = List.generate(memberList.length, (_) => TextEditingController());
         requestControllers = List.generate(memberList.length, (_) => TextEditingController());
-        personalMessageControllers = List.generate(memberList.length, (_) => TextEditingController());
+        messageControllers = List.generate(memberList.length, (_) => TextEditingController());
       }
     } finally {
       isLoading = false;
@@ -339,7 +339,7 @@ class WriteMessagePageModel extends ChangeNotifier {
     for (int i = 0; i < memberList.length; i++) {
       if (likeControllers[i].text.trim().isEmpty ||
           requestControllers[i].text.trim().isEmpty ||
-          personalMessageControllers[i].text.trim().isEmpty) {
+          messageControllers[i].text.trim().isEmpty) {
         throw 'すべての項目にメッセージを入力してください。';
       }
     }
@@ -353,7 +353,7 @@ class WriteMessagePageModel extends ChangeNotifier {
         final member = memberList[i];
         final likeText = likeControllers[i].text.trim();
         final requestText = requestControllers[i].text.trim();
-        final personalText = personalMessageControllers[i].text.trim();
+        final personalText = messageControllers[i].text.trim();
 
         await FirebaseFirestore.instance
             .collection('classes')
@@ -395,7 +395,7 @@ class WriteMessagePageModel extends ChangeNotifier {
     for (final controller in requestControllers) {
       controller.dispose();
     }
-    for (final controller in personalMessageControllers) {
+    for (final controller in messageControllers) {
       controller.dispose();
     }
     super.dispose();
