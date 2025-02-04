@@ -61,7 +61,7 @@ class ProfilePage extends StatelessWidget {
                   : membersModel.isEmpty || membersModel.classMemberList.isEmpty
                       ? const Center(
                           child: Text(
-                            '表示するメンバーがありません',
+                            '表示するメンバーがありません\n又はあなたのプロフィールが設定されていません。',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),

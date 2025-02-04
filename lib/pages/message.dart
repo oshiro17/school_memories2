@@ -269,24 +269,46 @@ class MessagePage extends StatelessWidget {
           },
         ),
       ),
-     floatingActionButton: StreamBuilder<ConnectivityResult>(
+      floatingActionButton: StreamBuilder<ConnectivityResult>(
   stream: Connectivity().onConnectivityChanged.map(
     (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
   ),
   builder: (context, snapshot) {
-    // snapshot.data が null の場合はオンラインと仮定（例: ConnectivityResult.mobile）
+    // snapshot.data が null の場合はオンライン状態（例: ConnectivityResult.mobile）とみなす
     final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
-    final offline = connectivityResult == ConnectivityResult.none;
+    final bool offline = connectivityResult == ConnectivityResult.none;
     return FloatingActionButton(
-      // オフラインの場合は背景色をグレーに変更
       backgroundColor: offline ? Colors.grey : goldColor,
-      // オンラインの場合のみ onPressed を設定し、オフラインの場合は null にすることで無効化
-      onPressed: () {
-          final model = Provider.of<MessageModel>(context, listen: false);
-          model.fetchMessages(classId, currentMemberId, forceUpdate: true);
-        },
+      // オフラインの場合は onPressed を null にし、オンラインの場合のみ処理を実行する
+      onPressed: offline
+          ? null
+          : () {
+              final model = Provider.of<MessageModel>(context, listen: false);
+              model.fetchMessages(classId, currentMemberId, forceUpdate: true);
+            },
       child: const Icon(Icons.refresh),
     );
+  // },
+// ),
+
+  //    floatingActionButton: StreamBuilder<ConnectivityResult>(
+  // stream: Connectivity().onConnectivityChanged.map(
+  //   (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+  // ),
+  // builder: (context, snapshot) {
+  //   // snapshot.data が null の場合はオンラインと仮定（例: ConnectivityResult.mobile）
+  //   final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+  //   final offline = connectivityResult == ConnectivityResult.none;
+  //   return FloatingActionButton(
+  //     // オフラインの場合は背景色をグレーに変更
+  //     backgroundColor: offline ? Colors.grey : goldColor,
+  //     // オンラインの場合のみ onPressed を設定し、オフラインの場合は null にすることで無効化
+  //     onPressed: () {
+  //         final model = Provider.of<MessageModel>(context, listen: false);
+  //         model.fetchMessages(classId, currentMemberId, forceUpdate: true);
+  //       },
+  //     child: const Icon(Icons.refresh),
+    // );
   },
 ),
 

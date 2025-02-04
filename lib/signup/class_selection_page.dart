@@ -412,6 +412,10 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
       _showMessage('メンバーは最低2人必要です');
       return;
     }
+        if (members.length > 80) {
+      _showMessage('メンバーは最大80人までです\nクラスを分けてください。');
+      return;
+    }
     final uniqueNames = members.toSet();
     if (uniqueNames.length != members.length) {
       _showMessage('名前が重複しています');

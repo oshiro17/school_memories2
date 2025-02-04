@@ -201,8 +201,14 @@ class MembersProfileModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     // キャッシュが存在し、forceRefresh が false の場合はキャッシュを読み込む
     if (!forceRefresh) {
+
+
+
       final cachedData = prefs.getString('classMembers_$classId');
       if (cachedData != null) {
+
+
+
         try {
           final List<dynamic> decodedList = jsonDecode(cachedData);
           // キャッシュから読み込んだリストのうち、motto が空でないものだけ採用する
@@ -222,6 +228,29 @@ class MembersProfileModel extends ChangeNotifier {
     }
 
     try {
+         final doc = await FirebaseFirestore.instance
+        .collection('classes')
+        .doc(classId)
+        .collection('members')
+        .doc(currentMemberId)
+        .get();
+
+    if (!doc.exists) {
+      errorMessage = "エラー: ドキュメントが存在しません";
+      isEmpty = true;
+      return;
+    }
+
+    final callme = doc.data()?['q1'];
+    if (callme == null || callme.isEmpty) {
+      isEmpty = true;
+      return;
+    } else {
+      isEmpty = false;
+    }
+
+
+
       // Firebase のコレクション全体を一度に取得
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('classes')
