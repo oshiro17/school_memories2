@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:school_memories2/main.dart'; // navigatorKey が定義されているファイル
-import 'package:school_memories2/offline_page.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   final String classId;
@@ -22,6 +23,32 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? errorMessage; // エラー状態を保持する変数
+
+  // オフライン状態を管理するフラグ
+  bool _isOffline = false;
+  late final StreamSubscription<ConnectivityResult> _connectivitySubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Connectivity のストリームから最初の値を取得して監視する
+_connectivitySubscription = Connectivity()
+    .onConnectivityChanged
+    .map((results) => results.isNotEmpty ? results.first : ConnectivityResult.none)
+    .listen((result) {
+  setState(() {
+    _isOffline = (result == ConnectivityResult.none);
+  });
+});
+
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _connectivitySubscription.cancel();
+    super.dispose();
+  }
 
   Future<void> _changePassword() async {
     final newPass = _passwordController.text.trim();
@@ -53,11 +80,9 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
       Navigator.pop(context);
     } on FirebaseException catch (e) {
       if (e.code == 'unavailable') {
-        // ネットワークエラーの場合、OfflinePage へ遷移
-        navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => OfflinePage(error: e.message ?? 'Network error')),
-          (route) => false,
-        );
+        setState(() {
+          errorMessage = 'オフライン: ${e.message}';
+        });
       } else {
         setState(() {
           errorMessage = 'Firestoreエラー: ${e.message}';
@@ -105,8 +130,9 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
             child: CircularProgressIndicator(),
           )
         else
+          // オフラインまたは処理中の場合は onPressed を null にしてボタンを無効化
           TextButton(
-            onPressed: _changePassword,
+            onPressed: (_isLoading || _isOffline) ? null : _changePassword,
             child: const Text('変更する'),
           ),
       ],

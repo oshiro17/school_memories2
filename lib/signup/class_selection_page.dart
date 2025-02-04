@@ -4,22 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:school_memories2/offline_page.dart';
 import 'package:school_memories2/signup/PrivacyPolicyPage.dart';
 import 'package:school_memories2/signup/TermsOfServicePage.dart';
 import '../color.dart';
 import 'select_account_page.dart';
-import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:school_memories2/class_model.dart';
-import 'package:school_memories2/color.dart';
-import 'package:school_memories2/signup/PrivacyPolicyPage.dart';
-import 'package:school_memories2/signup/TermsOfServicePage.dart';
-import 'package:school_memories2/signup/select_account_page.dart';
+
 
 class ClassSelectionPage extends StatefulWidget {
   const ClassSelectionPage({Key? key}) : super(key: key);
@@ -473,11 +462,7 @@ Future<void> _joinClassAfterConfirm(
     );
   } on FirebaseException catch (e) {
     if (e.code == 'unavailable') {
-      // ネットワークエラーなどの場合、OfflinePage に遷移
-      navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => OfflinePage(error: e.message ?? 'Network error')),
-        (route) => false,
-      );
+      return;
     } else {
       _showMessage('Firebaseエラー: ${e.message}');
     }
@@ -583,11 +568,7 @@ Future<void> _joinClassAfterConfirm(
     );
   } on FirebaseException catch (e) {
     if (e.code == 'unavailable') {
-      // ネットワークエラーの場合、OfflinePage へ遷移
-      navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => OfflinePage(error: e.message ?? 'Network error')),
-        (route) => false,
-      );
+        return;
     } else {
       _showMessage('Firebaseエラー: ${e.message}');
     }

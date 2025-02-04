@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/color.dart';
@@ -77,27 +78,50 @@ class _HomeState extends State<Home> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.white.withOpacity(0.5),
-        elevation: 0,
-        title: Text(
-          'Sotsu Bun',
-          style: GoogleFonts.dancingScript(fontSize: 23, color: Colors.black),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => MainMemoriesDialog(
-                  classInfo: widget.classInfo,
-                  currentMemberId: widget.currentMemberId,
+appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: StreamBuilder<ConnectivityResult>(
+          // Connectivity().onConnectivityChanged は List を返すため、最初の要素を取り出す
+         stream: Connectivity().onConnectivityChanged.map(
+  (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+),
+          builder: (context, snapshot) {
+            // オフラインの場合：シンプルな AppBar を表示
+            if (snapshot.hasData && snapshot.data == ConnectivityResult.none) {
+              return AppBar(
+                backgroundColor: Colors.grey[400],
+                title: const Text(
+                  'オフラインです',
+                  style: TextStyle(color: Colors.white),
                 ),
+                centerTitle: true,
               );
-            },
-          ),
-        ],
+            }
+            // オンラインの場合：通常の AppBar を表示
+            return AppBar(
+              backgroundColor: Colors.white.withOpacity(0.5),
+              elevation: 0,
+              title: Text(
+                'Sotsu Bun',
+                style: GoogleFonts.dancingScript(fontSize: 23, color: Colors.black),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => MainMemoriesDialog(
+                        classInfo: widget.classInfo,
+                        currentMemberId: widget.currentMemberId,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
       ),
       body: profileModel.isLoading || membersModel.isLoading
           ? const Center(child: CircularProgressIndicator())

@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/color.dart';
-import 'package:school_memories2/offline_page.dart';
 
 class WriteMessagePage extends StatelessWidget {
   final String classId;
@@ -386,11 +385,7 @@ class WriteMessagePageModel extends ChangeNotifier {
       isSent = true;
     } on FirebaseException catch (e) {
       if (e.code == 'unavailable') {
-        // ネットワークエラーの場合、OfflinePage へ遷移
-        navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => OfflinePage(error: e.message ?? 'Network error')),
-          (route) => false,
-        );
+        return;
       } else {
         throw 'Firebaseエラー: ${e.message}';
       }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:school_memories2/offline_page.dart';
 import 'package:school_memories2/pages/select_people_model.dart';
 
 class VoteRankingPageModel extends ChangeNotifier {
@@ -149,12 +148,7 @@ Future<void> submitVotes(String classId, String currentMemberId) async {
     hasAlreadyVoted = true;
   } on FirebaseException catch (e) {
     if (e.code == 'unavailable') {
-      // ネットワークエラーの場合
-      // ここも navigatorKey を利用して OfflinePage へ遷移する
-      navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => OfflinePage(error: e.message ?? 'Network error')),
-        (route) => false,
-      );
+
     } else {
       throw 'Firebaseエラー: ${e.message}';
     }

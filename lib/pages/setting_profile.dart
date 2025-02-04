@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/color.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:school_memories2/offline_page.dart';
 import 'package:school_memories2/main.dart'; // navigatorKey が定義されているファイル
 
 class SettingProfileModel extends ChangeNotifier {
@@ -103,10 +102,7 @@ class SettingProfileModel extends ChangeNotifier {
     } on FirebaseException catch (e) {
       if (e.code == 'unavailable') {
         // ネットワークエラーの場合、OfflinePage へ遷移
-        navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => OfflinePage(error: e.message ?? 'Network error')),
-          (route) => false,
-        );
+
       } else {
         rethrow;
       }
