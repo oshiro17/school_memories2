@@ -1,17 +1,58 @@
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:school_memories2/offline_page.dart';
+import 'package:school_memories2/pages/home.dart';
 
+// グローバルに navigatorKey を定義
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-class OfflinePage extends StatelessWidget {
+class OfflinePage extends StatefulWidget {
   final String error;
-
   const OfflinePage({Key? key, required this.error}) : super(key: key);
+
+  @override
+  _OfflinePageState createState() => _OfflinePageState();
+}
+
+class _OfflinePageState extends State<OfflinePage> {
+  late StreamSubscription<ConnectivityResult> _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Connectivity().onConnectivityChanged のストリームから先頭の結果だけ取り出す
+    _subscription = Connectivity()
+        .onConnectivityChanged
+        .map((results) => results.first)
+        .listen((result) {
+      if (result != ConnectivityResult.none) {
+        // 戻る先があるなら pop()、なければホーム画面へ遷移
+        if (navigatorKey.currentState != null &&
+            navigatorKey.currentState!.canPop()) {
+          navigatorKey.currentState!.pop();
+         }
+        // else {
+        //   navigatorKey.currentState?.pushReplacement(
+        //     MaterialPageRoute(builder: (_) => HomeScreen()),
+        //   );
+        // }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'エラー',
+      navigatorKey: navigatorKey, // グローバルな navigatorKey を設定
       home: Scaffold(
         appBar: AppBar(
           title: const Text('エラー'),
@@ -23,23 +64,17 @@ class OfflinePage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'オフラインです。\nアプリを閉じてください。',
+                  'オフラインです。又はエラーが発生しました。\nアプリを閉じて再度立ち上げてください。',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 20, color: Colors.red),
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'エラー詳細: $error',
+                  'エラー詳細: ${widget.error}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14),
                 ),
                 const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: () {
-                    SystemNavigator.pop();
-                  },
-                  child: const Text('閉じる'),
-                ),
               ],
             ),
           ),

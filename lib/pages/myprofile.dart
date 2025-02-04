@@ -173,8 +173,8 @@ class MyProfilePage extends StatelessWidget {
                   if (result == true) {
                     print('保存後に再取得');
                     model.fetchProfileOnce(classInfo.id, currentMemberId);
-                    final membersModel = context.read<MembersProfileModel>();
-      await membersModel.fetchClassMembers(classInfo.id,currentMemberId);
+                    final membersModel = context.read<MyProfileModel>();
+      await membersModel.fetchProfileOnce(classInfo.id,currentMemberId);
                   }
                 },
                 child: const Text('設定する'),
@@ -254,8 +254,13 @@ _buildProfileText('MBTIは ', model.q6),
 
 _buildSection([
     _buildProfileField('最近の事件は？', model.q18),
+    _buildProfileField('最近幸せだったこと', model.q30),
+    _buildProfileField('最近きつかったこと', model.q31),
+    _buildProfileField('最近面白かったこと', model.q32),
+    _buildProfileField('最近泣いちゃったこと', model.q33),
         _buildProfileField('きのう、何した？', model.q19),
-        _buildProfileField('学校生活で達成した一番の偉業は？', model.q20),
+        _buildProfileField('今までで達成した一番の偉業は？', model.q20),
+
 ]),
 
 _buildSection([

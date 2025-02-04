@@ -337,12 +337,15 @@ class WriteMessagePageModel extends ChangeNotifier {
   /// メッセージを全員に送信
   Future<void> sendMessages() async {
     // 各コントローラーが未入力でないかチェック
+    if (memberList.length < 30)
+    {
     for (int i = 0; i < memberList.length; i++) {
       if (likeControllers[i].text.trim().isEmpty ||
           requestControllers[i].text.trim().isEmpty ||
           messageControllers[i].text.trim().isEmpty) {
         throw 'すべての項目にメッセージを入力してください。';
       }
+    }
     }
 
     isLoading = true;

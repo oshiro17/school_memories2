@@ -32,6 +32,7 @@ dependencies:
   cloud_firestore: ^5.6.2
   google_fonts: ^6.2.1
   flutter_launcher_icons: ^0.14.3
+  connectivity_plus: ^6.1.2
 
 flutter_icons:
   android: true

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,6 +44,10 @@ class SettingProfileModel extends ChangeNotifier {
     required String q27,
     required String q28,
     required String q29,
+    required String q30,
+    required String q31,
+    required String q32,
+    required String q33,
     required String classId,
     required String memberId,
     required int avatarIndex,
@@ -80,6 +86,10 @@ class SettingProfileModel extends ChangeNotifier {
         'q27': q27,
         'q28': q28,
         'q29': q29,
+        'q30': q30,
+        'q31': q31,
+        'q32': q32,
+        'q33': q33,
         'avatarIndex': avatarIndex,
         'updatedAt': FieldValue.serverTimestamp(),
       };
@@ -157,6 +167,11 @@ final TextEditingController goalBigController = TextEditingController();
 final TextEditingController futureDreamController = TextEditingController();
 final TextEditingController mottoController = TextEditingController();
 
+final TextEditingController happyContoroller = TextEditingController();
+final TextEditingController hardController = TextEditingController();
+final TextEditingController funContoroller = TextEditingController();
+final TextEditingController cryContoroller = TextEditingController();
+
   /// 全アバター画像を列挙
   final List<String> avatarPaths = [
     'assets/j0.png',
@@ -203,6 +218,10 @@ final TextEditingController mottoController = TextEditingController();
       '今一番欲しいもの': wantController.text,
       '好きな場所は': favoritePlaceController.text,
       '最近の事件': recentEventController.text,
+      '最近の幸せだったこと':happyContoroller.text,
+      '最近きつかったこと':hardController.text,
+      '最近の面白かったこと':funContoroller.text,
+      '最後のに泣いたのは？':cryContoroller.text,
       'きのう、何した？': whatDidController.text,
       '今までに達成した一番の偉業は？': achievementController.text,
       '長所': strengthController.text,
@@ -423,7 +442,7 @@ FilteringTextInputFormatter.allow(
       style: TextStyle(fontSize: 12, color: Colors.grey),
     ),
       _buildSection([
-      _buildProfileField('呼んでほしい名前', nameController, 10, hintText: '例: のんたん'),
+      _buildProfileField('呼んでほしい名前', nameController, 10, hintText: '例: 〇〇くん'),
       _buildProfileField('何座?', birthdayController, 10, hintText: '例: 獅子座'),
       _buildProfileField('好きな教科、分野は?', subjectController, 10, hintText: '例: 数学, 英語, 理科'),
       _buildProfileField('あなたは一言で言うとどんな人？', bloodTypeController, 10, hintText: '例: 寂しがりや'),
@@ -435,12 +454,16 @@ FilteringTextInputFormatter.allow(
       _buildProfileField('好きな歌', favoriteSongController, 20, hintText: '好きな歌の名前'),
       _buildProfileField('好きな映画', favoriteMovieController, 20, hintText: '好きな映画'),
       _buildProfileField('好きな人はいる？', favoritePersonController, 10, hintText: '例: いない'),
-      _buildProfileField('好きなタイプは？', favoriteTypeController, 15, hintText: '例: ワイルドな人'),
+      _buildProfileField('好きなタイプは？', favoriteTypeController, 15, hintText: '例: 可愛い人'),
       _buildProfileField('たからもの', treasureController, 15, hintText: '例: 弟'),
       _buildProfileField('最近ゲットした一番高いもの', thingController, 20, hintText: '例: 天体望遠鏡'),
       _buildProfileField('今一番欲しいもの', wantController, 20, hintText: '例: オープンカー'),
       _buildProfileField('好きな場所は', favoritePlaceController, 15, hintText: '例: 蛍のいる田んぼ'),
       _buildProfileField('最近の事件', recentEventController, 30, isLongText: true, hintText: '例: 合唱コンクール金賞！'),
+      _buildProfileField('最近の幸せだったこと', happyContoroller, 30, isLongText: true, hintText: '例: おいしいラーメンを食べた'),
+      _buildProfileField('最近きつかったこと', hardController, 30, isLongText: true, hintText: '例: テストが難しかった'),
+      _buildProfileField('最近の面白かったこと', funContoroller, 30, isLongText: true, hintText: '例: お笑いライブを見た'),
+      _buildProfileField('最後のに泣いちゃった', cryContoroller, 30, isLongText: true, hintText: '例: 映画を見て'),
       _buildProfileField('きのう、何した？', whatDidController, 30, isLongText: true, hintText: '例: お父さんとつり'),
       _buildProfileField('今までに達成した一番の偉業は？', achievementController, 100, isLongText: true, hintText: '例: 全校生徒の前でスピーチをした'),
       _buildProfileField('長所', strengthController, 20, hintText: '例: 人見知りせずに話せる'),
@@ -503,6 +526,10 @@ FilteringTextInputFormatter.allow(
   q27: goalBigController.text,
   q28: futureDreamController.text,
   q29: mottoController.text,
+  q30: happyContoroller.text,
+q31: hardController.text,
+q32: funContoroller.text,
+q33: cryContoroller.text,
   classId: widget.classInfo.id,
   memberId: widget.currentMemberId,
   avatarIndex: selectedAvatarIndex,
@@ -574,6 +601,10 @@ void dispose() {
     goalBigController.dispose();
     futureDreamController.dispose();
     mottoController.dispose();
+    happyContoroller.dispose();
+    hardController.dispose();
+    funContoroller.dispose();
+    cryContoroller.dispose();
     super.dispose();
   }
 }

@@ -35,6 +35,10 @@ class MyProfileModel extends ChangeNotifier {
   String q27 = '';
   String q28 = '';
   String q29 = '';
+  String q30 = '';
+  String q31 = '';
+  String q32 = '';
+  String q33 = '';
   String name = '';
   int avatarIndex = 0;
   bool isLoading = false;
@@ -92,7 +96,7 @@ class MyProfileModel extends ChangeNotifier {
       errorMessage = 'プロフィールの取得に失敗しました: $e';
     }
   }
-
+  errorMessage = null;
   isLoading = false;
   notifyListeners();
 }
@@ -129,6 +133,10 @@ class MyProfileModel extends ChangeNotifier {
     q27 = data?['q27'] ?? '';
     q28 = data?['q28'] ?? '';
     q29 = data?['q29'] ?? '';
+    q30 = data?['q30'] ?? '';
+    q31 = data?['q31'] ?? '';
+    q32 = data?['q32'] ?? '';
+    q33 = data?['q33'] ?? '';
     name = data?['name'] ?? '';
     avatarIndex = data?['avatarIndex'] ?? 0;
   }

@@ -49,7 +49,6 @@ class _HomeState extends State<Home> {
        final rankingModel = Provider.of<RankingPageModel>(context, listen: false);
       rankingModel.init(widget.classInfo.id, widget.currentMemberId);
     });
-
     // タブの初期化
     tabs = [
       MyProfilePage(
