@@ -83,14 +83,10 @@
 //     );
 //   }
 // }
-import 'dart:async';
-
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/color.dart';
-import 'package:school_memories2/offline_page.dart';
 import 'package:school_memories2/pages/members_profile_model.dart';
 import 'package:school_memories2/pages/message.dart';
 import 'package:school_memories2/pages/myprofile_model.dart';
@@ -101,44 +97,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../class_model.dart';
 import '../pages/home.dart';
-class ConnectivityWrapper extends StatefulWidget {
-  final Widget child;
-  const ConnectivityWrapper({Key? key, required this.child}) : super(key: key);
 
-  @override
-  State<ConnectivityWrapper> createState() => _ConnectivityWrapperState();
-}
-
-class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
-late StreamSubscription<List<ConnectivityResult>> _subscription;
-
-@override
-void initState() {
-  super.initState();
-
-  _subscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
-    if (results.isNotEmpty && results.first == ConnectivityResult.none) {
-      navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => OfflinePage(error: 'ネットワークに接続できません。')),
-        (route) => false,
-      );
-    }
-  });
-}
-
-
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.child;
-  }
-}
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -187,13 +146,12 @@ Future<void> main() async {
 
 class MyApp extends StatelessWidget {
   final Widget firstPage;
-  const MyApp({Key? key, required this.firstPage}) : super(key: key);
+  const MyApp({super.key, required this.firstPage});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // 各 ChangeNotifierProvider
         ChangeNotifierProvider(create: (_) => MyProfileModel()),
         ChangeNotifierProvider(create: (_) => SettingProfileModel()),
         ChangeNotifierProvider(create: (_) => MembersProfileModel()),
@@ -202,11 +160,12 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Sotsu Bun',
-        navigatorKey: navigatorKey, // グローバルな navigatorKey を設定
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primaryColor: darkBlueColor,
-          appBarTheme: const AppBarTheme(foregroundColor: blackColor),
+          appBarTheme: const AppBarTheme(
+            foregroundColor: blackColor,
+          ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               backgroundColor: darkBlueColor,
@@ -215,10 +174,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        // ConnectivityWrapper でアプリ全体をラップする
-        home: ConnectivityWrapper(
-          child: firstPage,
-        ),
+        home: firstPage,
       ),
     );
   }

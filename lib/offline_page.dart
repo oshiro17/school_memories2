@@ -3,6 +3,46 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:school_memories2/offline_page.dart';
 import 'package:school_memories2/pages/home.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
+
+class ConnectivityWrapper extends StatefulWidget {
+  final Widget onlineChild;
+  final Widget offlineChild;
+
+  const ConnectivityWrapper({
+    Key? key,
+    required this.onlineChild,
+    required this.offlineChild,
+  }) : super(key: key);
+
+  @override
+  _ConnectivityWrapperState createState() => _ConnectivityWrapperState();
+}
+
+class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
+  bool isOnline = true;
+  late final Stream<List<ConnectivityResult>> _connectivityStream;
+
+@override
+void initState() {
+  super.initState();
+  _connectivityStream = Connectivity().onConnectivityChanged;
+  _connectivityStream.listen((results) {
+    // results は List<ConnectivityResult> です。
+    // 例えば、最初の要素を利用する場合:
+    if (results.isNotEmpty) {
+      setState(() {
+        isOnline = (results.first != ConnectivityResult.none);
+      });
+    }
+  });
+}
+  @override
+  Widget build(BuildContext context) {
+    return isOnline ? widget.onlineChild : widget.offlineChild;
+  }
+}
 
 // グローバルに navigatorKey を定義
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
