@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/color.dart';
@@ -16,96 +17,121 @@ class WriteMessagePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => WriteMessagePageModel()..initialize(classId, currentMemberId),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('寄せ書き送信'),
-          elevation: 5,
-        ),
-        body: Consumer<WriteMessagePageModel>(
-          builder: (context, model, child) {
-            // ローディング中
-            if (model.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    // Connectivity ストリームは defensive に扱う
+    final connectivityStream = Connectivity().onConnectivityChanged.map(
+      (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+    );
 
-            // 既に送信済み
-            if (model.isSent) {
-              return const Center(
-                child: Text(
-                  '既にメッセージを送信しました。',
-                  style: TextStyle(fontSize: 16, color: Colors.black87),
-                ),
-              );
-            }
-                        if (!model.isCallme) {
-              return const Center(
-                child: Text(
-                  '先にプロフィール設定をしてください。',
-                  style: TextStyle(fontSize: 16, color: Colors.black87),
-                ),
-              );
-            }
+    return StreamBuilder<ConnectivityResult>(
+      stream: connectivityStream,
+      builder: (context, snapshot) {
+        // snapshot.data が null の場合は ConnectivityResult.none とする
+        final connectivityResult = snapshot.data ?? ConnectivityResult.none;
+        final offline = connectivityResult == ConnectivityResult.none;
 
-            // 未送信の場合はメッセージ入力画面を表示
-            return Column(
-              children: [
-                // リスト部分
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                    itemCount: model.memberList.length,
-                    itemBuilder: (context, index) {
-                      final member = model.memberList[index];
-                      // TextField 用の3種類のコントローラを取得
-                      final likeController = model.likeControllers[index];
-                      final requestController = model.requestControllers[index];
-                      final messageController = model.messageControllers[index];
+        return ChangeNotifierProvider(
+          create: (_) => WriteMessagePageModel()
+            ..initialize(classId, currentMemberId),
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('寄せ書き送信'),
+              elevation: 5,
+            ),
+            body: Consumer<WriteMessagePageModel>(
+              builder: (context, model, child) {
+                // ローディング中
+                if (model.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                      return _buildMessageCard(
-                        member: member,
-                        likeController: likeController,
-                        requestController: requestController,
-                        messageController: messageController,
-                      );
-                    },
-                  ),
-                ),
-
-                // 送信ボタン
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      try {
-                        await model.sendMessages();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('メッセージを送信しました！')),
-                        );
-                        Navigator.pop(context);
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString())),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.send),
-                    label: const Text('送信'),
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                // 既に送信済み
+                if (model.isSent) {
+                  return const Center(
+                    child: Text(
+                      '既にメッセージを送信しました。',
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
                     ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+                  );
+                }
+                // プロフィール設定がまだの場合
+                if (!model.isCallme) {
+                  return const Center(
+                    child: Text(
+                      '先にプロフィール設定をしてください。',
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                  );
+                }
+
+                // 未送信の場合はメッセージ入力画面を表示
+                return Column(
+                  children: [
+                    // リスト部分
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 12),
+                        itemCount: model.memberList.length,
+                        itemBuilder: (context, index) {
+                          final member = model.memberList[index];
+                          // TextField 用の3種類のコントローラを取得
+                          final likeController = model.likeControllers[index];
+                          final requestController =
+                              model.requestControllers[index];
+                          final messageController =
+                              model.messageControllers[index];
+
+                          return _buildMessageCard(
+                            member: member,
+                            likeController: likeController,
+                            requestController: requestController,
+                            messageController: messageController,
+                          );
+                        },
+                      ),
+                    ),
+
+                    // 送信ボタン
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      child: ElevatedButton.icon(
+                        // オフラインの場合は onPressed を null にして無効化
+                        onPressed: offline
+                            ? null
+                            : () async {
+                                try {
+                                  await model.sendMessages();
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(const SnackBar(
+                                    content: Text('メッセージを送信しました！'),
+                                  ));
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Text(e.toString()),
+                                  ));
+                                }
+                              },
+                        icon: const Icon(Icons.send),
+                        label: const Text('送信'),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -140,22 +166,20 @@ class WriteMessagePage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             TextField(
-
               controller: likeController,
               inputFormatters: [
- FilteringTextInputFormatter.allow(
-  RegExp(
-    r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF'  // 英数字、日本語
-    r'\u3000\u3001\u3002'                                   // 全角スペース、、「。」
-    r'\uFF01\uFF1F'                                       // 全角感嘆符、疑問符
-    r'\uFF08\uFF09'                                       // 全角丸括弧
-    r'\u300C\u300D\u300E\u300F'                            // 鉤括弧、二重鉤括弧
-    r'\u301C\uFF5E'                                       // 波ダッシュ（どちらかまたは両方）
-    r']+'
-  ),
-),
-
-                LengthLimitingTextInputFormatter(20), 
+                FilteringTextInputFormatter.allow(
+                  RegExp(
+                    r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF'
+                    r'\u3000\u3001\u3002'
+                    r'\uFF01\uFF1F'
+                    r'\uFF08\uFF09'
+                    r'\u300C\u300D\u300E\u300F'
+                    r'\u301C\uFF5E'
+                    r']+',
+                  ),
+                ),
+                LengthLimitingTextInputFormatter(20),
               ],
               decoration: InputDecoration(
                 border: OutlineInputBorder(
@@ -182,18 +206,18 @@ class WriteMessagePage extends StatelessWidget {
             TextField(
               controller: requestController,
               inputFormatters: [
- FilteringTextInputFormatter.allow(
-  RegExp(
-    r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF'  // 英数字、日本語
-    r'\u3000\u3001\u3002'                                   // 全角スペース、、「。」
-    r'\uFF01\uFF1F'                                       // 全角感嘆符、疑問符
-    r'\uFF08\uFF09'                                       // 全角丸括弧
-    r'\u300C\u300D\u300E\u300F'                            // 鉤括弧、二重鉤括弧
-    r'\u301C\uFF5E'                                       // 波ダッシュ（どちらかまたは両方）
-    r']+'
-  ),
-),
-                LengthLimitingTextInputFormatter(20), 
+                FilteringTextInputFormatter.allow(
+                  RegExp(
+                    r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF'
+                    r'\u3000\u3001\u3002'
+                    r'\uFF01\uFF1F'
+                    r'\uFF08\uFF09'
+                    r'\u300C\u300D\u300E\u300F'
+                    r'\u301C\uFF5E'
+                    r']+',
+                  ),
+                ),
+                LengthLimitingTextInputFormatter(20),
               ],
               decoration: InputDecoration(
                 border: OutlineInputBorder(
@@ -220,17 +244,17 @@ class WriteMessagePage extends StatelessWidget {
             TextField(
               controller: messageController,
               inputFormatters: [
-FilteringTextInputFormatter.allow(
-  RegExp(
-    r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF'  // 英数字、日本語
-    r'\u3000\u3001\u3002'                                   // 全角スペース、、「。」
-    r'\uFF01\uFF1F'                                       // 全角感嘆符、疑問符
-    r'\uFF08\uFF09'                                       // 全角丸括弧
-    r'\u300C\u300D\u300E\u300F'                            // 鉤括弧、二重鉤括弧
-    r'\u301C\uFF5E'                                       // 波ダッシュ（どちらかまたは両方）
-    r']+'
-  ),
-),
+                FilteringTextInputFormatter.allow(
+                  RegExp(
+                    r'[A-Za-z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF'
+                    r'\u3000\u3001\u3002'
+                    r'\uFF01\uFF1F'
+                    r'\uFF08\uFF09'
+                    r'\u300C\u300D\u300E\u300F'
+                    r'\u301C\uFF5E'
+                    r']+',
+                  ),
+                ),
                 LengthLimitingTextInputFormatter(250),
               ],
               decoration: InputDecoration(
@@ -244,7 +268,7 @@ FilteringTextInputFormatter.allow(
               maxLines: 3,
             ),
             const SizedBox(height: 5),
-             Text(
+            Text(
               '※この個別メッセージは${member['name']}のみ読むことができます。',
               style: TextStyle(
                 fontSize: 10,

@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -226,34 +227,42 @@ Text(
     );
   }
 
-  Widget _buildLoginButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _darkBlueColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+ Widget _buildLoginButton() {
+  return StreamBuilder<ConnectivityResult>(
+    stream: Connectivity().onConnectivityChanged.map(
+      (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+    ),
+    builder: (context, snapshot) {
+      // snapshot.data が null の場合はオンライン（ConnectivityResult.mobile）と仮定する
+      final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+      final offline = connectivityResult == ConnectivityResult.none;
+      
+      return SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _darkBlueColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          // オフラインの場合は onPressed を null にしてボタンを無効化
+          onPressed: offline ? null : _onLoginPressed,
+          child: const Text(
+            'ログイン',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        onPressed: _onLoginPressed,
-        child: const Text('ログイン', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
-  // Widget _buildFooter() {
-  //   return Column(
-  //     children: [
-  //       Text(
-  //         '© 2025 卒業文集',
-  //         style: TextStyle(color: _goldColor.withOpacity(0.7), fontSize: 12),
-  //       ),
-  //       const SizedBox(height: 10),
-  //     ],
-  //   );
-  // }
 
   Future<void> _onLoginPressed() async {
     if (selectedMemberId == null) {

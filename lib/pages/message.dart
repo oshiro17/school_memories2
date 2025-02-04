@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/color.dart';
@@ -14,84 +15,83 @@ class MessageModel extends ChangeNotifier {
 
   /// Firestoreからメッセージを取得
   Future<void> fetchMessages(String classId, String memberId, {bool forceUpdate = false}) async {
-  final prefs = await SharedPreferences.getInstance();
-  final cacheKey = 'messages_${classId}_$memberId';
-  errorMessage = null;
-  if (!forceUpdate) {
-    final cachedData = prefs.getString(cacheKey);
-    if (cachedData != null) {
-      try {
-        final cachedMessages = json.decode(cachedData) as List;
-        messages = cachedMessages.map((e) => MessageData.fromJson(e)).toList();
-        isFetched = true;
-        isSent = true;
-        notifyListeners();
-        return;
-      } catch (e) {
-        print("キャッシュデータのデコードに失敗しました: $e");
+    final prefs = await SharedPreferences.getInstance();
+    final cacheKey = 'messages_${classId}_$memberId';
+    errorMessage = null;
+    if (!forceUpdate) {
+      final cachedData = prefs.getString(cacheKey);
+      if (cachedData != null) {
+        try {
+          final cachedMessages = json.decode(cachedData) as List;
+          messages = cachedMessages.map((e) => MessageData.fromJson(e)).toList();
+          isFetched = true;
+          isSent = true;
+          notifyListeners();
+          return;
+        } catch (e) {
+          print("キャッシュデータのデコードに失敗しました: $e");
+        }
       }
     }
-  }
 
-  isLoading = true;
-  notifyListeners();
+    isLoading = true;
+    notifyListeners();
 
-  try {
-    final memberDoc = await FirebaseFirestore.instance
-        .collection('classes')
-        .doc(classId)
-        .collection('members')
-        .doc(memberId)
-        .get();
-    isSent = memberDoc.data()?['isSent'] ?? false;
-
-    if (isSent) {
-      final snapshot = await FirebaseFirestore.instance
+    try {
+      final memberDoc = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
           .collection('members')
           .doc(memberId)
-          .collection('messages')
-          .orderBy('timestamp', descending: true)
           .get();
+      isSent = memberDoc.data()?['isSent'] ?? false;
 
-      messages = snapshot.docs.map((doc) {
-        final data = doc.data();
-        return MessageData(
-          avatarIndex: data['avatarIndex'] ?? 0,
-          likeMessage: data['likeMessage'] ?? '',
-          requestMessage: data['requestMessage'] ?? '',
-          message: data['message'] ?? '',
-          senderName: data['senderName'] ?? 'Unknown',
-          timestamp: data['timestamp'] as Timestamp?,
+      if (isSent) {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('classes')
+            .doc(classId)
+            .collection('members')
+            .doc(memberId)
+            .collection('messages')
+            .orderBy('timestamp', descending: true)
+            .get();
+
+        messages = snapshot.docs.map((doc) {
+          final data = doc.data();
+          return MessageData(
+            avatarIndex: data['avatarIndex'] ?? 0,
+            likeMessage: data['likeMessage'] ?? '',
+            requestMessage: data['requestMessage'] ?? '',
+            message: data['message'] ?? '',
+            senderName: data['senderName'] ?? 'Unknown',
+            timestamp: data['timestamp'] as Timestamp?,
+          );
+        }).toList();
+
+        await prefs.setString(
+          cacheKey,
+          json.encode(messages.map((msg) => msg.toJson()).toList()),
         );
-      }).toList();
-
-      await prefs.setString(
-        cacheKey,
-        json.encode(messages.map((msg) => msg.toJson()).toList()),
-      );
-    } else {
-      messages = [];
+      } else {
+        messages = [];
+      }
+    } on FirebaseException catch (e) {
+      if (e.code == 'unavailable') {
+        errorMessage = 'ネットワークエラーです。';
+        // 例: navigatorKey.currentState?.pushAndRemoveUntil(OfflinePage(...), (route)=>false);
+      } else {
+        errorMessage = 'Firestoreエラー: ${e.message}';
+      }
+      print('メッセージ取得中にエラーが発生: $e');
+    } catch (e) {
+      errorMessage = 'メッセージ取得中にエラーが発生しました: $e';
+      print('メッセージ取得中にエラーが発生: $e');
+    } finally {
+      isLoading = false;
+      isFetched = true;
+      notifyListeners();
     }
-  } on FirebaseException catch (e) {
-    if (e.code == 'unavailable') {
-      errorMessage = 'ネットワークエラーです。';
-      // 例: navigatorKey.currentState?.pushAndRemoveUntil(OfflinePage(...), (route)=>false);
-    } else {
-      errorMessage = 'Firestoreエラー: ${e.message}';
-    }
-    print('メッセージ取得中にエラーが発生: $e');
-  } catch (e) {
-    errorMessage = 'メッセージ取得中にエラーが発生しました: $e';
-    print('メッセージ取得中にエラーが発生: $e');
-  } finally {
-    isLoading = false;
-    isFetched = true;
-    notifyListeners();
   }
-}
-
 }
 
 /// メッセージ1件分のデータクラス
@@ -234,34 +234,64 @@ class MessagePage extends StatelessWidget {
               );
             }
 
-            // メッセージがある場合、Pull-to-refresh 付きの ListView で表示
-            return RefreshIndicator(
-              onRefresh: () =>
-                  model.fetchMessages(classId, currentMemberId, forceUpdate: true),
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                itemCount: model.messages.length + 1, // 先頭にAppBar分の余白用
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return const SizedBox(height: kToolbarHeight);
-                  }
-                  final msg = model.messages[index - 1];
-                  final dateTime = msg.timestamp?.toDate();
-                  return _buildMessageBubble(msg, dateTime);
-                },
+            // Connectivity の状態を監視して、オフラインの場合はリフレッシュ処理を無効化する
+            return StreamBuilder<ConnectivityResult>(
+              stream: Connectivity().onConnectivityChanged.map(
+                (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
               ),
+              builder: (context, snapshot) {
+                // snapshot.data が null の場合はオンラインと仮定（例: ConnectivityResult.mobile）
+                final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+                final offline = connectivityResult == ConnectivityResult.none;
+                return RefreshIndicator(
+                  onRefresh: offline
+                      ? () async {
+                          // オフラインの場合は何もしないダミーの Future を返す
+                          return;
+                        }
+                      : () async => await model.fetchMessages(
+                          classId, currentMemberId, forceUpdate: true),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                    itemCount: model.messages.length + 1, // 先頭にAppBar分の余白用
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return const SizedBox(height: kToolbarHeight);
+                      }
+                      final msg = model.messages[index - 1];
+                      final dateTime = msg.timestamp?.toDate();
+                      return _buildMessageBubble(msg, dateTime);
+                    },
+                  ),
+                );
+              },
             );
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: goldColor,
-        onPressed: () {
+     floatingActionButton: StreamBuilder<ConnectivityResult>(
+  stream: Connectivity().onConnectivityChanged.map(
+    (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+  ),
+  builder: (context, snapshot) {
+    // snapshot.data が null の場合はオンラインと仮定（例: ConnectivityResult.mobile）
+    final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+    final offline = connectivityResult == ConnectivityResult.none;
+    return FloatingActionButton(
+      // オフラインの場合は背景色をグレーに変更
+      backgroundColor: offline ? Colors.grey : goldColor,
+      // オンラインの場合のみ onPressed を設定し、オフラインの場合は null にすることで無効化
+      onPressed: () {
           final model = Provider.of<MessageModel>(context, listen: false);
           model.fetchMessages(classId, currentMemberId, forceUpdate: true);
         },
-        child: const Icon(Icons.refresh),
-      ),
+      child: const Icon(Icons.refresh),
+    );
+  },
+),
+
+
+    
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/color.dart';
@@ -13,38 +14,55 @@ class RankingPage extends StatelessWidget {
     required this.currentMemberId,
   }) : super(key: key);
 
-  @override
+ @override
   Widget build(BuildContext context) {
-    // RankingPageModel を取得
-    return Consumer<RankingPageModel>(
-      builder: (context, model, child) {
-        return Scaffold(
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFFE0F7FA), // very light cyan
-                  Color(0xFFFFEBEE), // very light pink
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+    // Connectivity のストリームから、リストが空の場合は ConnectivityResult.none を返すように防御的記述
+    final connectivityStream = Connectivity().onConnectivityChanged.map(
+      (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+    );
+
+    return StreamBuilder<ConnectivityResult>(
+      stream: Connectivity().onConnectivityChanged.map(
+  (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+),
+      builder: (context, snapshot) {
+        // snapshot.data が null の場合は ConnectivityResult.none とする
+        final connectivityResult = snapshot.data ?? ConnectivityResult.none;
+        final offline = connectivityResult == ConnectivityResult.none;
+
+        return Consumer<RankingPageModel>(
+          builder: (context, model, child) {
+            return Scaffold(
+              body: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFFE0F7FA), // very light cyan
+                      Color(0xFFFFEBEE), // very light pink
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: _buildBodyContent(model),
               ),
-            ),
-            child: _buildBodyContent(model),
-          ),
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: goldColor,
-            onPressed: () {
-              // forceUpdate = true => キャッシュ無視して再読み込み
-              model.init(classId, currentMemberId, forceUpdate: true);
-            },
-            child: const Icon(Icons.refresh),
-          ),
+              floatingActionButton: FloatingActionButton(
+               backgroundColor: offline ? Colors.grey : goldColor,
+                // オフラインの場合は onPressed を null にしてボタンを無効化
+                onPressed: offline
+                    ? null
+                    : () {
+                        // forceUpdate = true => キャッシュ無視して再読み込み
+                        model.init(classId, currentMemberId, forceUpdate: true);
+                      },
+                child: const Icon(Icons.refresh),
+              ),
+            );
+          },
         );
       },
     );
   }
-
   /// メインの表示ロジック
   Widget _buildBodyContent(RankingPageModel model) {
     // エラー状態がある場合はエラーメッセージと再試行ボタンを表示

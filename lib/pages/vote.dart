@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/pages/select_people_model.dart';
@@ -15,45 +16,59 @@ class VoteRankingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<VoteRankingPageModel>(
-      create: (_) => VoteRankingPageModel()..init(classId, currentMemberId),
-      child: Consumer<VoteRankingPageModel>(
-        builder: (context, model, child) {
-          if (model.isLoading) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
+    // Connectivity().onConnectivityChanged は List<ConnectivityResult> を返すので defensive に扱う
+    final connectivityStream = Connectivity().onConnectivityChanged.map(
+      (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+    );
 
-          if (model.hasAlreadyVoted) {
-            return Scaffold(
-              appBar: AppBar(title: const Text('投票済み')),
-              body: const Center(child: Text('すでに投票済みです！')),
-            );
-          }
+    return StreamBuilder<ConnectivityResult>(
+      stream: connectivityStream,
+      builder: (context, snapshot) {
+        final connectivityResult = snapshot.data ?? ConnectivityResult.none;
+        final offline = connectivityResult == ConnectivityResult.none;
 
-          return Scaffold(
-            appBar: AppBar(title: const Text('ランキングに投票する')),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  for (int i = 0; i < model.questionList.length; i++) ...[
-                    _buildRankingDropdown(context, model, i),
-                    const SizedBox(height: 16),
-                  ],
-                  ElevatedButton(
-                    onPressed: model.isReadyToVote
-                        ? () => _onSubmit(context, model)
-                        : null,
-                    child: const Text('投票する'),
+        return ChangeNotifierProvider<VoteRankingPageModel>(
+          create: (_) => VoteRankingPageModel()..init(classId, currentMemberId),
+          child: Consumer<VoteRankingPageModel>(
+            builder: (context, model, child) {
+              if (model.isLoading) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (model.hasAlreadyVoted) {
+                return Scaffold(
+                  appBar: AppBar(title: const Text('投票済み')),
+                  body: const Center(child: Text('すでに投票済みです！')),
+                );
+              }
+
+              return Scaffold(
+                appBar: AppBar(title: const Text('ランキングに投票する')),
+                body: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      for (int i = 0; i < model.questionList.length; i++) ...[
+                        _buildRankingDropdown(context, model, i),
+                        const SizedBox(height: 16),
+                      ],
+                      ElevatedButton(
+                        // オフラインの場合は onPressed を null にしてボタンを無効化
+                        onPressed: (model.isReadyToVote && !offline)
+                            ? () => _onSubmit(context, model)
+                            : null,
+                        child: const Text('投票する'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -66,7 +81,6 @@ class VoteRankingPage extends StatelessWidget {
     final selectedMember = model.selectedMembers[questionIndex];
 
     return Column(
-      // crossAxisAlignment: CrossAxisAlignment.left,
       children: [
         Text(
           questionText,
