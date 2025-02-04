@@ -172,43 +172,42 @@ class MyProfilePage extends StatelessWidget {
         final isProfileEmpty = model.q1.isEmpty;
         if (isProfileEmpty) {
           return Scaffold(
-        
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 15),
-                  const Text('まだプロフィールが設定されていません'),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: offline
-                        ? null
-                        : () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => SettingProfilePage(
-                                  classInfo: classInfo,
-                                  currentMemberId: currentMemberId,
-                                ),
-                              ),
-                            );
-                            // result が null でないことをチェック
-                            if (result != null && result == true) {
-                              print('保存後に再取得');
-                              await model.fetchProfileOnce(classInfo.id, currentMemberId);
-                            } else {
-                              // result が null または false の場合の処理（必要ならば）
-                              print('プロフィール設定がキャンセルされました');
-                            }
-                          },
-                    child: const Text('設定する'),
-                  ),
-                ],
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 15),
+              const Text('まだプロフィールが設定されていません'),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: offline
+                    ? null
+                    : () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SettingProfilePage(
+                              classInfo: classInfo,
+                              currentMemberId: currentMemberId,
+                            ),
+                          ),
+                        );
+                        // result が null でないことをチェック
+                        if (result != null && result == true) {
+                          print('保存後に再取得');
+                          await model.fetchProfileOnce(classInfo.id, currentMemberId);
+                        } else {
+                          // result が null または false の場合の処理（必要ならば）
+                          print('プロフィール設定がキャンセルされました');
+                        }
+                      },
+                child: const Text('設定する'),
               ),
-            ),
-          );
+            ],
+          ),
+        ),
+      );
         }
 
         // プロフィールがある場合のUI

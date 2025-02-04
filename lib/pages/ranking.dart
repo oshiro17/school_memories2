@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:school_memories2/color.dart';
+import 'package:school_memories2/pages/message.dart';
 import 'package:school_memories2/pages/ranking_page_model.dart';
 
 class RankingPage extends StatelessWidget {
@@ -46,17 +47,44 @@ class RankingPage extends StatelessWidget {
                 ),
                 child: _buildBodyContent(model),
               ),
-              floatingActionButton: FloatingActionButton(
-               backgroundColor: offline ? Colors.grey : goldColor,
-                // オフラインの場合は onPressed を null にしてボタンを無効化
-                onPressed: offline
-                    ? null
-                    : () {
-                        // forceUpdate = true => キャッシュ無視して再読み込み
-                        model.init(classId, currentMemberId, forceUpdate: true);
-                      },
-                child: const Icon(Icons.refresh),
-              ),
+              floatingActionButton: StreamBuilder<ConnectivityResult>(
+  // 最新の connectivity_plus では、直接 ConnectivityResult を返す
+  stream: Connectivity().onConnectivityChanged.map(
+    (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+  ),
+  builder: (context, snapshot) {
+    // snapshot.data が null の場合はオンライン状態（例: ConnectivityResult.mobile）と仮定する
+    final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+    // オフラインならば、ConnectivityResult.none になるはず
+    final bool offline = connectivityResult == ConnectivityResult.none;
+    
+    // デバッグ用に現在の接続状態を出力
+    // print("Current connectivity: $connectivityResult");
+
+    return FloatingActionButton(
+      backgroundColor: offline ? Colors.grey : goldColor,
+      // オフラインの場合は onPressed を null にして無効化、オンラインの場合のみ有効
+      onPressed: offline
+          ? null
+          : () {
+              Provider.of<MessageModel>(context, listen: false)
+                  .fetchMessages(classId, currentMemberId, forceUpdate: true);
+            },
+      child: const Icon(Icons.refresh),
+    );
+  },
+),
+              // floatingActionButton: FloatingActionButton(
+              //  backgroundColor: offline ? Colors.grey : goldColor,
+              //   // オフラインの場合は onPressed を null にしてボタンを無効化
+              //   onPressed: offline
+              //       ? null
+              //       : () {
+              //           // forceUpdate = true => キャッシュ無視して再読み込み
+              //           model.init(classId, currentMemberId, forceUpdate: true);
+              //         },
+              //   child: const Icon(Icons.refresh),
+              // ),
             );
           },
         );
