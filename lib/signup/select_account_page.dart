@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:school_memories2/signup/PrivacyPolicyPage.dart';
-import 'package:school_memories2/signup/TermsOfServicePage.dart';
+import 'package:school_memories2/color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/pages/home.dart';
 import 'package:school_memories2/pages/myprofile_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SelectAccountPage extends StatefulWidget {
   final String classId;
@@ -183,49 +183,70 @@ Text(
     );
   }
 
-  Widget _buildAgreementText() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: RichText(
-        text: TextSpan(
-          text: 'クラスを作成・参加することで、',
-          style: const TextStyle(color: Colors.black),
-          children: [
-            TextSpan(
-              text: 'プライバシーポリシー',
-              style: const TextStyle(
-                color: Color(0xFF1E3A8A),
-                decoration: TextDecoration.underline,
-              ),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()),
-                  );
-                },
-            ),
-            const TextSpan(text: ' および '),
-            TextSpan(
-              text: '利用規約',
-              style: const TextStyle(
-                color: Color(0xFF1E3A8A),
-                decoration: TextDecoration.underline,
-              ),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const TermsOfServicePage()),
-                  );
-                },
-            ),
-            const TextSpan(text: ' に同意したことになります。'),
-          ],
-        ),
-      ),
-    );
+ Future<void> _launchExternalURL(String url) async {
+  final Uri uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
+    // エラー処理（必要に応じて）
+    debugPrint('Could not launch $url');
   }
+}
+
+Widget _buildAgreementText() {
+  return StreamBuilder<ConnectivityResult>(
+    // Connectivity のストリームをそのまま利用
+         stream: Connectivity().onConnectivityChanged.map(
+        (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+      ),
+    initialData: ConnectivityResult.mobile, // 初期状態はオンラインと仮定
+    builder: (context, snapshot) {
+      // snapshot.data が null の場合はオンライン（例: ConnectivityResult.mobile）と仮定
+      final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+      final offline = connectivityResult == ConnectivityResult.none;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: RichText(
+          text: TextSpan(
+            text: 'クラスを作成・参加することで、',
+            style: const TextStyle(color: Colors.black),
+            children: [
+              TextSpan(
+                text: 'プライバシーポリシー',
+                style: const TextStyle(
+                  color: darkBlueColor,
+                  decoration: TextDecoration.underline,
+                ),
+                recognizer: offline
+                    ? null
+                    : (TapGestureRecognizer()
+                      ..onTap = () {
+                        _launchExternalURL('https://note.com/nonokapiano/n/nede64e2d5743');
+                      }),
+              ),
+              const TextSpan(text: ' および '),
+              TextSpan(
+                text: '利用規約',
+                style: const TextStyle(
+                  color: darkBlueColor,
+                  decoration: TextDecoration.underline,
+                ),
+                recognizer: offline
+                    ? null
+                    : (TapGestureRecognizer()
+                      ..onTap = () {
+                        _launchExternalURL('https://note.com/nonokapiano/n/nec5b8a045d5d');
+                      }),
+              ),
+              const TextSpan(text: ' に同意したことになります。'),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
  Widget _buildLoginButton() {
   return StreamBuilder<ConnectivityResult>(

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:school_memories2/pages/write_message.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/pages/change_password_dialog.dart';
-import 'package:school_memories2/pages/write_message.dart';
 import 'package:school_memories2/pages/vote.dart';
 import 'package:school_memories2/signup/class_selection_page.dart';
 import 'package:school_memories2/signup/select_account_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:url_launcher/url_launcher.dart'; // 追加
 
 class MainMemoriesDialog extends StatelessWidget {
   final ClassModel classInfo;
@@ -18,14 +19,24 @@ class MainMemoriesDialog extends StatelessWidget {
     Key? key,
   }) : super(key: key);
 
+  // 外部ブラウザで URL を開くヘルパー関数
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      // エラー処理
+      debugPrint('Could not launch $url');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<ConnectivityResult>(
-      // 最新の Connectivity Plus では、onConnectivityChanged は ConnectivityResult を返すので、
-      // そのまま利用します。
-            stream: Connectivity().onConnectivityChanged.map(
-  (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
-),
+      // 最新の Connectivity Plus では、onConnectivityChanged は ConnectivityResult を返すので、そのまま利用します。
+      stream: Connectivity().onConnectivityChanged.map(
+        (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+      ),
       builder: (context, snapshot) {
         // snapshot.data が null の場合はオンライン状態（例: ConnectivityResult.mobile）と仮定する
         final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
@@ -111,6 +122,23 @@ class MainMemoriesDialog extends StatelessWidget {
               );
             },
           ),
+          // 利用規約へのリンク
+          SimpleDialogOption(
+            child: const Text('利用規約'),
+            onPressed: () {
+              Navigator.pop(context);
+              _launchURL('https://note.com/nonokapiano/n/nec5b8a045d5d');
+            },
+          ),
+          // プライバシーポリシーへのリンク
+          SimpleDialogOption(
+            child: const Text('プライバシーポリシー'),
+            onPressed: () {
+              Navigator.pop(context);
+              _launchURL('https://note.com/nonokapiano/n/nede64e2d5743');
+            },
+          ),
+          // お問い合わせ・報告
           SimpleDialogOption(
             child: const Text('お問い合わせ\n不適切ユーザーの報告'),
             onPressed: () {

@@ -33,6 +33,7 @@ dependencies:
   google_fonts: ^6.2.1
   flutter_launcher_icons: ^0.14.3
   connectivity_plus: ^6.1.2
+  url_launcher: ^6.3.1
 
 flutter_icons:
   android: true

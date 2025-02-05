@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:school_memories2/signup/PrivacyPolicyPage.dart';
-import 'package:school_memories2/signup/TermsOfServicePage.dart';
 import '../color.dart';
 import 'select_account_page.dart';
 
@@ -281,49 +279,70 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
     );
   }
 
-  Widget _buildAgreementText() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: RichText(
-        text: TextSpan(
-          text: 'クラスを作成・参加することで、',
-          style: const TextStyle(color: Colors.black),
-          children: [
-            TextSpan(
-              text: 'プライバシーポリシー',
-              style: const TextStyle(
-                color: darkBlueColor,
-                decoration: TextDecoration.underline,
-              ),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => PrivacyPolicyPage()),
-                  );
-                },
-            ),
-            const TextSpan(text: ' および '),
-            TextSpan(
-              text: '利用規約',
-              style: const TextStyle(
-                color: darkBlueColor,
-                decoration: TextDecoration.underline,
-              ),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TermsOfServicePage()),
-                  );
-                },
-            ),
-            const TextSpan(text: ' に同意したことになります。'),
-          ],
-        ),
-      ),
-    );
+ Future<void> _launchExternalURL(String url) async {
+  final Uri uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
+    // エラー処理（必要に応じて）
+    debugPrint('Could not launch $url');
   }
+}
+
+Widget _buildAgreementText() {
+  return StreamBuilder<ConnectivityResult>(
+    // Connectivity のストリームをそのまま利用
+         stream: Connectivity().onConnectivityChanged.map(
+        (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+      ),
+    initialData: ConnectivityResult.mobile, // 初期状態はオンラインと仮定
+    builder: (context, snapshot) {
+      // snapshot.data が null の場合はオンライン（例: ConnectivityResult.mobile）と仮定
+      final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+      final offline = connectivityResult == ConnectivityResult.none;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: RichText(
+          text: TextSpan(
+            text: 'クラスを作成・参加することで、',
+            style: const TextStyle(color: Colors.black),
+            children: [
+              TextSpan(
+                text: 'プライバシーポリシー',
+                style: const TextStyle(
+                  color: darkBlueColor,
+                  decoration: TextDecoration.underline,
+                ),
+                recognizer: offline
+                    ? null
+                    : (TapGestureRecognizer()
+                      ..onTap = () {
+                        _launchExternalURL('https://note.com/nonokapiano/n/nede64e2d5743');
+                      }),
+              ),
+              const TextSpan(text: ' および '),
+              TextSpan(
+                text: '利用規約',
+                style: const TextStyle(
+                  color: darkBlueColor,
+                  decoration: TextDecoration.underline,
+                ),
+                recognizer: offline
+                    ? null
+                    : (TapGestureRecognizer()
+                      ..onTap = () {
+                        _launchExternalURL('https://note.com/nonokapiano/n/nec5b8a045d5d');
+                      }),
+              ),
+              const TextSpan(text: ' に同意したことになります。'),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   /// 既存クラスに参加するUI
   Widget _buildJoinClassArea() {
