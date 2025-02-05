@@ -67,24 +67,15 @@ class RankingPage extends StatelessWidget {
       onPressed: offline
           ? null
           : () {
-              Provider.of<MessageModel>(context, listen: false)
-                  .fetchMessages(classId, currentMemberId, forceUpdate: true);
+             Provider.of<RankingPageModel>(context, listen: false)
+    .init(classId, currentMemberId, forceUpdate: true);
             },
       child: const Icon(Icons.refresh),
     );
   },
 ),
               // floatingActionButton: FloatingActionButton(
-              //  backgroundColor: offline ? Colors.grey : goldColor,
-              //   // オフラインの場合は onPressed を null にしてボタンを無効化
-              //   onPressed: offline
-              //       ? null
-              //       : () {
-              //           // forceUpdate = true => キャッシュ無視して再読み込み
-              //           model.init(classId, currentMemberId, forceUpdate: true);
-              //         },
-              //   child: const Icon(Icons.refresh),
-              // ),
+  
             );
           },
         );

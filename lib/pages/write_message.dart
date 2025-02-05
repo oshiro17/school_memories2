@@ -17,13 +17,15 @@ class WriteMessagePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Connectivity ストリームは defensive に扱う
-    final connectivityStream = Connectivity().onConnectivityChanged.map(
-      (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
-    );
+    // Connectivity ストリーム（マッピング処理を削除）
+    final connectivityStream = Connectivity().onConnectivityChanged;
 
     return StreamBuilder<ConnectivityResult>(
-      stream: connectivityStream,
+      // 初期データを適宜設定（例えば、初期は mobile とする）
+      initialData: ConnectivityResult.mobile,
+    stream: Connectivity().onConnectivityChanged.map(
+        (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+      ),
       builder: (context, snapshot) {
         // snapshot.data が null の場合は ConnectivityResult.none とする
         final connectivityResult = snapshot.data ?? ConnectivityResult.none;
@@ -269,7 +271,7 @@ class WriteMessagePage extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text(
-              '※この個別メッセージは${member['name']}のみ読むことができます。',
+              '送信された内容は${member['name']}のみ読むことができます。',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -282,6 +284,7 @@ class WriteMessagePage extends StatelessWidget {
     );
   }
 }
+
 
 
 class WriteMessagePageModel extends ChangeNotifier {
@@ -363,10 +366,9 @@ class WriteMessagePageModel extends ChangeNotifier {
     if (memberList.length < 30)
     {
     for (int i = 0; i < memberList.length; i++) {
-      if (likeControllers[i].text.trim().isEmpty ||
-          requestControllers[i].text.trim().isEmpty ||
-          messageControllers[i].text.trim().isEmpty) {
-        throw 'すべての項目にメッセージを入力してください。';
+      if (
+          likeControllers[i].text.trim().isEmpty) {
+        throw '好きなところすごいところのみ必須項目です。';
       }
     }
     }

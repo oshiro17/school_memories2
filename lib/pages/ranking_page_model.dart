@@ -20,10 +20,10 @@ class RankingPageModel extends ChangeNotifier {
     '有名になりそうなのは？',
     '会社の社長になりそうなのは？',
     '世界一周しそうなのは？',
-    'すぐ結婚しそうなのは？',
+    '力持ちなのは？',
     '忘れ物が多いのは？',
     '優しいのは？',
-    '美人なのは？',
+    'イケメンなのは？',
     '可愛いのは？',
     '天然なのは？',
     'うるさいのは？',
@@ -88,6 +88,8 @@ class RankingPageModel extends ChangeNotifier {
       if (memberDoc.exists) {
         final data = memberDoc.data() ?? {};
         isVoted = data['isVoted'] ?? false;
+
+        print("ここきた");
       } else {
         isVoted = false;
       }
@@ -106,6 +108,7 @@ class RankingPageModel extends ChangeNotifier {
 
     // 3) 投票済みなら順次ランキングをロード
     isLoading = false; 
+  
     notifyListeners(); // 画面更新可能に
 
     for (int i = 0; i < questionList.length; i++) {

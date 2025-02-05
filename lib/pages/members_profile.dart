@@ -205,6 +205,7 @@ floatingActionButton: StreamBuilder<ConnectivityResult>(
 
 
 
+SizedBox(height: 20,),
 _buildProfileText('こんにちは ', member.name),
 _buildProfileText('', member.q1, isCallMe: true),
 _buildProfileText('星座は', member.q2),

@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/pages/select_people_model.dart';
 import 'package:school_memories2/pages/vote_model.dart';
 
@@ -16,57 +18,64 @@ class VoteRankingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Connectivity().onConnectivityChanged は List<ConnectivityResult> を返すので defensive に扱う
-    final connectivityStream = Connectivity().onConnectivityChanged.map(
-      (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
-    );
+    // FutureBuilder を利用して初回の接続状態を取得（初期値はオンラインと仮定）
+    return FutureBuilder<ConnectivityResult>(
+     future: Connectivity().checkConnectivity().then((results) => results.first),
 
-    return StreamBuilder<ConnectivityResult>(
-      stream: connectivityStream,
+      initialData: ConnectivityResult.mobile,
       builder: (context, snapshot) {
-        final connectivityResult = snapshot.data ?? ConnectivityResult.none;
-        final offline = connectivityResult == ConnectivityResult.none;
+        final initialConnectivity = snapshot.data ?? ConnectivityResult.mobile;
+        // その後、ストリームで最新の接続状態に更新
+        return StreamBuilder<ConnectivityResult>(
+          initialData: initialConnectivity,
+         stream: Connectivity().onConnectivityChanged.map(
+  (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+),
 
-        return ChangeNotifierProvider<VoteRankingPageModel>(
-          create: (_) => VoteRankingPageModel()..init(classId, currentMemberId),
-          child: Consumer<VoteRankingPageModel>(
-            builder: (context, model, child) {
-              if (model.isLoading) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
+          builder: (context, snapshot) {
+            final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+            final offline = connectivityResult == ConnectivityResult.none;
 
-              if (model.hasAlreadyVoted) {
-                return Scaffold(
-                  appBar: AppBar(title: const Text('投票済み')),
-                  body: const Center(child: Text('すでに投票済みです！')),
-                );
-              }
-
-              return Scaffold(
-                appBar: AppBar(title: const Text('ランキングに投票する')),
-                body: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      for (int i = 0; i < model.questionList.length; i++) ...[
-                        _buildRankingDropdown(context, model, i),
-                        const SizedBox(height: 16),
-                      ],
-                      ElevatedButton(
-                        // オフラインの場合は onPressed を null にしてボタンを無効化
-                        onPressed: (model.isReadyToVote && !offline)
-                            ? () => _onSubmit(context, model)
-                            : null,
-                        child: const Text('投票する'),
+            return ChangeNotifierProvider<VoteRankingPageModel>(
+              create: (_) => VoteRankingPageModel()..init(classId, currentMemberId),
+              child: Consumer<VoteRankingPageModel>(
+                builder: (context, model, child) {
+                  if (model.isLoading) {
+                    return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (model.hasAlreadyVoted) {
+                    return Scaffold(
+                      appBar: AppBar(title: const Text('投票済み')),
+                      body: const Center(child: Text('すでに投票済みです！')),
+                    );
+                  }
+                  return Scaffold(
+                    appBar: AppBar(title: const Text('ランキングに投票する')),
+                    body: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < model.questionList.length; i++) ...[
+                            _buildRankingDropdown(context, model, i),
+                            const SizedBox(height: 16),
+                          ],
+                          ElevatedButton(
+                            // オフラインの場合は onPressed を null にしてボタンを無効化
+                            onPressed: (model.isReadyToVote && !offline)
+                                ? () => _onSubmit(context, model)
+                                : null,
+                            child: const Text('投票する'),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         );
       },
     );
