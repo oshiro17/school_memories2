@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:school_memories2/class_model.dart';
 import 'package:school_memories2/color.dart';
 import 'package:school_memories2/pages/daialog.dart';
 import 'package:school_memories2/pages/members_profile.dart';
@@ -10,7 +11,6 @@ import 'package:school_memories2/pages/myprofile.dart';
 import 'package:school_memories2/pages/myprofile_model.dart';
 import 'package:school_memories2/pages/ranking.dart';
 import 'package:school_memories2/pages/ranking_page_model.dart';
-import '../class_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class Home extends StatefulWidget {
@@ -35,19 +35,21 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
 
-    // MyProfileModelのfetchProfileOnceを呼び出し
-     WidgetsBinding.instance.addPostFrameCallback((_) {
+    // MyProfileModel の fetchProfileOnce を呼び出し
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final profileModel = Provider.of<MyProfileModel>(context, listen: false);
       profileModel.fetchProfileOnce(widget.classInfo.id, widget.currentMemberId);
 
-      final membersModel = Provider.of<MembersProfileModel>(context, listen: false);
+      final membersModel =
+          Provider.of<MembersProfileModel>(context, listen: false);
       membersModel.fetchClassMembers(widget.classInfo.id, widget.currentMemberId);
 
       // MessageModel の初期化
       final messageModel = Provider.of<MessageModel>(context, listen: false);
       messageModel.fetchMessages(widget.classInfo.id, widget.currentMemberId);
 
-       final rankingModel = Provider.of<RankingPageModel>(context, listen: false);
+      final rankingModel =
+          Provider.of<RankingPageModel>(context, listen: false);
       rankingModel.init(widget.classInfo.id, widget.currentMemberId);
     });
     // タブの初期化
@@ -74,20 +76,24 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     final profileModel = Provider.of<MyProfileModel>(context);
-    final membersModel = Provider.of<MembersProfileModel>(context); // 追加
+    final membersModel = Provider.of<MembersProfileModel>(context);
+
+    // 防御的記述を行った接続状態のストリーム
+    final connectivityStream = Connectivity().onConnectivityChanged.map(
+      (results) =>
+          results.isNotEmpty ? results.first : ConnectivityResult.none,
+    );
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-appBar: PreferredSize(
+      appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: StreamBuilder<ConnectivityResult>(
-          // Connectivity().onConnectivityChanged は List を返すため、最初の要素を取り出す
-         stream: Connectivity().onConnectivityChanged.map(
-  (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
-),
+          stream: connectivityStream,
           builder: (context, snapshot) {
             // オフラインの場合：シンプルな AppBar を表示
-            if (snapshot.hasData && snapshot.data == ConnectivityResult.none) {
+            if (snapshot.hasData &&
+                snapshot.data == ConnectivityResult.none) {
               return AppBar(
                 backgroundColor: Colors.grey[400],
                 title: const Text(
@@ -103,7 +109,8 @@ appBar: PreferredSize(
               elevation: 0,
               title: Text(
                 'Sotsu Bun',
-                style: GoogleFonts.dancingScript(fontSize: 23, color: Colors.black),
+                style: GoogleFonts.dancingScript(
+                    fontSize: 23, color: Colors.black),
               ),
               actions: [
                 IconButton(
@@ -126,18 +133,35 @@ appBar: PreferredSize(
       body: profileModel.isLoading || membersModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : tabs[currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (idx) => setState(() => currentIndex = idx),
-        selectedItemColor: darkBlueColor,
-        unselectedItemColor: Colors.black,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'マイページ'),
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'プロフィール'),
-          BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'よせがき'),
-          BottomNavigationBarItem(icon: Icon(Icons.equalizer), label: 'ランキング'),
-        ],
+      // BottomNavigationBar を StreamBuilder でラップ
+      bottomNavigationBar: StreamBuilder<ConnectivityResult>(
+        stream: connectivityStream,
+        initialData: ConnectivityResult.mobile,
+        builder: (context, snapshot) {
+          if (snapshot.hasData &&
+              snapshot.data == ConnectivityResult.none) {
+            // オフラインの場合は BottomNavigationBar を表示しない
+            return const SizedBox.shrink();
+          }
+          // オンラインの場合は通常の BottomNavigationBar を表示
+          return BottomNavigationBar(
+            currentIndex: currentIndex,
+            onTap: (idx) => setState(() => currentIndex = idx),
+            selectedItemColor: darkBlueColor,
+            unselectedItemColor: Colors.black,
+            type: BottomNavigationBarType.fixed,
+            items: const [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.account_circle), label: 'マイページ'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.book), label: 'プロフィール'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.mail), label: 'よせがき'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.equalizer), label: 'ランキング'),
+            ],
+          );
+        },
       ),
     );
   }

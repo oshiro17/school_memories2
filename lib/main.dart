@@ -92,6 +92,7 @@ import 'package:school_memories2/pages/message.dart';
 import 'package:school_memories2/pages/myprofile_model.dart';
 import 'package:school_memories2/pages/ranking_page_model.dart';
 import 'package:school_memories2/pages/setting_profile.dart';
+import 'package:school_memories2/pages/setting_profile_model.dart';
 import 'package:school_memories2/signup/class_selection_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

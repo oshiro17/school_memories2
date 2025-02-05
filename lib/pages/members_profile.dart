@@ -61,7 +61,7 @@ class ProfilePage extends StatelessWidget {
                   : membersModel.isEmpty || membersModel.classMemberList.isEmpty
                       ? const Center(
                           child: Text(
-                            '表示するメンバーがありません\n又はあなたのプロフィールが設定されていません。',
+                            '表示するメンバーがありません',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
@@ -204,8 +204,6 @@ floatingActionButton: StreamBuilder<ConnectivityResult>(
 
 
 
-
-SizedBox(height: 20,),
 
 _buildProfileText('こんにちは ', member.name),
 _buildProfileText('', member.q1, isCallMe: true),
