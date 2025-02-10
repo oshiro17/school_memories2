@@ -286,7 +286,7 @@ class MyProfilePage extends StatelessWidget {
                     _buildProfileField('短所', model.q22),
                   ]),
                   _buildSection([
-                    _buildProfileField('1億あったら何したい？', model.q23),
+                    _buildProfileField('1億円あったら何したい？', model.q23),
                     _buildProfileField('尊敬している人は誰？', model.q24),
                     _buildProfileField('10年後自分は何してると思う？', model.q25),
                     _buildProfileField('明日の目標は？', model.q26),

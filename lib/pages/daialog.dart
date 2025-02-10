@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // ★ Firestoreの操作に必要
 import 'package:school_memories2/pages/write_message.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:school_memories2/class_model.dart';
@@ -7,7 +8,8 @@ import 'package:school_memories2/pages/change_password_dialog.dart';
 import 'package:school_memories2/pages/vote.dart';
 import 'package:school_memories2/signup/class_selection_page.dart';
 import 'package:school_memories2/signup/select_account_page.dart';
-import 'package:url_launcher/url_launcher.dart'; // 追加
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:async'; // ★ カウントダウン用のTimerに必要
 
 class MainMemoriesDialog extends StatelessWidget {
   final ClassModel classInfo;
@@ -25,20 +27,98 @@ class MainMemoriesDialog extends StatelessWidget {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      // エラー処理
       debugPrint('Could not launch $url');
     }
+  }
+
+  /// アカウント削除処理全体
+  /// 1) 10秒のカウントダウンダイアログを表示
+  /// 2) 「キャンセル」押下で削除を中断 / タイムアウトで削除実行
+  Future<void> _confirmAccountDeletion(BuildContext context) async {
+    // カウントダウンダイアログを表示して結果を受け取る
+    final bool canceled = await showDialog<bool>(
+      context: context,
+      // ダイアログ外をタップしても閉じない
+      barrierDismissible: false,
+      builder: (_) => const _CountdownDialog(),
+    ) ?? true; 
+    // showDialogがnullを返す可能性があるため、デフォルトでtrue(キャンセル扱い)
+
+    // ユーザーがキャンセルを押した場合は true が返るので処理中断
+    if (canceled) {
+      return;
+    }
+
+    // キャンセルされず10秒経過した → Firestore & SharedPreferences 削除実行
+
+    // 1) Firestore で該当ユーザー情報を消去
+    final docRef = FirebaseFirestore.instance
+        .collection('classes')
+        .doc(classInfo.id)
+        .collection('members')
+        .doc(currentMemberId);
+
+    try {
+      final snapshot = await docRef.get();
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>?;
+        if (data != null) {
+          // name と avatarIndex 以外のフィールドを削除
+          final Map<String, dynamic> updateData = {};
+          for (final key in data.keys) {
+            if (key != 'name' && key != 'avatarIndex' && key!= 'id') {
+              updateData[key] = FieldValue.delete();
+            }
+          }
+          if (updateData.isNotEmpty) {
+            await docRef.update(updateData);
+          }
+          // name と avatarIndex を上書き
+          await docRef.update({
+            'name': 'unknown',
+            'avatarIndex': 0,
+          });
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('アカウント情報の消去に失敗しました: $e')),
+      );
+      return;
+    }
+
+    // 2) SharedPreferences の情報を消去
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('savedClassId');
+      await prefs.remove('savedMemberId');
+      await prefs.remove('savedClassName');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('内部データの消去に失敗しました: $e')),
+      );
+      return;
+    }
+
+    // 3) SnackBarを表示してから ClassSelectionPage に遷移
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('アカウント情報を消去しました')),
+    );
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => ClassSelectionPage()),
+      (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<ConnectivityResult>(
-      // 最新の Connectivity Plus では、onConnectivityChanged は ConnectivityResult を返すので、そのまま利用します。
-      stream: Connectivity().onConnectivityChanged.map(
-        (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
-      ),
+      // 最新の Connectivity Plus では onConnectivityChanged が単一 ConnectivityResult をストリームで返す
+        stream: Connectivity().onConnectivityChanged.map(
+    (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+  ),
       builder: (context, snapshot) {
-        // snapshot.data が null の場合はオンライン状態（例: ConnectivityResult.mobile）と仮定する
+        // snapshot.data が null の場合はオンライン状態（例: ConnectivityResult.mobile）と仮定
         final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
         final bool isOffline = connectivityResult == ConnectivityResult.none;
 
@@ -51,7 +131,7 @@ class MainMemoriesDialog extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => WriteMessagePage(
+                  builder: (_) => WriteMessagePage(
                     classId: classInfo.id,
                     currentMemberId: currentMemberId,
                   ),
@@ -66,7 +146,7 @@ class MainMemoriesDialog extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => VoteRankingPage(
+                  builder: (_) => VoteRankingPage(
                     classId: classInfo.id,
                     currentMemberId: currentMemberId,
                   ),
@@ -84,9 +164,7 @@ class MainMemoriesDialog extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => ClassSelectionPage(),
-                ),
+                MaterialPageRoute(builder: (_) => ClassSelectionPage()),
               );
             },
           ),
@@ -99,7 +177,7 @@ class MainMemoriesDialog extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => SelectAccountPage(
+                  builder: (_) => SelectAccountPage(
                     classId: classInfo.id,
                     className: classInfo.name,
                   ),
@@ -113,7 +191,7 @@ class MainMemoriesDialog extends StatelessWidget {
               Navigator.pop(context);
               showDialog(
                 context: context,
-                builder: (context) {
+                builder: (_) {
                   return ChangePasswordDialog(
                     classId: classInfo.id,
                     memberId: currentMemberId,
@@ -145,7 +223,7 @@ class MainMemoriesDialog extends StatelessWidget {
               Navigator.pop(context);
               showDialog(
                 context: context,
-                builder: (context) {
+                builder: (_) {
                   return AlertDialog(
                     title: const Text('お問い合わせ 報告'),
                     content: Column(
@@ -159,15 +237,21 @@ class MainMemoriesDialog extends StatelessWidget {
                     ),
                     actions: [
                       TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        onPressed: () => Navigator.pop(context),
                         child: const Text('閉じる'),
                       ),
                     ],
                   );
                 },
               );
+            },
+          ),
+          // ★ ここに "アカウント情報を消去する" の項目を追加
+          SimpleDialogOption(
+            child: const Text('アカウント情報を消去する'),
+            onPressed: () {
+              Navigator.pop(context);
+              _confirmAccountDeletion(context);
             },
           ),
         ];
@@ -189,6 +273,67 @@ class MainMemoriesDialog extends StatelessWidget {
           children: options,
         );
       },
+    );
+  }
+}
+
+/// 10秒カウントダウン用のダイアログウィジェット
+/// - キャンセルで [true] を返して削除を中断
+/// - タイムアウトで [false] を返して削除実行
+class _CountdownDialog extends StatefulWidget {
+  const _CountdownDialog({Key? key}) : super(key: key);
+
+  @override
+  State<_CountdownDialog> createState() => _CountdownDialogState();
+}
+
+class _CountdownDialogState extends State<_CountdownDialog> {
+  late int _remainingSeconds;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _remainingSeconds = 10; // 10秒のカウントダウン
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _remainingSeconds--;
+      });
+      if (_remainingSeconds <= 0) {
+        _timer?.cancel();
+        // タイムアウト → false(削除実行)
+        Navigator.pop(context, false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('本当に消去しますか？'),
+      content: Text(
+        'キャンセルを $_remainingSeconds 秒以内に押さないと\n'
+        'アカウントが完全に消去されます。',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            // キャンセルを押した → true(削除中断)
+            Navigator.pop(context, true);
+          },
+          child: const Text('キャンセル'),
+        ),
+      ],
     );
   }
 }

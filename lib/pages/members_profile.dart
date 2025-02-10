@@ -240,7 +240,7 @@ SizedBox(height: 15,),
         SizedBox(height: 15,),
         
 
- _buildProfileField('1億あったら何したい？', member.q23),
+ _buildProfileField('1億円あったら何したい？', member.q23),
         _buildProfileField('尊敬している人は誰？', member.q24),
         _buildProfileField('10年後自分は何してると思う？', member.q25),
         _buildProfileField('明日の目標は？', member.q26),
