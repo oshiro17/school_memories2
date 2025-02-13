@@ -1,6 +1,6 @@
 {
-    "name": "school_memories2",
-    "short_name": "school_memories2",
+    "name": "#卒業文集",
+    "short_name": "#卒業文集",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

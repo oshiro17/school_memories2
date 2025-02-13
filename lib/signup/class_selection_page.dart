@@ -80,7 +80,7 @@ class _ClassSelectionPageState extends State<ClassSelectionPage> {
               children: [
                 const SizedBox(height: 35),
                 Text(
-                  '卒業文集アプリへようこそ！',
+                  '#卒業文集アプリへようこそ！',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: darkBlueColor,
