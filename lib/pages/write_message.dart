@@ -278,6 +278,8 @@ class WriteMessagePage extends StatelessWidget {
                 color: darkBlueColor,
               ),
             ),
+             const SizedBox(height: 15),
+        
           ],
         ),
       ),
@@ -391,6 +393,7 @@ class WriteMessagePageModel extends ChangeNotifier {
             .doc(member['id'])
             .collection('messages')
             .add({
+          'senderId': currentMemberId,
           'likeMessage': likeText,
           'requestMessage': requestText,
           'message': personalText,

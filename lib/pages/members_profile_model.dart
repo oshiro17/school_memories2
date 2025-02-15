@@ -1,16 +1,16 @@
+// members_profile_model.dart
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// メンバー情報クラス
 class Member {
   final String id;
   final int avatarIndex;
   final String name;
   final String motto;
   final String futureDream;
-   final String q1;
+  final String q1;
   final String q2;
   final String q3;
   final String q4;
@@ -42,7 +42,6 @@ class Member {
   final String q32;
   final String q33;
 
-
   Member({
     required this.id,
     required this.avatarIndex,
@@ -54,7 +53,6 @@ class Member {
     required this.q3,
     required this.q4,
     required this.q5,
-
     required this.q6,
     required this.q7,
     required this.q8,
@@ -71,7 +69,6 @@ class Member {
     required this.q19,
     required this.q20,
     required this.q21,
-        
     required this.q22,
     required this.q23,
     required this.q24,
@@ -82,10 +79,8 @@ class Member {
     required this.q31,
     required this.q32,
     required this.q33,
-    
   });
 
-  /// JSONから Member インスタンスを生成
   factory Member.fromJson(Map<String, dynamic> json) {
     return Member(
       id: json['id'] ?? '',
@@ -121,20 +116,12 @@ class Member {
       q26: json['q26'] ?? '',
       q27: json['q27'] ?? '',
       q30: json['q30'] ?? '',
-
       q31: json['q31'] ?? '',
       q32: json['q32'] ?? '',
       q33: json['q33'] ?? '',
-
-
-
-
-
-
     );
   }
 
-  /// Member インスタンスを JSON 形式に変換
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -173,177 +160,165 @@ class Member {
       'q31': q31,
       'q32': q32,
       'q33': q33,
-
-
     };
   }
 }
 
-/// クラスメンバー一覧の管理モデル
 class MembersProfileModel extends ChangeNotifier {
   List<Member> classMemberList = [];
   bool isLoading = false;
   bool isEmpty = true;
   String? errorMessage; // エラー状態
 
-  /// クラスメンバーを取得する
-  ///
-  /// ・forceRefresh が false の場合、キャッシュがあればキャッシュから読み込む  
-  /// ・その後 Firebase から各ドキュメントを個別に取得し、motto が空でないものだけリストに追加  
-  /// ・各ドキュメント取得完了ごとに notifyListeners() でUI更新  
-  /// ・Firebase から取得できたらキャッシュも更新する
-  Future<void> fetchClassMembers(String classId, String currentMemberId,
-      {bool forceRefresh = false}) async {
+  Future<void> fetchClassMembers(
+    String classId,
+    String currentMemberId, {
+    bool forceRefresh = false,
+  }) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    // キャッシュが存在し、forceRefresh が false の場合はキャッシュを読み込む
+
     if (!forceRefresh) {
-
-
-
       final cachedData = prefs.getString('classMembers_$classId');
       if (cachedData != null) {
-
-
-
         try {
           final List<dynamic> decodedList = jsonDecode(cachedData);
-          // キャッシュから読み込んだリストのうち、motto が空でないものだけ採用する
+          // キャッシュから読み込んだリストのうち、motto が空でないものだけ採用
           classMemberList = decodedList
               .map((json) => Member.fromJson(json))
               .where((member) => member.motto.trim().isNotEmpty)
               .toList();
           isEmpty = classMemberList.isEmpty;
-          // キャッシュがあれば先に表示
+          // 先に画面に反映
           notifyListeners();
         } catch (e) {
           if (kDebugMode) {
-            print('キャッシュのパースに失敗しました: $e');
+            print('キャッシュのパースに失敗: $e');
           }
         }
       }
     }
 
     try {
-         final doc = await FirebaseFirestore.instance
-        .collection('classes')
-        .doc(classId)
-        .collection('members')
-        .doc(currentMemberId)
-        .get();
+      // 現在ユーザーのドキュメントを取得
+      final doc = await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId)
+          .collection('members')
+          .doc(currentMemberId)
+          .get();
 
-    if (!doc.exists) {
-      errorMessage = "エラー: ドキュメントが存在しません";
-      isEmpty = true;
-      return;
-    }
+      if (!doc.exists) {
+        errorMessage = "エラー: ドキュメントが存在しません";
+        isEmpty = true;
+        return;
+      }
 
-    final callme = doc.data()?['q1'];
-    if (callme == null || callme.isEmpty) {
-      isEmpty = true;
-      return;
-    } else {
-      isEmpty = false;
-    }
+      final dataCurrentUser = doc.data()!;
+      final callme = dataCurrentUser['q1'] ?? '';
+      if (callme.isEmpty) {
+        isEmpty = true;
+        return;
+      } else {
+        isEmpty = false;
+      }
 
+      // ★ 追加: blockedList を取得 (ない場合は空リスト)
+      final blockedListDynamic = dataCurrentUser['blockedList'] as List<dynamic>?; 
+      final blockedList = blockedListDynamic?.map((e) => e.toString()).toList() ?? [];
 
-
-      // Firebase のコレクション全体を一度に取得
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
+      // クラス内の全メンバーをまとめて取得
+      final snapshot = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
           .collection('members')
           .get();
 
-      // 取得したドキュメントから順次個別取得してリストに追加
-      // ※ 新しくリストを作成して、順次追加（カードが読み込めた分だけ画面に反映）
       List<Member> membersTemp = [];
       for (var doc in snapshot.docs) {
         try {
-          // ここでは、すでに doc.data() で内容はあるが
-          // 必要に応じて個々のドキュメントを改めて取得する場合は下記のようにする
-          DocumentSnapshot memberDoc = await doc.reference.get();
-          if (memberDoc.exists) {
-            final data = memberDoc.data() as Map<String, dynamic>;
-            // motto が空文字の場合は表示対象外
-            if ((data['q29'] ?? '').toString().trim().isEmpty) {
-              continue;
-            }
-            Member member = Member(
-              id: memberDoc.id,
-              avatarIndex: data['avatarIndex'] ?? 0,
-              name: data['name'] ?? '',
-              motto: data['q29'] ?? '',
-              futureDream: data['q28'] ?? '',
-                q1: data['q1'] ?? '',
-      q2: data['q2'] ?? '',
-      q3: data['q3'] ?? '',
-      q4: data['q4'] ?? '',
-      q5: data['q5'] ?? '',
-      q6: data['q6'] ?? '',
-      q7: data['q7'] ?? '',
-      q8: data['q8'] ?? '',
-      q9: data['q9'] ?? '',
-      q10: data['q10'] ?? '',
-      q11: data['q11'] ?? '',
-      q12: data['q12'] ?? '',
-      q13: data['q13'] ?? '',
-      q14: data['q14'] ?? '',
-      q15: data['q15'] ?? '',
-      q16: data['q16'] ?? '',
-      q17: data['q17'] ?? '',
-      q18: data['q18'] ?? '',
-      q19: data['q19'] ?? '',
-      q20: data['q20'] ?? '',
-      q21: data['q21'] ?? '',
-      q22: data['q22'] ?? '',
-      q23: data['q23'] ?? '',
-      q24: data['q24'] ?? '',
-      q25: data['q25'] ?? '',
-      q26: data['q26'] ?? '',
-      q27: data['q27'] ?? '',
-      q30: data['q30'] ?? '',
+          // すでに doc.data() があるが、念のため再取得したい場合は下記
+          final memberDoc = await doc.reference.get();
+          if (!memberDoc.exists) continue;
 
-      q31: data['q31'] ?? '',
-      q32: data['q32'] ?? '',
-      q33: data['q33'] ?? '',
+          final data = memberDoc.data() as Map<String, dynamic>;
+          final memberId = memberDoc.id;
 
-            );
-            membersTemp.add(member);
-            // 取得できたらすぐリスト更新
-            classMemberList = List.from(membersTemp);
-            isEmpty = classMemberList.isEmpty;
-            notifyListeners();
+          // ★ ブロックリストに含まれる相手は除外
+          if (blockedList.contains(memberId)) {
+            continue;
           }
-        } on FirebaseException catch (e) {
-          // 個々の取得時のエラー処理（ネットワークエラーなど）
-          if (e.code == 'unavailable') {
-            errorMessage = 'ネットワークエラーです。';
-          } else {
-            errorMessage = 'Firestoreエラー: ${e.message}';
+
+          // motto が空ならスキップ
+          final mottoData = data['q29'] ?? '';
+          if (mottoData.toString().trim().isEmpty) {
+            continue;
           }
-          // ここでは個々のエラーはログに出しつつ、続行する
-          if (kDebugMode) {
-            print('メンバー ${doc.id} の取得に失敗しました: $e');
-          }
+
+          final member = Member(
+            id: memberId,
+            avatarIndex: data['avatarIndex'] ?? 0,
+            name: data['name'] ?? '',
+            motto: data['q29'] ?? '',
+            futureDream: data['q28'] ?? '',
+            q1: data['q1'] ?? '',
+            q2: data['q2'] ?? '',
+            q3: data['q3'] ?? '',
+            q4: data['q4'] ?? '',
+            q5: data['q5'] ?? '',
+            q6: data['q6'] ?? '',
+            q7: data['q7'] ?? '',
+            q8: data['q8'] ?? '',
+            q9: data['q9'] ?? '',
+            q10: data['q10'] ?? '',
+            q11: data['q11'] ?? '',
+            q12: data['q12'] ?? '',
+            q13: data['q13'] ?? '',
+            q14: data['q14'] ?? '',
+            q15: data['q15'] ?? '',
+            q16: data['q16'] ?? '',
+            q17: data['q17'] ?? '',
+            q18: data['q18'] ?? '',
+            q19: data['q19'] ?? '',
+            q20: data['q20'] ?? '',
+            q21: data['q21'] ?? '',
+            q22: data['q22'] ?? '',
+            q23: data['q23'] ?? '',
+            q24: data['q24'] ?? '',
+            q25: data['q25'] ?? '',
+            q26: data['q26'] ?? '',
+            q27: data['q27'] ?? '',
+            q30: data['q30'] ?? '',
+            q31: data['q31'] ?? '',
+            q32: data['q32'] ?? '',
+            q33: data['q33'] ?? '',
+          );
+          membersTemp.add(member);
+
+          // 取得できたらすぐ反映
+          classMemberList = List.from(membersTemp);
+          isEmpty = classMemberList.isEmpty;
+          notifyListeners();
         } catch (e) {
           if (kDebugMode) {
-            print('メンバー ${doc.id} の取得中に予期せぬエラーが発生しました: $e');
+            print('メンバー取得失敗: $e');
           }
+          // 個々の取得エラーは無視して続行
         }
       }
-      // キャッシュの更新（Firebase からの最新データが取得できたら）
+
+      // キャッシュ更新
       try {
-        final String encodedData = jsonEncode(
-          classMemberList.map((member) => member.toJson()).toList(),
+        final encodedData = jsonEncode(
+          classMemberList.map((m) => m.toJson()).toList(),
         );
         await prefs.setString('classMembers_$classId', encodedData);
       } catch (e) {
         if (kDebugMode) {
-          print('キャッシュ更新に失敗しました: $e');
+          print('キャッシュ更新に失敗: $e');
         }
       }
     } on FirebaseException catch (e) {

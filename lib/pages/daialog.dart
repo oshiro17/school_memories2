@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // ★ Firestoreの操作に必要
+import 'package:school_memories2/pages/block.dart';
 import 'package:school_memories2/pages/write_message.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:school_memories2/class_model.dart';
@@ -124,6 +125,21 @@ class MainMemoriesDialog extends StatelessWidget {
 
         // オンライン時に表示する項目一覧
         final List<Widget> onlineOptions = [
+                    SimpleDialogOption(
+            child: const Text('友達をブロックする'),
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>  BlockPage(
+                    classId: classInfo.id,
+                    currentMemberId: currentMemberId,
+                  ),
+                ),
+              );
+            },
+          ),
           SimpleDialogOption(
             child: const Text('寄せ書きを書く'),
             onPressed: () {

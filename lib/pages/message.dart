@@ -14,88 +14,113 @@ class MessageModel extends ChangeNotifier {
   String? errorMessage; // エラー状態を保持するフィールド
 
   /// Firestoreからメッセージを取得
-  Future<void> fetchMessages(String classId, String memberId, {bool forceUpdate = false}) async {
-    final prefs = await SharedPreferences.getInstance();
-    final cacheKey = 'messages_${classId}_$memberId';
-    errorMessage = null;
-    if (!forceUpdate) {
-      final cachedData = prefs.getString(cacheKey);
-      if (cachedData != null) {
-        try {
-          final cachedMessages = json.decode(cachedData) as List;
-          messages = cachedMessages.map((e) => MessageData.fromJson(e)).toList();
-          isFetched = true;
-          isSent = true;
-          notifyListeners();
-          return;
-        } catch (e) {
-          print("キャッシュデータのデコードに失敗しました: $e");
-        }
+ Future<void> fetchMessages(String classId, String memberId, {bool forceUpdate = false}) async {
+  final prefs = await SharedPreferences.getInstance();
+  final cacheKey = 'messages_${classId}_$memberId';
+  errorMessage = null;
+
+  // 1) キャッシュ読み込み
+  if (!forceUpdate) {
+    final cachedData = prefs.getString(cacheKey);
+    if (cachedData != null) {
+      try {
+        final cachedMessages = json.decode(cachedData) as List;
+        messages = cachedMessages.map((e) => MessageData.fromJson(e)).toList();
+        isFetched = true;
+        isSent = true;
+        notifyListeners();
+        return;
+      } catch (e) {
+        print("キャッシュデータのデコードに失敗しました: $e");
       }
     }
+  }
 
-    isLoading = true;
-    notifyListeners();
+  isLoading = true;
+  notifyListeners();
 
-    try {
-      final memberDoc = await FirebaseFirestore.instance
+  try {
+    // 2) 現在ユーザーのドキュメントを取得し、isSent・blockedList を確認
+    final userDoc = await FirebaseFirestore.instance
+        .collection('classes')
+        .doc(classId)
+        .collection('members')
+        .doc(memberId)
+        .get();
+    final userData = userDoc.data() ?? {};
+
+    isSent = userData['isSent'] ?? false;
+    final blockedListDynamic = userData['blockedList'] as List<dynamic>?;
+    // blockedList がなければ空リスト
+    final blockedList = blockedListDynamic?.map((e) => e.toString()).toList() ?? [];
+
+    if (isSent) {
+      // 3) メッセージ一覧を取得
+      final snapshot = await FirebaseFirestore.instance
           .collection('classes')
           .doc(classId)
           .collection('members')
           .doc(memberId)
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
           .get();
-      isSent = memberDoc.data()?['isSent'] ?? false;
 
-      if (isSent) {
-        final snapshot = await FirebaseFirestore.instance
-            .collection('classes')
-            .doc(classId)
-            .collection('members')
-            .doc(memberId)
-            .collection('messages')
-            .orderBy('timestamp', descending: true)
-            .get();
+      // 4) senderId が blockedList に含まれているメッセージを除外
+      final List<MessageData> filtered = [];
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final senderId = data['senderId'] ?? '';
 
-        messages = snapshot.docs.map((doc) {
-          final data = doc.data();
-          return MessageData(
+        if (blockedList.contains(senderId)) {
+          // ブロックしている相手のメッセージ → スキップ
+          continue;
+        }
+
+        filtered.add(
+          MessageData(
+            id: doc.id,
             avatarIndex: data['avatarIndex'] ?? 0,
             likeMessage: data['likeMessage'] ?? '',
             requestMessage: data['requestMessage'] ?? '',
             message: data['message'] ?? '',
             senderName: data['senderName'] ?? 'Unknown',
             timestamp: data['timestamp'] as Timestamp?,
-          );
-        }).toList();
-
-        await prefs.setString(
-          cacheKey,
-          json.encode(messages.map((msg) => msg.toJson()).toList()),
+          ),
         );
-      } else {
-        messages = [];
       }
-    } on FirebaseException catch (e) {
-      if (e.code == 'unavailable') {
-        errorMessage = 'ネットワークエラーです。';
-        // 例: navigatorKey.currentState?.pushAndRemoveUntil(OfflinePage(...), (route)=>false);
-      } else {
-        errorMessage = 'Firestoreエラー: ${e.message}';
-      }
-      print('メッセージ取得中にエラーが発生: $e');
-    } catch (e) {
-      errorMessage = 'メッセージ取得中にエラーが発生しました: $e';
-      print('メッセージ取得中にエラーが発生: $e');
-    } finally {
-      isLoading = false;
-      isFetched = true;
-      notifyListeners();
+
+      messages = filtered;
+
+      // キャッシュに保存
+      await prefs.setString(
+        cacheKey,
+        json.encode(messages.map((msg) => msg.toJson()).toList()),
+      );
+    } else {
+      messages = [];
     }
+  } on FirebaseException catch (e) {
+    if (e.code == 'unavailable') {
+      errorMessage = 'ネットワークエラーです。';
+    } else {
+      errorMessage = 'Firestoreエラー: ${e.message}';
+    }
+    print('メッセージ取得中にエラーが発生: $e');
+  } catch (e) {
+    errorMessage = 'メッセージ取得中にエラーが発生しました: $e';
+    print('メッセージ取得中にエラーが発生: $e');
+  } finally {
+    isLoading = false;
+    isFetched = true;
+    notifyListeners();
   }
+}
+
 }
 
 /// メッセージ1件分のデータクラス
 class MessageData {
+  final String id; // ★ 新規追加: ドキュメントIDを保持するフィールド
   final int avatarIndex;
   final String likeMessage;
   final String requestMessage;
@@ -104,6 +129,7 @@ class MessageData {
   final Timestamp? timestamp;
 
   MessageData({
+    required this.id,
     required this.avatarIndex,
     required this.likeMessage,
     required this.requestMessage,
@@ -115,6 +141,7 @@ class MessageData {
   // JSONからの復元
   factory MessageData.fromJson(Map<String, dynamic> json) {
     return MessageData(
+      id: json['id'] ?? '',
       avatarIndex: json['avatarIndex'] ?? 0,
       likeMessage: json['likeMessage'] ?? '',
       requestMessage: json['requestMessage'] ?? '',
@@ -129,6 +156,7 @@ class MessageData {
   // JSONへの変換
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'avatarIndex': avatarIndex,
       'likeMessage': likeMessage,
       'requestMessage': requestMessage,
@@ -260,7 +288,7 @@ class MessagePage extends StatelessWidget {
                       }
                       final msg = model.messages[index - 1];
                       final dateTime = msg.timestamp?.toDate();
-                      return _buildMessageBubble(msg, dateTime);
+                      return _buildMessageBubble(context, msg, dateTime);
                     },
                   ),
                 );
@@ -270,184 +298,189 @@ class MessagePage extends StatelessWidget {
         ),
       ),
       floatingActionButton: StreamBuilder<ConnectivityResult>(
-  stream: Connectivity().onConnectivityChanged.map(
-    (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
-  ),
-  builder: (context, snapshot) {
-    // snapshot.data が null の場合はオンライン状態（例: ConnectivityResult.mobile）とみなす
-    final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
-    final bool offline = connectivityResult == ConnectivityResult.none;
-    return FloatingActionButton(
-      backgroundColor: offline ? Colors.grey : goldColor,
-      // オフラインの場合は onPressed を null にし、オンラインの場合のみ処理を実行する
-      onPressed: offline
-          ? null
-          : () {
-              final model = Provider.of<MessageModel>(context, listen: false);
-              model.fetchMessages(classId, currentMemberId, forceUpdate: true);
-            },
-      child: const Icon(Icons.refresh),
-    );
-  // },
-// ),
-
-  //    floatingActionButton: StreamBuilder<ConnectivityResult>(
-  // stream: Connectivity().onConnectivityChanged.map(
-  //   (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
-  // ),
-  // builder: (context, snapshot) {
-  //   // snapshot.data が null の場合はオンラインと仮定（例: ConnectivityResult.mobile）
-  //   final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
-  //   final offline = connectivityResult == ConnectivityResult.none;
-  //   return FloatingActionButton(
-  //     // オフラインの場合は背景色をグレーに変更
-  //     backgroundColor: offline ? Colors.grey : goldColor,
-  //     // オンラインの場合のみ onPressed を設定し、オフラインの場合は null にすることで無効化
-  //     onPressed: () {
-  //         final model = Provider.of<MessageModel>(context, listen: false);
-  //         model.fetchMessages(classId, currentMemberId, forceUpdate: true);
-  //       },
-  //     child: const Icon(Icons.refresh),
-    // );
-  },
-),
-
-
-    
-    );
-  }
-
-  /// メッセージの吹き出しUI
-  Widget _buildMessageBubble(MessageData msg, DateTime? dateTime) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1) アバター画像
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.grey[300],
-            backgroundImage: AssetImage('assets/j${msg.avatarIndex}.png'),
-          ),
-          const SizedBox(width: 16),
-          // 2) 吹き出し本体（カスタムペインで尻尾をつける）
-          Expanded(
-            child: CustomPaint(
-              painter: BubblePainter(),
-              child: Container(
-                margin: const EdgeInsets.only(left: 6),
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.white, Color(0xFFF1F1F1)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(2, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // (A) 送信者名
-                    Text(
-                      msg.senderName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: darkBlueColor,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // (B) 3種類のメッセージをそれぞれ表示
-                    if (msg.likeMessage.isNotEmpty) ...[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.favorite, color: Colors.pink, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '君の好きなところ,すごいところ',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        msg.likeMessage,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    if (msg.requestMessage.isNotEmpty) ...[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.volunteer_activism, color: Colors.blue, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '君へのお願いごと',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        msg.requestMessage,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    if (msg.message.isNotEmpty) ...[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.history_edu, color: darkBlueColor, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '君へのメッセージ',
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        msg.message,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    // (C) 日時（右下に表示）
-                    if (dateTime != null)
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: Text(
-                          _formatDateTime(dateTime),
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+        stream: Connectivity().onConnectivityChanged.map(
+          (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+        ),
+        builder: (context, snapshot) {
+          // snapshot.data が null の場合はオンライン状態（例: ConnectivityResult.mobile）とみなす
+          final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+          final bool offline = connectivityResult == ConnectivityResult.none;
+          return FloatingActionButton(
+            backgroundColor: offline ? Colors.grey : goldColor,
+            // オフラインの場合は onPressed を null にし、オンラインの場合のみ処理を実行する
+            onPressed: offline
+                ? null
+                : () {
+                    final model = Provider.of<MessageModel>(context, listen: false);
+                    model.fetchMessages(classId, currentMemberId, forceUpdate: true);
+                  },
+            child: const Icon(Icons.refresh),
+          );
+        },
       ),
     );
   }
+
+  Widget _buildMessageBubble(BuildContext context, MessageData msg, DateTime? dateTime) {
+  return Container(
+    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1) アバター画像
+        CircleAvatar(
+          radius: 30,
+          backgroundColor: Colors.grey[300],
+          backgroundImage: AssetImage('assets/j${msg.avatarIndex}.png'),
+        ),
+        const SizedBox(width: 16),
+        // 2) 吹き出し本体（カスタムペインで尻尾をつける）
+        Expanded(
+          child: CustomPaint(
+            painter: BubblePainter(),
+            child: Container(
+              margin: const EdgeInsets.only(left: 6),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.white, Color(0xFFF1F1F1)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4,
+                    offset: Offset(2, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // (A) 送信者名
+                  Text(
+                    msg.senderName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: darkBlueColor,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // (B) 3種類のメッセージをそれぞれ表示
+                  if (msg.likeMessage.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.favorite, color: Colors.pink, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '君の好きなところ,すごいところ',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      msg.likeMessage,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (msg.requestMessage.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.volunteer_activism, color: Colors.blue, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '君へのお願いごと',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      msg.requestMessage,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (msg.message.isNotEmpty) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.history_edu, color: darkBlueColor, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '君へのメッセージ',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      msg.message,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  // (C) 日時と通報ボタンを同じ行に配置
+                  if (dateTime != null)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          _formatDateTime(dateTime),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(width: 8),
+                        // 通報ボタン（Connectivity 状態で無効化する）
+                        StreamBuilder<ConnectivityResult>(
+                          stream: Connectivity().onConnectivityChanged.map(
+                            (results) => results.isNotEmpty ? results.first : ConnectivityResult.none,
+                          ),
+                          builder: (context, snapshot) {
+                            final connectivityResult = snapshot.data ?? ConnectivityResult.mobile;
+                            final offline = connectivityResult == ConnectivityResult.none;
+                            return TextButton(
+                              onPressed: offline
+                                  ? null
+                                  : () {
+                                      _showReportDialog(context, msg.id);
+                                    },
+                              style: TextButton.styleFrom(
+                                minimumSize: Size.zero,
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                backgroundColor: offline ? Colors.grey : Colors.red,
+                              ),
+                              child: const Text(
+                                "通報！",
+                                style: TextStyle(fontSize: 10, color: Colors.white),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   /// 日付のフォーマット
   String _formatDateTime(DateTime dateTime) {
@@ -457,6 +490,57 @@ class MessagePage extends StatelessWidget {
     final hh = dateTime.hour.toString().padLeft(2, '0');
     final mm = dateTime.minute.toString().padLeft(2, '0');
     return '$y/$m/$d $hh:$mm';
+  }
+
+  /// 通報ダイアログを表示する（MessagePage版）
+  void _showReportDialog(BuildContext context, String messageId) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('通報する理由を選択'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text("スパム"),
+                onTap: () => _reportContent(context, "スパム", messageId),
+              ),
+              ListTile(
+                title: const Text("不適切な内容"),
+                onTap: () => _reportContent(context, "不適切な内容", messageId),
+              ),
+              ListTile(
+                title: const Text("嫌がらせ"),
+                onTap: () => _reportContent(context, "嫌がらせ", messageId),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Firestore の reports コレクションに通報情報を追加する
+  Future<void> _reportContent(BuildContext context, String reason, String messageId) async {
+    try {
+      await FirebaseFirestore.instance.collection('reports').add({
+        'postId': messageId,
+        'reportedBy': currentMemberId,
+        'reason': reason,
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': 'pending',
+      });
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("通報しました。")),
+      );
+    } catch (e) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("通報に失敗しました: $e")),
+      );
+    }
   }
 }
 

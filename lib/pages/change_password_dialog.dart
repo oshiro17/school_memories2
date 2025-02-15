@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:school_memories2/main.dart'; // navigatorKey が定義されているファイル
+// import 'package:school_memories2/main.dart'; // navigatorKey が定義されているファイル
 
 class ChangePasswordDialog extends StatefulWidget {
   final String classId;
